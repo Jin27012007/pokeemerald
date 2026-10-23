@@ -158,3 +158,39 @@ Hashes SHA de blobs do snapshot examinado (servem para detectar alterações e s
 - `audio_rules.mk`: `dcf08b352bea1c67ab9eafee0a3979172d5afe28`
 
 **Regra final:** este índice acelera a navegação e registra investigação preliminar, mas o código atual da branch prevalece. Antes de implementar qualquer mudança, consultar novamente fontes, usos e dependências específicas.
+
+## Verified implementation details from source inspection
+
+This section records specific source patterns already inspected, so future changes can start from the correct boundary.
+
+### Script execution and command registration
+
+- `src/script.c` defines `RunScriptCommand` and `ScriptContext_RunScript`; the script context can be in bytecode or native mode.
+- `include/script.h` declares `struct ScriptContext`, `ScrCmdFunc`, and script-context entry points.
+- `data/script_cmd_table.inc` is a generated/assembly-style table that maps opcode constants (for example `SCR_OP_SETVAR`, `SCR_OP_SETFLAG`, `SCR_OP_MESSAGE`, `SCR_OP_SPECIAL`) to C handlers such as `ScrCmd_setvar`, `ScrCmd_setflag`, `ScrCmd_message`, and `ScrCmd_special`.
+- `src/scrcmd.c` implements those handlers. The inspected `ScrCmd_setflag` calls `FlagSet(ScriptReadHalfword(ctx))`; `ScrCmd_setvar` reads a variable/value and writes via `GetVarPointer`; `ScrCmd_message` reads a message pointer and calls `ShowFieldMessage`; `ScrCmd_special` indexes `gSpecials` and invokes that function. Therefore, a new script behavior should first be expressed using existing commands/specials if possible. A genuinely new opcode needs consistent opcode definition, dispatch-table entry, C handler, script encoder/preprocessor compatibility and validation.
+- A `special` is not the same as a script opcode implementation: `special` dispatches an already registered C function through the specials table. If an existing special can provide the behavior, it may avoid adding an opcode, but its own effects/dependencies must still be examined.
+- The scripts are macro/opcode-based input that ultimately compile through preprocessors/assembler rules; textual command names are not arbitrary C function calls. Follow how the current command table and build generate output before changing a command.
+
+### Flags, variables, and persistent state
+
+- `src/event_data.c` includes logic that clears temporary flags and temporary variables and calls `FlagSet`, `FlagClear`, `VarSet`, and `VarGet` from other flow paths.
+- `include/constants/flags.h` and `include/constants/vars.h` are extensive registries. Before adding a state identifier, search definitions AND all uses, distinguish temporary from persistent flags/vars, and check initialization/clearing and save/load behavior.
+- A story/event flag should be checked in each branch of the event and on map re-entry; a variable is appropriate only when the requirement needs a value/state rather than a simple on/off. The final choice depends on existing conventions in the surrounding code.
+
+### Data-driven items and trainer teams
+
+- `src/data/items.h` defines the `gItems[]` table. Each item can contain user-visible fields such as name, price, description, pocket, item type and a field-use callback, plus other effect-related values. For an item change, inspect the exact item entry and the consuming path before touching general item logic.
+- `src/item.c`, `src/item_use.c`, `src/item_menu.c` and `src/shop.c` split item access, use behavior, menu/bag UI and shop transactions. A new/modified item may involve one or several of these layers depending on the requested behavior.
+- `src/data/trainers.h` defines `gTrainers[]`, including trainer class, encounter presentation/music, name and party flags. Team members are represented separately in `src/data/trainer_parties.h`. A trainer change must check the map's trainer event/script reference plus trainer constants, party data and battle-start flow; editing the display record alone does not define the team.
+- The inspected Pokémon data sources include `src/data/pokemon/species_info.h`, `level_up_learnsets.h`, `tmhm_learnsets.h`, `tutor_learnsets.h`, `egg_moves.h`, `experience_tables.h`, and `evolution.h`. The correct file depends on whether a request concerns base species data, learnsets, evolution, egg moves, or another table.
+
+### Map generation and event validity
+
+- `map_data_rules.mk` consumes source map JSON and layout metadata to generate map includes and constants such as map groups/layouts/event IDs. That means the editable source for object placement and warps is ordinarily the appropriate `data/maps/<Map>/map.json`, not generated headers/includes.
+- The map entry and its local script form a pair: an event can compile yet be unusable if its script label is missing, its trigger is absent/unreachable, its graphics/object ID is invalid, or its flag logic is wrong.
+- For terrain edits, the correct source layout is resolved through the map's `layout` value and `data/layouts/layouts.json`; the binary layout itself must be treated as binary data and inspected through suitable map/tileset tooling rather than hand-editing as text.
+
+### Known current-state caveat
+
+The guide documents file roles and verified interfaces, not a promise that every subsystem has been fully reverse-engineered. For a concrete future request, reopen the affected files at the then-current branch SHA, search usages/callers, inspect related build rules, make the minimal edit and validate it. Do not infer function signatures, command operands, or save compatibility from filenames alone.
