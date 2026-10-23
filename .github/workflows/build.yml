@@ -1,70 +1,32 @@
-name: CI
+name: Build Pokémon Emerald
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - "lilycove/**"
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: Compile modern ROM
     runs-on: ubuntu-latest
-    env:
-      GAME_VERSION: EMERALD
-      GAME_REVISION: 0
-      GAME_LANGUAGE: ENGLISH
-      MODERN: 0
-      COMPARE: 1
+    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@master
+      - name: Check out source
+        uses: actions/checkout@v4
 
-      - name: Checkout syms
-        if: ${{ github.event_name == 'push' }}
-        uses: actions/checkout@master
-        with:
-          path: symbols
-          ref: symbols
-
-      - name: Checkout agbcc
-        uses: actions/checkout@master
-        with:
-          path: agbcc
-          repository: pret/agbcc
-
-      - name: Install binutils
+      - name: Install build dependencies
         run: |
-          sudo apt update
-          sudo apt install gcc-arm-none-eabi binutils-arm-none-eabi libpng-dev
-        # build-essential and git are already installed
-        # gcc-arm-none-eabi is only needed for the modern build
-        # as an alternative to dkP
+          sudo apt-get update
+          sudo apt-get install -y build-essential binutils-arm-none-eabi gcc-arm-none-eabi libpng-dev
 
-      - name: Install agbcc
-        run: |
-          ./build.sh
-          ./install.sh ../
-        working-directory: agbcc
+      - name: Compile
+        run: make -j2 modern
 
-      - name: Compare
-        run: make -j${nproc} all syms
-
-      - name: Modern
-        env:
-          MODERN: 1
-          COMPARE: 0
-        run: make -j${nproc} all
-
-      - name: Move symfiles
-        if: ${{ github.event_name == 'push' }}
-        run: |
-          cp -v *.sym symbols/
-          echo "SYMBOLS_COMMIT_MSG=$( git log --format=%s ${GITHUB_SHA} )" >> $GITHUB_ENV
-
-      - name: Update symfiles
-        if: ${{ github.event_name == 'push' }}
-        uses: EndBug/add-and-commit@v7
-        with:
-          branch: symbols
-          cwd: "./symbols"
-          add: "*.sym"
-          message: ${{ env.SYMBOLS_COMMIT_MSG }}
+      - name: Verify output exists
+        run: test -s pokeemerald_modern.gba
