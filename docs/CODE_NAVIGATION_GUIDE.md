@@ -99,3 +99,41 @@ Hashes abaixo ajudam a perceber quando esses arquivos mudarem e precisarem ser r
 - `Makefile`: `ed46644b7bde3fd2223ae8f5d07b5e95effa7f4d`
 
 **Regra final:** em cada pedido, consultar novamente o código atual, buscar chamadas e usos, conferir o diff e compilar/testar. Este mapa acelera a navegação; não substitui a leitura contextual dos arquivos implicados.
+
+
+## Implementation patterns and dependency tracing
+
+The sections below are workflow guidance grounded in the repository structure. They deliberately avoid prescribing a gameplay design that the user has not yet specified.
+
+### Event/script additions
+- Start at the relevant `data/maps/<Map>/map.json`: identify whether the interaction belongs to an object/NPC, warp, coordinate trigger, or background event. Record its coordinates, local ID, graphics, movement, trainer or script fields as applicable.
+- Follow its script reference into `data/maps/<Map>/scripts.inc`; follow any called common script into `data/scripts/` or the relevant shared include. Check every `call`, conditional, `goto`, `return`, and terminal `end` against the intended flow.
+- If the event must happen only once or depends on story progress, inspect the existing flag/variable definitions and all relevant reads/writes before deciding whether a new state variable is needed. Verify behavior when the flag is unset, set, and after leaving/re-entering the map.
+- For an item reward, battle, money, heal, ferry, or other side effect, inspect the called script/special implementation rather than assuming a command does what its name suggests.
+- For an interior connection, verify the source and destination warp IDs in both map JSONs, and check locked/hidden behavior at each story state.
+
+### State and script runtime
+- The script runner and command implementations are not the same layer: `src/script.c` manages script execution, while `src/scrcmd.c` implements many individual commands. Headers such as `include/script.h` and `include/event_scripts.h` expose relevant declarations.
+- Event data/state helpers are in `src/event_data.c`; actual flags/vars are defined in `include/constants/flags.h` and `include/constants/vars.h`. Before changing state, trace where it is initialized, persisted, cleared, and consumed.
+- Adding a new script command is a cross-layer task: command implementation, registration/dispatch table, declaration/prototype and script usage must agree. Only do this if existing commands/specials cannot express the requested behavior.
+
+### Map/layout work
+- `map.json` carries metadata and event definitions; `data/layouts/layouts.json` maps layout IDs to layout resources. The binary `map.bin`/border files represent the layout grid, not text-based coordinates.
+- Visual/terrain edits require inspecting the correct layout and tileset assets and their metatile attributes/behavior. Check object placement, warps, impassable tiles, surf/cycling rules and map connections after a terrain change.
+- The map build rules in `map_data_rules.mk` regenerate map headers/events/constants from source JSON. Never hand-edit generated outputs without tracing their generator.
+
+### C systems and data tables
+- For a feature request, search for the current consumer and the data definition before editing. Data-only changes can be enough for simple balance/table edits; behavioral changes may require updates to C logic, declarations, constants, scripts, UI, animations, and save state.
+- Pokémon data is spread across multiple sources, including `src/data/pokemon/species_info.h`, `src/data/pokemon/level_up_learnsets.h`, `src/data/pokemon/tmhm_learnsets.h`, and `src/data/pokemon/evolution.h`, with consumers in `src/pokemon.c` and related systems. Find the exact table/symbol rather than assuming all species data is in one file.
+- Battle behavior can span `src/battle_main.c`, `src/battle_script_commands.c`, `src/battle_ai_script_commands.c`, battle scripts/data, constants, messages and animations. A change to a battle command must be traced through both its dispatch/implementation and all calling scripts.
+- Item behavior is split across item definitions/accessors, use logic, bag/menu logic, and shop data/scripts. Check whether an item is field-usable, battle-usable, key, held, or a shop-stock item before deciding which module owns the behavior.
+- Save/state changes are high-risk: inspect the relevant save-block struct, serialization/load flow, initialization and all references. Consider compatibility with existing saves before modifying saved structures.
+- Graphics and audio must be traced from the asset through its references and build conversion rules; changing a PNG/MIDI alone does not guarantee it is compiled or used.
+
+### Validation checklist
+- Source diff is limited to the requested feature and supporting assets/data.
+- All labels, symbols, constants, flags, vars, object IDs and warp destinations resolve; no duplicate IDs.
+- Any newly added event can be reached in-game and ends in the expected state.
+- Check both branches of conditionals, re-entry/reload behavior, and story states relevant to the feature.
+- Build succeeds from the intended branch.
+- ROM boots in a GBA emulator and the feature is manually exercised; report compile and gameplay validation separately.
