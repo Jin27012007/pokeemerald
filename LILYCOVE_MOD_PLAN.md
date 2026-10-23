@@ -35,5 +35,5 @@ This fork is the working base for a Pokémon Emerald modification focused on Lil
 7. A successful build proves compilation/artifact generation, not correct gameplay. Emulator testing is still required.
 8. Do not invent major features or modify the ROM until the user specifies the desired changes.
 
-## Design scope still to define
-The user confirmed Pokémon Emerald as the base and asked for technical preparation focused on understanding how to implement systems, events, rules, and other changes. No gameplay feature list has been supplied yet.
+## Project proposal now received
+The user wants a Pokémon Emerald ROM focused on Contests, beginning with the protagonist arriving by boat at Lilycove Harbor and being welcomed by their mother. The entire playable experience should remain within Lilycove, with a lively and highly detailed city. The proposal and technical implementation plan are documented in [\`docs/PROJECT_PROPOSAL.md\`](docs/PROJECT_PROPOSAL.md). The exact contest progression, starter/party setup, mother's role, NPC routines, and which city services remain are still undecided. Do not modify gameplay until those architecture-affecting decisions are confirmed and a focused implementation plan is agreed.
