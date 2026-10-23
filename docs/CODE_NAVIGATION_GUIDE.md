@@ -194,3 +194,19 @@ This section records specific source patterns already inspected, so future chang
 ### Known current-state caveat
 
 The guide documents file roles and verified interfaces, not a promise that every subsystem has been fully reverse-engineered. For a concrete future request, reopen the affected files at the then-current branch SHA, search usages/callers, inspect related build rules, make the minimal edit and validate it. Do not infer function signatures, command operands, or save compatibility from filenames alone.
+
+
+## Lilycove event audit snapshot
+
+This is a basic structural inventory from the current source, not gameplay validation. Recheck the source before implementation.
+
+- Main map definition: `data/maps/LilycoveCity/map.json`.
+- ID/layout/music: `MAP_LILYCOVE_CITY`, `LAYOUT_LILYCOVE_CITY`, `MUS_LILYCOVE`.
+- The JSON currently lists 22 object events, 14 warps, 0 coordinate events and 13 background events.
+- Connected routes in this JSON: left → MAP_ROUTE121 (offset 10); right → MAP_ROUTE124 (offset -10).
+- Since warp events are references into other map data, an edit affecting entrances/exits must inspect the target map JSONs and not only this map.
+- The map contains a transition script and a load script. These can adjust story flags, map metatiles and rival graphics; changing the entry lifecycle should therefore be done only after tracing callers and the state assumptions of each script.
+
+## Completion standard for technical readiness
+
+“Ready” means a reliable implementation workflow and navigation map are in place, not that every feature or every line of the game has been exhaustively reverse-engineered. Once the proposed feature is known, do a focused deep dive on all affected systems and create an implementation plan with exact files, symbols, state and test cases before changing gameplay.
