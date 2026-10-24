@@ -57,34 +57,34 @@ LilycoveCity_House4_EventScript_AdoptionCard::
 	end
 
 LilycoveCity_House4_Text_FirstArrival:
-	.string "A MUDANCA PARA LILYCOVE FINALMENTE\n"
-	.string "TERMINOU.\p"
-	.string "MAE GUARDA A ULTIMA MALA E OLHA\n"
-	.string "AO REDOR DA CASA NOVA.$"
+	.string "A mudança para Lilycove finalmente\n"
+	.string "terminou.\p"
+	.string "Mamãe guarda a última mala e olha\n"
+	.string "ao redor da casa nova.$"
 
 LilycoveCity_House4_Text_MomWelcome:
-	.string "MAE: CHEGAMOS, {PLAYER}! ESTA E\n"
-	.string "NOSSA NOVA CASA EM LILYCOVE.\p"
-	.string "EU NAO ESQUECI QUE DIA E HOJE.\n"
-	.string "FELIZ ANIVERSARIO, {PLAYER}!\p"
-	.string "SEU PRESENTE ESTA ALI. PODE ABRIR!$"
+	.string "Mãe: Chegamos, {PLAYER}! Esta é\n"
+	.string "nossa nova casa em Lilycove.\p"
+	.string "Eu não esqueci que dia é hoje.\n"
+	.string "Feliz aniversário, {PLAYER}!\p"
+	.string "Seu presente está ali. Pode abrir!$"
 
 LilycoveCity_House4_Text_MomBirthdayReminder:
-	.string "MAE: A MUDANCA FOI CORRIDA, MAS\n"
-	.string "NAO ESQUECI SEU ANIVERSARIO.\n"
-	.string "SEU PRESENTE ESTA ALI!$"
+	.string "Mãe: A mudança foi corrida, mas\n"
+	.string "não esqueci seu aniversário.\n"
+	.string "Seu presente está ali!$"
 
 LilycoveCity_House4_Text_MomAfterArrival:
-	.string "MAE: ESPERO QUE A GENTE CRIE\n"
-	.string "MUITAS LEMBRANCAS EM LILYCOVE.\p"
-	.string "ESPERO QUE GOSTE DO PRESENTE!$"
+	.string "Mãe: Espero que a gente crie\n"
+	.string "muitas lembranças em Lilycove.\p"
+	.string "Espero que goste do presente!$"
 
 LilycoveCity_House4_Text_BirthdayPresent:
-	.string "VOCE ABRE O PRESENTE DE ANIVERSARIO.\p"
-	.string "DENTRO HA CINCO POKé BOLAS E UMA\n"
-	.string "CARTA: CARTAO DE ADOTACAO.$"
+	.string "Você abre o presente de aniversário.\p"
+	.string "Dentro há cinco Poké Bolas e uma\n"
+	.string "carta: Cartão de Adoção.$"
 
 LilycoveCity_House4_Text_AdoptionCard:
-	.string "MAE ESCOLHEU ESTA CARTA PARA VOCE.\p"
-	.string "LEVE-A A ZONA SAFARI PARA ADOTAR\n"
-	.string "SEU PRIMEIRO POKéMON. PARABENS!$"
+	.string "Mamãe escolheu esta carta para você.\p"
+	.string "Leve-a à Zona Safari para adotar\n"
+	.string "seu primeiro Pokémon. Parabéns!$"
