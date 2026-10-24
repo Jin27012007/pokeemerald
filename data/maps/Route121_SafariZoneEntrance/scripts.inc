@@ -190,31 +190,31 @@ Route121_SafariZoneEntrance_EventScript_AdoptionLeave::
 	end
 
 Route121_SafariZoneEntrance_Text_AdoptionWelcome:
-	.string "Welcome to the SAFARI adoption desk!\p"
-	.string "Show me your ADOPTION CARD and you\n"
-	.string "can choose a partner to take home.$"
+	.string "BEM-VINDO AO BALCAO DE ADOCAO DA\p"
+	.string "ZONA SAFARI!\pMOSTRE SEU CARTAO DE ADOCAO E\n"
+	.string "ESCOLHA UM COMPANHEIRO PARA LEVAR.$"
 
 Route121_SafariZoneEntrance_Text_AdoptionSkitty:
-	.string "Would you like to adopt SKITTY?$"
+	.string "VOCE QUER ADOTAR SKITTY?$"
 
 Route121_SafariZoneEntrance_Text_AdoptionEevee:
-	.string "Would you like to adopt EEVEE?$"
+	.string "VOCE QUER ADOTAR EEVEE?$"
 
 Route121_SafariZoneEntrance_Text_AdoptionVulpix:
-	.string "Would you like to adopt VULPIX?$"
+	.string "VOCE QUER ADOTAR VULPIX?$"
 
 Route121_SafariZoneEntrance_Text_AdoptionStorageFull:
-	.string "Your party and PC are full. Make room\n"
-	.string "before choosing your new partner.$"
+	.string "SUA EQUIPE E O PC ESTAO CHEIOS.\n"
+	.string "LIBERE ESPACO ANTES DE ESCOLHER.$"
 
 Route121_SafariZoneEntrance_Text_AdoptionComplete:
-	.string "Congratulations! Your new partner is\n"
-	.string "ready to begin this journey with you.$"
+	.string "PARABENS! SEU NOVO COMPANHEIRO\n"
+	.string "ESTA PRONTO PARA A JORNADA.$"
 
 Route121_SafariZoneEntrance_Text_AdoptionNeedCard:
-	.string "You'll need an ADOPTION CARD from\n"
-	.string "your family before adopting a POKéMON.$"
+	.string "VOCE PRECISA DO CARTAO DE ADOCAO\n"
+	.string "QUE RECEBEU DA SUA FAMILIA.$"
 
 Route121_SafariZoneEntrance_Text_AdoptionAlreadyDone:
-	.string "You've already adopted your first\n"
-	.string "partner. Take good care of them!$"
+	.string "VOCE JA ADOTOU SEU PRIMEIRO\n"
+	.string "COMPANHEIRO. CUIDE BEM DELE!$"
