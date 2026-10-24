@@ -59,13 +59,13 @@ LilycoveCity_House4_EventScript_AdoptionCard::
 LilycoveCity_House4_Text_FirstArrival:
 	.string "A mudanca para Lilycove finalmente\n"
 	.string "terminou.\p"
-	.string "Mamae guarda a última mala e olha\n"
+	.string "Mamae guarda a ultima mala e olha\n"
 	.string "ao redor da casa nova.$"
 
 LilycoveCity_House4_Text_MomWelcome:
-	.string "Mae: Chegamos, {PLAYER}! Esta é\n"
+	.string "Mae: Chegamos, {PLAYER}! Esta e\n"
 	.string "nossa nova casa em Lilycove.\p"
-	.string "Eu nao esqueci que dia é hoje.\n"
+	.string "Eu nao esqueci que dia e hoje.\n"
 	.string "Feliz aniversario, {PLAYER}!\p"
 	.string "Seu presente esta ali. Pode abrir!$"
 
@@ -81,10 +81,10 @@ LilycoveCity_House4_Text_MomAfterArrival:
 
 LilycoveCity_House4_Text_BirthdayPresent:
 	.string "Voce abre o presente de aniversario.\p"
-	.string "Dentro ha cinco Poké Bolas e uma\n"
-	.string "carta: Cartao de Adoção.$"
+	.string "Dentro ha cinco Poke Bolas e uma\n"
+	.string "carta: Cartao de Adocao.$"
 
 LilycoveCity_House4_Text_AdoptionCard:
 	.string "Mamae escolheu esta carta para voce.\p"
 	.string "Leve-a a Zona Safari para adotar\n"
-	.string "seu primeiro Pokémon. Parabéns!$"
+	.string "seu primeiro Pokemon. Parabens!$"
