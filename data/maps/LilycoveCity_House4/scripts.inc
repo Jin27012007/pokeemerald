@@ -18,12 +18,22 @@ LilycoveCity_House4_OnFrame:
 LilycoveCity_House4_EventScript_FirstArrival::
 	lockall
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
+	@ The player appears beside Mom instead of on the table.
+	setobjectxyperm LOCALID_PLAYER, 5, 4
+	setobjectmovementtype LOCALID_PLAYER, MOVEMENT_TYPE_FACE_LEFT
 	msgbox LilycoveCity_House4_Text_FirstArrival, MSGBOX_DEFAULT
 	closemessage
+	@ A short step-in-place gives the arrival a small animated beat.
+	applymovement LOCALID_PLAYER, LilycoveCity_House4_Movement_ArrivalStep
+	waitmovement 0
 	msgbox LilycoveCity_House4_Text_MomWelcome, MSGBOX_DEFAULT
 	closemessage
 	releaseall
 	end
+
+LilycoveCity_House4_Movement_ArrivalStep:
+	walk_in_place_faster_right
+	step_end
 
 LilycoveCity_House4_EventScript_Mom::
 	lock
