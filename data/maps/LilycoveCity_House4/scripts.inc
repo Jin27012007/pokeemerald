@@ -59,7 +59,7 @@ LilycoveCity_House4_Text_MomAfterArrival:
 	.string "memories here in LILYCOVE.$"
 
 LilycoveCity_House4_Text_AdoptionCard:
-	.string "A card was tucked under the table.\\p"
-	.string "It is an ADOPTION CARD for the\\n"
-	.string "SAFARI. You can use it to adopt\\n"
+	.string "A card was tucked under the table.\p"
+	.string "It is an ADOPTION CARD for the\n"
+	.string "SAFARI. You can use it to adopt\n"
 	.string "your first POKéMON there.$"
