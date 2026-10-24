@@ -1,10 +1,43 @@
 LilycoveCity_Harbor_MapScripts::
+	map_script MAP_SCRIPT_ON_FRAME_TABLE, LilycoveCity_Harbor_OnFrame
 	map_script MAP_SCRIPT_ON_TRANSITION, LilycoveCity_Harbor_OnTransition
 	.byte 0
+
+LilycoveCity_Harbor_OnFrame:
+	map_script_2 VAR_LILYCOVE_OPENING_STATE, 0, LilycoveCity_Harbor_EventScript_FirstArrival
+	.2byte 0
 
 LilycoveCity_Harbor_OnTransition:
 	setescapewarp MAP_LILYCOVE_CITY, 12, 33
 	end
+
+LilycoveCity_Harbor_EventScript_FirstArrival::
+	lockall
+	msgbox LilycoveCity_Harbor_Text_Arrival, MSGBOX_DEFAULT
+	closemessage
+	msgbox LilycoveCity_Harbor_Text_MomAtHarbor, MSGBOX_DEFAULT
+	closemessage
+	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
+	warp MAP_LILYCOVE_CITY_HOUSE4, 4, 6
+	waitstate
+	releaseall
+	end
+
+LilycoveCity_Harbor_EventScript_OpeningMom::
+	lock
+	faceplayer
+	msgbox LilycoveCity_Harbor_Text_MomAtHarbor, MSGBOX_DEFAULT
+	release
+	end
+
+LilycoveCity_Harbor_Text_Arrival:
+	.string "The boat has docked at LILYCOVE CITY.\p"
+	.string "The sea breeze carries the sound of\n"
+	.string "the busy harbor.$"
+
+LilycoveCity_Harbor_Text_MomAtHarbor:
+	.string "MOM: We're here, {PLAYER}! Let's get\n"
+	.string "our things and head to our new home.$"
 
 LilycoveCity_Harbor_EventScript_FerryAttendant::
 	lock
