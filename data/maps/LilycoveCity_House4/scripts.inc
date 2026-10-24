@@ -57,35 +57,34 @@ LilycoveCity_House4_EventScript_AdoptionCard::
 	end
 
 LilycoveCity_House4_Text_FirstArrival:
-	.string "The move to LILYCOVE is finally over.\p"
-	.string "MOM sets the last bag down and looks\n"
-	.string "around the new house.$"
+	.string "A MUDANCA PARA LILYCOVE FINALMENTE\n"
+	.string "TERMINOU.\p"
+	.string "MAE GUARDA A ULTIMA MALA E OLHA\n"
+	.string "AO REDOR DA CASA NOVA.$"
 
 LilycoveCity_House4_Text_MomWelcome:
-	.string "MOM: We made it, {PLAYER}! This is\n"
-	.string "our new home in LILYCOVE.\p"
-	.string "And I haven't forgotten what day it\n"
-	.string "is. Happy birthday, {PLAYER}!\p"
-	.string "Your present is waiting over there.\n"
-	.string "Go on, take a look!$"
+	.string "MAE: CHEGAMOS, {PLAYER}! ESTA E\n"
+	.string "NOSSA NOVA CASA EM LILYCOVE.\p"
+	.string "EU NAO ESQUECI QUE DIA E HOJE.\n"
+	.string "FELIZ ANIVERSARIO, {PLAYER}!\p"
+	.string "SEU PRESENTE ESTA ALI. PODE ABRIR!$"
 
 LilycoveCity_House4_Text_MomBirthdayReminder:
-	.string "MOM: Moving day has been hectic, but\n"
-	.string "I still wanted you to have a birthday\n"
-	.string "to remember. Your present is waiting\n"
-	.string "right over there!$"
+	.string "MAE: A MUDANCA FOI CORRIDA, MAS\n"
+	.string "NAO ESQUECI SEU ANIVERSARIO.\n"
+	.string "SEU PRESENTE ESTA ALI!$"
 
 LilycoveCity_House4_Text_MomAfterArrival:
-	.string "MOM: I hope we can make wonderful\n"
-	.string "memories here in LILYCOVE. And I hope\n"
-	.string "you like your birthday present!$"
+	.string "MAE: ESPERO QUE A GENTE CRIE\n"
+	.string "MUITAS LEMBRANCAS EM LILYCOVE.\p"
+	.string "ESPERO QUE GOSTE DO PRESENTE!$"
 
 LilycoveCity_House4_Text_BirthdayPresent:
-	.string "You open your birthday present.\p"
-	.string "Inside are five POKé BALLS and a card\n"
-	.string "that reads: ADOPTION CARD.$"
+	.string "VOCE ABRE O PRESENTE DE ANIVERSARIO.\p"
+	.string "DENTRO HA CINCO POKé BOLAS E UMA\n"
+	.string "CARTA: CARTAO DE ADOTACAO.$"
 
 LilycoveCity_House4_Text_AdoptionCard:
-	.string "MOM chose this card just for you.\p"
-	.string "Take it to the SAFARI to adopt your\n"
-	.string "first POKéMON. Happy birthday!$"
+	.string "MAE ESCOLHEU ESTA CARTA PARA VOCE.\p"
+	.string "LEVE-A A ZONA SAFARI PARA ADOTAR\n"
+	.string "SEU PRIMEIRO POKéMON. PARABENS!$"

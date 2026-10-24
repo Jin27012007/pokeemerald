@@ -1013,9 +1013,9 @@ static const u8 sContestPassDesc[] = _(
     "POKéMON CONTESTS.");
 
 static const u8 sAdoptionCardDesc[] = _(
-    "A card that allows\n"
-    "you to adopt a\n"
-    "POKéMON at the SAFARI.");
+    "A CARTA PERMITE\n"
+    "ADOTAR UM POKéMON\n"
+    "NA ZONA SAFARI.");
 
 static const u8 sWailmerPailDesc[] = _(
     "A tool used for\n"

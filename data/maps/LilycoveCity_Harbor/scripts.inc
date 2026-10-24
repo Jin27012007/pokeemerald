@@ -31,13 +31,13 @@ LilycoveCity_Harbor_EventScript_OpeningMom::
 	end
 
 LilycoveCity_Harbor_Text_Arrival:
-	.string "The boat has docked at LILYCOVE CITY.\p"
-	.string "The sea breeze carries the sound of\n"
-	.string "the busy harbor.$"
+	.string "O BARCO CHEGOU A LILYCOVE CITY.\p"
+	.string "A BRISA DO MAR TRAZ O SOM DO\n"
+	.string "MOVIMENTO NO PORTO.$"
 
 LilycoveCity_Harbor_Text_MomAtHarbor:
-	.string "MOM: We're here, {PLAYER}! Let's get\n"
-	.string "our things and head to our new home.$"
+	.string "MAE: CHEGAMOS, {PLAYER}! VAMOS PEGAR\n"
+	.string "NOSSAS COISAS E IR PARA NOSSA CASA.$"
 
 LilycoveCity_Harbor_EventScript_FerryAttendant::
 	lock
