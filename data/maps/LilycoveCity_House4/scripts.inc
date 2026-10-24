@@ -24,10 +24,6 @@ LilycoveCity_House4_EventScript_Mom:
 	release
 	end
 
-LilycoveCity_House4_Movement_MomTurnToPlayer:
-	walk_in_place_faster_down
-	step_end
-
 LilycoveCity_House4_Text_FirstArrival:
 	.string "The move to LILYCOVE is finally over.\p"
 	.string "MOM sets the last bag down and looks\n"
