@@ -28,6 +28,12 @@ LilycoveCity_House4_EventScript_FirstArrival::
 LilycoveCity_House4_EventScript_Mom::
 	lock
 	faceplayer
+	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 2, LilycoveCity_House4_EventScript_MomAfterBirthday
+	msgbox LilycoveCity_House4_Text_MomBirthdayReminder, MSGBOX_DEFAULT
+	release
+	end
+
+LilycoveCity_House4_EventScript_MomAfterBirthday::
 	msgbox LilycoveCity_House4_Text_MomAfterArrival, MSGBOX_DEFAULT
 	release
 	end
@@ -58,18 +64,28 @@ LilycoveCity_House4_Text_FirstArrival:
 LilycoveCity_House4_Text_MomWelcome:
 	.string "MOM: We made it, {PLAYER}! This is\n"
 	.string "our new home in LILYCOVE.\p"
-	.string "Let's get settled in. Tomorrow will be\n"
-	.string "a big day for you…$"
+	.string "And I haven't forgotten what day it\n"
+	.string "is. Happy birthday, {PLAYER}!\p"
+	.string "Your present is waiting over there.\n"
+	.string "Go on, take a look!$"
+
+LilycoveCity_House4_Text_MomBirthdayReminder:
+	.string "MOM: Moving day has been hectic, but\n"
+	.string "I still wanted you to have a birthday\n"
+	.string "to remember. Your present is waiting\n"
+	.string "right over there!$"
 
 LilycoveCity_House4_Text_MomAfterArrival:
 	.string "MOM: I hope we can make wonderful\n"
-	.string "memories here in LILYCOVE.$"
+	.string "memories here in LILYCOVE. And I hope\n"
+	.string "you like your birthday present!$"
 
 LilycoveCity_House4_Text_BirthdayPresent:
-	.string "A birthday present was left for you.\p"
-	.string "You open it and find some supplies.$"
+	.string "You open your birthday present.\p"
+	.string "Inside are five POKé BALLS and a card\n"
+	.string "that reads: ADOPTION CARD.$"
 
 LilycoveCity_House4_Text_AdoptionCard:
-	.string "There is an ADOPTION CARD inside, too!\p"
-	.string "You can take it to the SAFARI and\n"
-	.string "adopt your first POKéMON there.$"
+	.string "MOM chose this card just for you.\p"
+	.string "Take it to the SAFARI to adopt your\n"
+	.string "first POKéMON. Happy birthday!$"
