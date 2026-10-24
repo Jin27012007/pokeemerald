@@ -432,7 +432,7 @@
     {
       "type": "trigger",
       "x": 12,
-      "y": 26,
+      "y": 27,
       "elevation": 0,
       "var": "VAR_LILYCOVE_OPENING_STATE",
       "var_value": "1",
@@ -441,7 +441,7 @@
     {
       "type": "trigger",
       "x": 12,
-      "y": 20,
+      "y": 21,
       "elevation": 0,
       "var": "VAR_LILYCOVE_OPENING_STATE",
       "var_value": "2",
