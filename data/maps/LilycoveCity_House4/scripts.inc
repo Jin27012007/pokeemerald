@@ -17,7 +17,7 @@ LilycoveCity_House4_EventScript_FirstArrival::
 	releaseall
 	end
 
-LilycoveCity_House4_EventScript_Mom::
+LilycoveCity_House4_EventScript_Mom:
 	lock
 	faceplayer
 	msgbox LilycoveCity_House4_Text_MomAfterArrival, MSGBOX_DEFAULT
