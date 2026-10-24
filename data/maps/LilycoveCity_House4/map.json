@@ -45,14 +45,16 @@
       "dest_warp_id": "11"
     }
   ],
-  "coord_events": [],
-  "bg_events": [
+  "coord_events": [
     {
-      "type": "script",
+      "type": "trigger",
       "x": 4,
       "y": 6,
       "elevation": 0,
+      "var": "VAR_LILYCOVE_OPENING_STATE",
+      "var_value": "0",
       "script": "LilycoveCity_House4_EventScript_FirstArrival"
     }
-  ]
+  ],
+  "bg_events": []
 }
