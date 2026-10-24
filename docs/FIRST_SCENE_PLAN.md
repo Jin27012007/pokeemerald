@@ -1,32 +1,41 @@
 # Primeira cena jogável — Lilycove
 
 ## Objetivo desta etapa
-Substituir progressivamente a abertura original de Pokémon Emerald por uma chegada narrativa a Lilycove, sem ainda implementar concursos, temporada, cultivo ou catálogo de Pokémon.
+Substituir progressivamente a abertura original de Pokémon Emerald por uma chegada narrativa a Lilycove, sem ainda implementar concursos, temporadas, cultivo ou o catálogo de Pokémon.
 
 ## Direção escolhida
-- O prólogo acontece em Lilycove.
-- A cena deve começar com a chegada de barco ao porto.
-- A mãe recebe o protagonista; os dois seguem para a nova casa.
-- A primeira etapa termina quando o jogador chega à casa nova.
-- O presente com o Pokémon inicial será tratado como uma etapa separada depois que o fluxo de chegada estiver estável.
+- O prólogo começa com a chegada de barco ao porto de Lilycove.
+- A mãe recebe o protagonista e os dois seguem para a nova casa.
+- Esta primeira etapa termina na casa nova; o presente de Pokémon inicial fica para a próxima etapa.
+- A implementação deve começar com scripts e mapas existentes, usando recursos temporários quando necessário.
+
+## Descobertas confirmadas no código
+- `CB2_NewGame()` em `src/overworld.c` chama `NewGameInitData()` e define `gFieldCallback = ExecuteTruckSequence`.
+- `NewGameInitData()` em `src/new_game.c` inicializa o save, chama `WarpToTruck()` e executa `EventScript_ResetAllMapFlags`. A inicialização geral do save precisa ser preservada.
+- `WarpToTruck()` manda para `MAP_INSIDE_OF_TRUCK`; `ExecuteTruckSequence()` em `src/field_special_scene.c` anima a cena do caminhão e libera o jogador.
+- `data/maps/InsideOfTruck/scripts.inc` define `VAR_LITTLEROOT_INTRO_STATE`, o respawn e o warp dinâmico de Littleroot por gênero. A introdução antiga depende também dos scripts e objetos das casas de Littleroot.
+- `data/maps/LilycoveCity_Harbor/map.json` é um interior usado pelo sistema de ferry; seus NPCs e scripts existentes não devem ser substituídos indiscriminadamente.
+- Os interiores `LilycoveCity_House1` a `House4` já existem e usam entradas de warp ligadas ao mapa principal, mas House1, House2 e outras contêm habitantes/atividades originais que precisariam ser removidos ou reaproveitados deliberadamente antes de transformar um deles na casa da família.
+- `VAR_LILYCOVE_CITY_STATE` está comentada como “Unused Var”, mas isso por si só não prova que é seguro reutilizá-la. Antes de adotá-la, é necessário localizar todas as referências e conferir o inventário completo de variáveis/flags.
 
 ## Escolha de mapa
-Usar o porto existente de Lilycove como referência visual e de localização, e reservar uma das casas existentes para ser adaptada como a casa do jogador. A escolha final da casa depende de conferir layout, conexões/warps e possibilidade de adaptar o interior sem afetar outras rotas. Não sobrescrever um interior usado por NPC sem antes decidir como o conteúdo original será reaproveitado.
+Não reaproveitar o porto existente como mapa de cutscene separado nem substituir os scripts de ferry. Na implementação, preferir um ponto de chegada de roteiro que possa usar o porto sem destruir os serviços existentes, seguido por uma casa escolhida após validar layout, warps, personagens e coordenadas. O interior da casa ainda não foi definitivamente selecionado.
 
 ## Implementação técnica — ordem obrigatória
-1. Rastrear a entrada de jogo novo: `CB2_NewGame` em `src/overworld.c`, `NewGameInitData()` e `WarpToTruck()` em `src/new_game.c`, além de `ExecuteTruckSequence()` em `src/field_special_scene.c`.
-2. Identificar o estado de intro original, callbacks e flags/vars usados pela abertura, pelo quarto/casa de Littleroot e pelo primeiro save/respawn. Procurar todos os usos antes de reutilizar estados.
-3. Definir um estado de introdução próprio para Lilycove e um ponto de entrada controlado, preservando inicialização geral do save e evitando que as etapas antigas disparem depois.
-4. Implementar apenas o primeiro segmento observável: jogo novo → cena/entrada em Lilycove → diálogo de boas-vindas → transição para a casa.
-5. Compilar no branch `lilycove/development`, revisar o diff e verificar o artefato da build.
-6. Testar no emulador: novo jogo, chegada à cena, diálogo, transição para casa, saída/reentrada e salvamento. Build bem-sucedida não substitui o teste de gameplay.
+1. Encontrar as referências reais de `VAR_LITTLEROOT_INTRO_STATE`, os estados das duas casas, os callbacks do caminhão e o destino/respawn inicial. Fazer busca completa antes de alterar qualquer estado.
+2. Definir um estado de introdução dedicado e confirmar que ele não conflita com variáveis ou flags já utilizadas. Se nenhum estado seguro puder ser confirmado, acrescentar uma definição própria com a contagem/limites de save revisados, em vez de reutilizar às cegas um ID marcado como não utilizado.
+3. Alterar o destino do início do jogo de forma controlada, preservando todos os passos de `NewGameInitData()` que inicializam o save.
+4. Implementar o primeiro segmento: jogo novo → chegada/diálogo em Lilycove → mãe conduz o jogador → warp para casa.
+5. Garantir um respawn válido e testar reentrada, salvamento e retorno após desmaio/blackout antes de avançar para a cena do Pokémon inicial.
+6. Compilar no branch `lilycove/development`, revisar o diff e inspecionar os logs e artefato da build.
+7. Testar no emulador: jogo novo, cena de chegada, diálogo, transição à casa, saída/reentrada e salvamento. Build bem-sucedida não substitui teste de gameplay.
 
 ## Restrições
-- Não apagar o roteiro original do caminhão nem os mapas/recursos originais nesta fase.
-- Não mudar a lógica de Pokémon iniciais/party antes da cena de chegada funcionar.
-- Não implementar novas mecânicas de Contest nesta etapa.
-- Não adicionar sprites novos ainda; reutilizar gráficos existentes como placeholders quando necessário.
-- Não declarar a cena concluída até haver build verificada e teste manual no emulador.
+- Não apagar o roteiro original do caminhão nem os mapas/recursos de Littleroot nesta etapa.
+- Não mudar a lógica de party ou Pokémon inicial antes que a chegada funcione.
+- Não implementar mecânicas de Contest nesta etapa.
+- Não criar sprites novos ainda; usar gráficos já existentes como placeholders se necessário.
+- Não declarar a cena concluída sem build e teste manual.
 
 ## Estado atual
-Planejamento e inspeção apenas. Nenhum arquivo de gameplay foi alterado por esta etapa.
+Apenas investigação e documentação. Nenhum arquivo de gameplay foi alterado ainda.
