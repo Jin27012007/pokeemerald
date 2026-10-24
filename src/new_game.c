@@ -126,8 +126,8 @@ static void ClearFrontierRecord(void)
 
 static void WarpToLilycoveOpening(void)
 {
-    // Begin at the family's temporary home. The first-arrival map script handles the scene.
-    SetWarpDestination(MAP_GROUP(MAP_LILYCOVE_CITY_HOUSE4), MAP_NUM(MAP_LILYCOVE_CITY_HOUSE4), WARP_ID_NONE, 4, 6);
+    // Start at the harbor. Its opening script welcomes the player and takes them home.
+    SetWarpDestination(MAP_GROUP(MAP_LILYCOVE_CITY_HARBOR), MAP_NUM(MAP_LILYCOVE_CITY_HARBOR), WARP_ID_NONE, 7, 12);
     WarpIntoMap();
 }
 
