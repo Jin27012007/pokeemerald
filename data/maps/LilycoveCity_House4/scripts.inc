@@ -3,7 +3,6 @@ LilycoveCity_House4_MapScripts::
 	.byte 0
 
 LilycoveCity_House4_OnTransition:
-	call_if_eq VAR_LILYCOVE_OPENING_STATE, 0, LilycoveCity_House4_EventScript_FirstArrival
 	end
 
 LilycoveCity_House4_EventScript_FirstArrival::
