@@ -63,19 +63,19 @@ LilycoveCity_House4_Text_FirstArrival:
 	.string "ao redor da casa nova.$"
 
 LilycoveCity_House4_Text_MomWelcome:
-	.string "Mãe: Chegamos, {PLAYER}! Esta é\n"
+	.string "Mae: Chegamos, {PLAYER}! Esta é\n"
 	.string "nossa nova casa em Lilycove.\p"
 	.string "Eu nao esqueci que dia é hoje.\n"
 	.string "Feliz aniversario, {PLAYER}!\p"
 	.string "Seu presente esta ali. Pode abrir!$"
 
 LilycoveCity_House4_Text_MomBirthdayReminder:
-	.string "Mãe: A mudanca foi corrida, mas\n"
+	.string "Mae: A mudanca foi corrida, mas\n"
 	.string "nao esqueci seu aniversario.\n"
 	.string "Seu presente esta ali!$"
 
 LilycoveCity_House4_Text_MomAfterArrival:
-	.string "Mãe: Espero que a gente crie\n"
+	.string "Mae: Espero que a gente crie\n"
 	.string "muitas lembrancas em Lilycove.\p"
 	.string "Espero que goste do presente!$"
 
