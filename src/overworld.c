@@ -1539,8 +1539,8 @@ void CB2_NewGame(void)
     PlayTimeCounter_Start();
     ScriptContext_Init();
     UnlockPlayerFieldControls();
-    // The new-game warp already places the player in the Lilycove opening map.
-    // No truck-scene callback is needed.
+    // The new-game warp already places the player in the Lilycove family home.
+    // No truck-scene callback is needed for this opening.
     gFieldCallback = NULL;
     gFieldCallback2 = NULL;
     DoMapLoadLoop(&gMain.state);
