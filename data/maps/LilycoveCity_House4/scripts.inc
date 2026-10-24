@@ -5,14 +5,10 @@ LilycoveCity_House4_MapScripts::
 	.byte 0
 
 LilycoveCity_House4_OnLoad:
-	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 1, LilycoveCity_House4_OnLoadDone
-	@ Set the initial tile before the player is created on the map.
-	setobjectxyperm LOCALID_PLAYER, 5, 4
-LilycoveCity_House4_OnLoadDone:
 	end
 
 LilycoveCity_House4_OnTransition:
-	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 2, LilycoveCity_House4_EventScript_HideAdoptionCard
+	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 5, LilycoveCity_House4_EventScript_HideAdoptionCard
 	end
 
 LilycoveCity_House4_EventScript_HideAdoptionCard:
@@ -20,15 +16,15 @@ LilycoveCity_House4_EventScript_HideAdoptionCard:
 	end
 
 LilycoveCity_House4_OnFrame:
-	map_script_2 VAR_LILYCOVE_OPENING_STATE, 0, LilycoveCity_House4_EventScript_FirstArrival
+	map_script_2 VAR_LILYCOVE_OPENING_STATE, 3, LilycoveCity_House4_EventScript_FirstArrival
 	.2byte 0
 
 LilycoveCity_House4_EventScript_FirstArrival::
 	lockall
-	setvar VAR_LILYCOVE_OPENING_STATE, 1
+	setvar VAR_LILYCOVE_OPENING_STATE, 4
 	msgbox LilycoveCity_House4_Text_FirstArrival, MSGBOX_DEFAULT
 	closemessage
-	@ Walk from the front of the room toward Mom, then turn to face her.
+	@ Player starts at the door warp, walks around the table, then faces Mom.
 	applymovement LOCALID_PLAYER, LilycoveCity_House4_Movement_WalkToMom
 	waitmovement 0
 	msgbox LilycoveCity_House4_Text_MomWelcome, MSGBOX_DEFAULT
@@ -40,8 +36,8 @@ LilycoveCity_House4_Movement_WalkToMom:
 	walk_up
 	walk_up
 	walk_up
-	walk_right
-	walk_in_place_faster_up
+	walk_left
+	walk_in_place_faster_left
 	step_end
 
 LilycoveCity_House4_EventScript_Mom::
@@ -69,7 +65,7 @@ LilycoveCity_House4_EventScript_AdoptionCard::
 	msgbox LilycoveCity_House4_Text_BirthdayPresent, MSGBOX_DEFAULT
 	giveitem ITEM_POKE_BALL, 5
 	giveitem ITEM_ADOPTION_CARD
-	setvar VAR_LILYCOVE_OPENING_STATE, 2
+	setvar VAR_LILYCOVE_OPENING_STATE, 5
 	removeobject LOCALID_LILYCOVE_ADOPTION_CARD
 	msgbox LilycoveCity_House4_Text_AdoptionCard, MSGBOX_DEFAULT
 	release
