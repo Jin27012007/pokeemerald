@@ -129,9 +129,9 @@ Route121_SafariZoneEntrance_EventScript_TrainerTipSign::
 Route121_SafariZoneEntrance_EventScript_AdoptionAttendant::
 	lock
 	faceplayer
+	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 3, Route121_SafariZoneEntrance_EventScript_AdoptionAlreadyDone
 	checkitem ITEM_ADOPTION_CARD
 	goto_if_eq VAR_RESULT, FALSE, Route121_SafariZoneEntrance_EventScript_AdoptionNoCard
-	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 3, Route121_SafariZoneEntrance_EventScript_AdoptionAlreadyDone
 	msgbox Route121_SafariZoneEntrance_Text_AdoptionWelcome, MSGBOX_YESNO
 	goto_if_eq VAR_RESULT, NO, Route121_SafariZoneEntrance_EventScript_AdoptionLeave
 	getpartysize

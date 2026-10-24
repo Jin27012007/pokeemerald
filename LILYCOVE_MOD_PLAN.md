@@ -20,7 +20,8 @@ The adventure starts with the protagonist arriving by boat at Lilycove, welcomed
 - `CB2_NewGame()` calls `NewGameInitData()`, but skips the original truck callback for a new game. `NewGameInitData()` uses `WarpToLilycoveOpening()` to send the player to the harbor while retaining normal save initialization.
 - The harbor's on-frame map script plays the arrival dialogue once, hides the harbor-mother object and warps into `LilycoveCity_House4`.
 - House4 contains a mother NPC and a floor gift object using existing object graphics. The gift grants five Poké Balls plus the key item `ITEM_ADOPTION_CARD`; both inventory checks occur before rewards are granted.
-- The adoption card has an item definition, description and reused existing icon. No custom sprite art has been added. The actual Safari Zone adoption interaction remains future work.
+- The Safari Zone adoption interaction and custom adoption-card icon are implemented and compile successfully; manual emulator testing is still required.
+- The adoption card has an item definition and description plus a custom 24×24 pixel-art icon. The Safari Zone attendant now offers Skitty, Eevee, or Vulpix at level 5, checks for party/PC space, consumes the card after adoption, and prevents repeat adoption. The attendant still uses an existing Camper sprite; no custom character sprite has been added.
 - Existing ferry logic remains in the harbor scripts. Build success is tracked separately from manual emulator/gameplay verification.
 
 ## Milestones
