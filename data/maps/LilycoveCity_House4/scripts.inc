@@ -43,7 +43,7 @@ LilycoveCity_House4_Movement_WalkToMom:
 LilycoveCity_House4_EventScript_Mom::
 	lock
 	faceplayer
-	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 2, LilycoveCity_House4_EventScript_MomAfterBirthday
+	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 5, LilycoveCity_House4_EventScript_MomAfterBirthday
 	msgbox LilycoveCity_House4_Text_MomBirthdayReminder, MSGBOX_DEFAULT
 	release
 	end
