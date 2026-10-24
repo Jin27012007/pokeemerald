@@ -37,6 +37,7 @@ LilycoveCity_House4_Movement_WalkToMom:
 	walk_up
 	walk_up
 	walk_left
+	walk_up
 	walk_in_place_faster_left
 	step_end
 
