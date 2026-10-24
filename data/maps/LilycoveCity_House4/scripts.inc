@@ -1,5 +1,10 @@
 LilycoveCity_House4_MapScripts::
+	map_script MAP_SCRIPT_ON_FRAME_TABLE, LilycoveCity_House4_OnFrame
 	.byte 0
+
+LilycoveCity_House4_OnFrame:
+	map_script_2 VAR_LILYCOVE_OPENING_STATE, 0, LilycoveCity_House4_EventScript_FirstArrival
+	.2byte 0
 
 LilycoveCity_House4_EventScript_FirstArrival::
 	lockall
