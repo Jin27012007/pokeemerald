@@ -46,5 +46,13 @@
     }
   ],
   "coord_events": [],
-  "bg_events": []
+  "bg_events": [
+    {
+      "type": "script",
+      "x": 4,
+      "y": 6,
+      "elevation": 0,
+      "script": "LilycoveCity_House4_EventScript_FirstArrival"
+    }
+  ]
 }
