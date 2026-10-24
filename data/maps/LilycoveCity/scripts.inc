@@ -1,6 +1,7 @@
 LilycoveCity_MapScripts::
 	map_script MAP_SCRIPT_ON_TRANSITION, LilycoveCity_OnTransition
 	map_script MAP_SCRIPT_ON_LOAD, LilycoveCity_OnLoad
+	map_script MAP_SCRIPT_ON_FRAME_TABLE, LilycoveCity_OnFrame
 	.byte 0
 
 LilycoveCity_OnTransition:
@@ -14,6 +15,82 @@ LilycoveCity_OnTransition:
 LilycoveCity_OnLoad:
 	call_if_unset FLAG_TEAM_AQUA_ESCAPED_IN_SUBMARINE, LilycoveCity_EventScript_SetWailmerMetatiles
 	end
+
+LilycoveCity_OnFrame:
+	map_script_2 VAR_LILYCOVE_OPENING_STATE, 0, LilycoveCity_EventScript_MomGuideFromHarbor
+	.2byte 0
+
+@ Mom walks ahead in sections and waits while the player catches up.
+LilycoveCity_EventScript_MomGuideFromHarbor::
+	lockall
+	setvar VAR_LILYCOVE_OPENING_STATE, 1
+	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
+	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
+	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToFirstStop
+	waitmovement 0
+	msgbox LilycoveCity_Text_MomGuideStart, MSGBOX_DEFAULT
+	closemessage
+	releaseall
+	end
+
+LilycoveCity_EventScript_MomGuideSecondStop::
+	lockall
+	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToSecondStop
+	waitmovement 0
+	setvar VAR_LILYCOVE_OPENING_STATE, 2
+	msgbox LilycoveCity_Text_MomGuideWait, MSGBOX_DEFAULT
+	closemessage
+	releaseall
+	end
+
+LilycoveCity_EventScript_MomGuideHouseStop::
+	lockall
+	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToHouse
+	waitmovement 0
+	setvar VAR_LILYCOVE_OPENING_STATE, 3
+	msgbox LilycoveCity_Text_MomGuideHouse, MSGBOX_DEFAULT
+	closemessage
+	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
+	hideobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
+	releaseall
+	end
+
+LilycoveCity_Movement_MomWalkToFirstStop:
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	step_end
+
+LilycoveCity_Movement_MomWalkToSecondStop:
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	step_end
+
+LilycoveCity_Movement_MomWalkToHouse:
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	walk_up
+	step_end
+
+LilycoveCity_Text_MomGuideStart:
+	.string "MAE: VAMOS POR AQUI, {PLAYER}!\p"
+	.string "ME ACOMPANHE ATE NOSSA CASA.$"
+
+LilycoveCity_Text_MomGuideWait:
+	.string "MAE: VOU ESPERAR VOCE MAIS ADIANTE.\n"
+	.string "VENHA QUANDO ESTIVER PRONTO!$"
+
+LilycoveCity_Text_MomGuideHouse:
+	.string "MAE: CHEGAMOS. ENTRE, EU VOU NA FRENTE!$"
 
 LilycoveCity_EventScript_SetWailmerMetatiles::
 	setmetatile 76, 12, METATILE_Lilycove_Wailmer0, TRUE
