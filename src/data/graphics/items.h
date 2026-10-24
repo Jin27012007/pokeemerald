@@ -561,6 +561,8 @@ const u32 gItemIconPalette_SSTicket[] = INCGFX_U32("graphics/items/icon_palettes
 
 const u32 gItemIcon_ContestPass[] = INCGFX_U32("graphics/items/icons/contest_pass.png", ".4bpp.lz");
 const u32 gItemIconPalette_ContestPass[] = INCGFX_U32("graphics/items/icon_palettes/contest_pass.pal", ".gbapal.lz");
+const u32 gItemIcon_AdoptionCard[] = INCGFX_U32("graphics/items/icons/adoption_card.png", ".4bpp.lz");
+const u32 gItemIconPalette_AdoptionCard[] = INCGFX_U32("graphics/items/icon_palettes/adoption_card.pal", ".gbapal.lz");
 
 const u32 gItemIcon_WailmerPail[] = INCGFX_U32("graphics/items/icons/wailmer_pail.png", ".4bpp.lz");
 const u32 gItemIconPalette_WailmerPail[] = INCGFX_U32("graphics/items/icon_palettes/wailmer_pail.pal", ".gbapal.lz");
