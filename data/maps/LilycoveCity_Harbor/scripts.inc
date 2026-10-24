@@ -15,10 +15,12 @@ LilycoveCity_Harbor_EventScript_FirstArrival::
 	lockall
 	msgbox LilycoveCity_Harbor_Text_Arrival, MSGBOX_DEFAULT
 	closemessage
+	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	msgbox LilycoveCity_Harbor_Text_MomAtHarbor, MSGBOX_DEFAULT
 	closemessage
+	@ Leave the harbor into the city; the walk to the house happens outdoors.
 	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
-	warp MAP_LILYCOVE_CITY_HOUSE4, 4, 6
+	warp MAP_LILYCOVE_CITY, 12, 33
 	waitstate
 	releaseall
 	end
