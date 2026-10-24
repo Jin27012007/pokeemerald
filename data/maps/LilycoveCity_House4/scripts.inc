@@ -21,13 +21,7 @@ LilycoveCity_House4_EventScript_FirstArrival::
 LilycoveCity_House4_EventScript_Mom::
 	lock
 	faceplayer
-	goto_if_eq VAR_LILYCOVE_OPENING_STATE, 0, LilycoveCity_House4_EventScript_MomFirstArrival
 	msgbox LilycoveCity_House4_Text_MomAfterArrival, MSGBOX_DEFAULT
-	release
-	end
-
-LilycoveCity_House4_EventScript_MomFirstArrival::
-	msgbox LilycoveCity_House4_Text_MomWelcome, MSGBOX_DEFAULT
 	release
 	end
 
