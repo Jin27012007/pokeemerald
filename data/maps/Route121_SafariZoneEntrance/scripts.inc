@@ -153,110 +153,17 @@ Route121_SafariZoneEntrance_EventScript_AdoptionChoose::
 	end
 
 Route121_SafariZoneEntrance_EventScript_AdoptSkitty::
-	givepokemon SPECIES_SKITTY, 5, ITEM_NONE
+	givemon SPECIES_SKITTY, 5, ITEM_NONE
 	goto Route121_SafariZoneEntrance_EventScript_AdoptionComplete
 	end
 
 Route121_SafariZoneEntrance_EventScript_AdoptEevee::
-	givepokemon SPECIES_EEVEE, 5, ITEM_NONE
+	givemon SPECIES_EEVEE, 5, ITEM_NONE
 	goto Route121_SafariZoneEntrance_EventScript_AdoptionComplete
 	end
 
 Route121_SafariZoneEntrance_EventScript_AdoptVulpix::
-	givepokemon SPECIES_VULPIX, 5, ITEM_NONE
-	goto Route121_SafariZoneEntrance_EventScript_AdoptionComplete
-	end
-
-Route121_SafariZoneEntrance_EventScript_AdoptionComplete::
-	removeitem ITEM_ADOPTION_CARD
-	setvar VAR_LILYCOVE_OPENING_STATE, 3
-	playfanfare MUS_OBTAIN_ITEM
-	msgbox Route121_SafariZoneEntrance_Text_AdoptionComplete, MSGBOX_DEFAULT
-	release
-	end
-
-Route121_SafariZoneEntrance_EventScript_AdoptionNoCard::
-	msgbox Route121_SafariZoneEntrance_Text_AdoptionNeedCard, MSGBOX_DEFAULT
-	release
-	end
-
-Route121_SafariZoneEntrance_EventScript_AdoptionAlreadyDone::
-	msgbox Route121_SafariZoneEntrance_Text_AdoptionAlreadyDone, MSGBOX_DEFAULT
-	release
-	end
-
-Route121_SafariZoneEntrance_EventScript_AdoptionLeave::
-	release
-	end
-
-Route121_SafariZoneEntrance_Text_AdoptionWelcome:
-	.string "Welcome to the SAFARI adoption desk!\p"
-	.string "Show me your ADOPTION CARD and you\n"
-	.string "can choose a partner to take home.$"
-
-Route121_SafariZoneEntrance_Text_AdoptionSkitty:
-	.string "Would you like to adopt SKITTY?$"
-
-Route121_SafariZoneEntrance_Text_AdoptionEevee:
-	.string "Would you like to adopt EEVEE?$"
-
-Route121_SafariZoneEntrance_Text_AdoptionVulpix:
-	.string "Would you like to adopt VULPIX?$"
-
-Route121_SafariZoneEntrance_Text_AdoptionStorageFull:
-	.string "Your party and PC are full. Make room\n"
-	.string "before choosing your new partner.$"
-
-Route121_SafariZoneEntrance_Text_AdoptionComplete:
-	.string "Congratulations! Your new partner is\n"
-	.string "ready to begin this journey with you.$"
-
-Route121_SafariZoneEntrance_Text_AdoptionNeedCard:
-	.string "You'll need an ADOPTION CARD from\n"
-	.string "your family before adopting a POKéMON.$"
-
-Route121_SafariZoneEntrance_Text_AdoptionAlreadyDone:
-	.string "You've already adopted your first\n"
-	.string "partner. Take good care of them!$"
-
-Route121_SafariZoneEntrance_EventScript_AdoptionAttendant::
-	lock
-	faceplayer
-	checkitem ITEM_ADOPTION_CARD
-	goto_if_eq VAR_RESULT, FALSE, Route121_SafariZoneEntrance_EventScript_AdoptionNoCard
-	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 3, Route121_SafariZoneEntrance_EventScript_AdoptionAlreadyDone
-	msgbox Route121_SafariZoneEntrance_Text_AdoptionWelcome, MSGBOX_YESNO
-	goto_if_eq VAR_RESULT, NO, Route121_SafariZoneEntrance_EventScript_AdoptionLeave
-	getpartysize
-	goto_if_ne VAR_RESULT, PARTY_SIZE, Route121_SafariZoneEntrance_EventScript_AdoptionChoose
-	specialvar VAR_RESULT, ScriptCheckFreePokemonStorageSpace
-	goto_if_eq VAR_RESULT, 1, Route121_SafariZoneEntrance_EventScript_AdoptionChoose
-	msgbox Route121_SafariZoneEntrance_Text_AdoptionStorageFull, MSGBOX_DEFAULT
-	goto Route121_SafariZoneEntrance_EventScript_AdoptionLeave
-	end
-
-Route121_SafariZoneEntrance_EventScript_AdoptionChoose::
-	msgbox Route121_SafariZoneEntrance_Text_AdoptionSkitty, MSGBOX_YESNO
-	goto_if_eq VAR_RESULT, YES, Route121_SafariZoneEntrance_EventScript_AdoptSkitty
-	msgbox Route121_SafariZoneEntrance_Text_AdoptionEevee, MSGBOX_YESNO
-	goto_if_eq VAR_RESULT, YES, Route121_SafariZoneEntrance_EventScript_AdoptEevee
-	msgbox Route121_SafariZoneEntrance_Text_AdoptionVulpix, MSGBOX_YESNO
-	goto_if_eq VAR_RESULT, YES, Route121_SafariZoneEntrance_EventScript_AdoptVulpix
-	goto Route121_SafariZoneEntrance_EventScript_AdoptionLeave
-	end
-
-Route121_SafariZoneEntrance_EventScript_AdoptSkitty::
-	givepokemon SPECIES_SKITTY, 5, ITEM_NONE
-	goto Route121_SafariZoneEntrance_EventScript_AdoptionComplete
-	end
-
-Route121_SafariZoneEntrance_EventScript_AdoptEevee::
-	givepokemon SPECIES_EEVEE, 5, ITEM_NONE
-	goto Route121_SafariZoneEntrance_EventScript_AdoptionComplete
-	end
-
-Route121_SafariZoneEntrance_EventScript_AdoptVulpix::
-	givepokemon SPECIES_VULPIX, 5, ITEM_NONE
+	givemon SPECIES_VULPIX, 5, ITEM_NONE
 	goto Route121_SafariZoneEntrance_EventScript_AdoptionComplete
 	end
 
