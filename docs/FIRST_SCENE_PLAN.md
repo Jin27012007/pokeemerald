@@ -1,41 +1,26 @@
 # Primeira cena jogável — Lilycove
 
-## Objetivo desta etapa
-Substituir progressivamente a abertura original de Pokémon Emerald por uma chegada narrativa a Lilycove, sem ainda implementar concursos, temporadas, cultivo ou o catálogo de Pokémon.
+## Objetivo
+Substituir a abertura inicial de Hoenn por uma chegada a Lilycove, a mudança para a casa nova e a preparação para adotar o primeiro Pokémon. Esta etapa não implementa ainda o sistema completo de adoção, as temporadas ou a progressão de Concursos.
 
-## Direção escolhida
-- O prólogo começa com a chegada de barco ao porto de Lilycove.
-- A mãe recebe o protagonista e os dois seguem para a nova casa.
-- Esta primeira etapa termina na casa nova; o presente de Pokémon inicial fica para a próxima etapa.
-- A implementação deve começar com scripts e mapas existentes, usando recursos temporários quando necessário.
+## Implementação atualmente presente na branch
+- `CB2_NewGame()` mantém a inicialização normal do save, mas não chama a animação do caminhão.
+- `NewGameInitData()` chama `WarpToLilycoveOpening()`, que zera `VAR_LILYCOVE_OPENING_STATE` e inicia no interior do porto de Lilycove.
+- O porto usa uma tabela `MAP_SCRIPT_ON_FRAME_TABLE` para disparar o diálogo da chegada apenas quando o estado é zero. A cena então esconde a mãe do porto e faz o warp para `LilycoveCity_House4`.
+- House4 é a casa da família nesta versão. O script de primeira entrada apresenta a mudança, e a mãe usa o gráfico existente `OBJ_EVENT_GFX_MOM`.
+- O presente está representado por um objeto de chão `OBJ_EVENT_GFX_ITEM_BALL`. Ao abri-lo, o jogador recebe cinco Poké Bolas e o item-chave `ITEM_ADOPTION_CARD`.
+- `ITEM_ADOPTION_CARD` já tem definição, descrição e ícone reutilizado de um recurso existente (ícone do passe de Concurso). Não foi criado um sprite artístico novo para o cartão.
+- O script do presente agora verifica espaço na bolsa para os dois itens antes de conceder qualquer recompensa; isso evita receber Poké Bolas repetidamente caso a bolsa esteja cheia e o cartão não caiba.
+- O porto continua com seus eventos de ferry existentes; o novo diálogo foi adicionado sem substituir os scripts de atendimento do ferry.
+- `VAR_LILYCOVE_OPENING_STATE` acompanha três etapas: 0 = primeira chegada, 1 = chegada à casa vista, 2 = presente/cartão recolhido.
 
-## Descobertas confirmadas no código
-- `CB2_NewGame()` em `src/overworld.c` chama `NewGameInitData()` e define `gFieldCallback = ExecuteTruckSequence`.
-- `NewGameInitData()` em `src/new_game.c` inicializa o save, chama `WarpToTruck()` e executa `EventScript_ResetAllMapFlags`. A inicialização geral do save precisa ser preservada.
-- `WarpToTruck()` manda para `MAP_INSIDE_OF_TRUCK`; `ExecuteTruckSequence()` em `src/field_special_scene.c` anima a cena do caminhão e libera o jogador.
-- `data/maps/InsideOfTruck/scripts.inc` define `VAR_LITTLEROOT_INTRO_STATE`, o respawn e o warp dinâmico de Littleroot por gênero. A introdução antiga depende também dos scripts e objetos das casas de Littleroot.
-- `data/maps/LilycoveCity_Harbor/map.json` é um interior usado pelo sistema de ferry; seus NPCs e scripts existentes não devem ser substituídos indiscriminadamente.
-- Os interiores `LilycoveCity_House1` a `House4` já existem e usam entradas de warp ligadas ao mapa principal, mas House1, House2 e outras contêm habitantes/atividades originais que precisariam ser removidos ou reaproveitados deliberadamente antes de transformar um deles na casa da família.
-- `VAR_LILYCOVE_CITY_STATE` está comentada como “Unused Var”, mas isso por si só não prova que é seguro reutilizá-la. Antes de adotá-la, é necessário localizar todas as referências e conferir o inventário completo de variáveis/flags.
+## O que ainda não está completo
+- O cartão ainda é um item-chave preparatório. A interação de adoção no Safari Zone, incluindo a lista de Pokémon disponível e a entrega do Pokémon escolhido, ainda precisa ser implementada.
+- A mãe e o presente usam gráficos já existentes do jogo. Não há novos sprites personalizados nesta etapa.
+- O fluxo de entrada, os warps e a interação do presente ainda precisam de teste manual no emulador; uma compilação bem-sucedida não comprova que a cena está correta durante o jogo.
 
-## Escolha de mapa
-Não reaproveitar o porto existente como mapa de cutscene separado nem substituir os scripts de ferry. Na implementação, preferir um ponto de chegada de roteiro que possa usar o porto sem destruir os serviços existentes, seguido por uma casa escolhida após validar layout, warps, personagens e coordenadas. O interior da casa ainda não foi definitivamente selecionado.
+## Verificação técnica antes de novas alterações
+Preservar `NewGameInitData()` e seus passos de inicialização; não restaurar o callback do caminhão no início novo. Manter as rotinas de ferry de Lilycove Harbor. Ao ampliar o sistema, testar: jogo novo, diálogo do porto, chegada em House4, reentrada na casa, presente com espaço livre e bolsa cheia, salvamento e retorno após desmaio.
 
-## Implementação técnica — ordem obrigatória
-1. Encontrar as referências reais de `VAR_LITTLEROOT_INTRO_STATE`, os estados das duas casas, os callbacks do caminhão e o destino/respawn inicial. Fazer busca completa antes de alterar qualquer estado.
-2. Definir um estado de introdução dedicado e confirmar que ele não conflita com variáveis ou flags já utilizadas. Se nenhum estado seguro puder ser confirmado, acrescentar uma definição própria com a contagem/limites de save revisados, em vez de reutilizar às cegas um ID marcado como não utilizado.
-3. Alterar o destino do início do jogo de forma controlada, preservando todos os passos de `NewGameInitData()` que inicializam o save.
-4. Implementar o primeiro segmento: jogo novo → chegada/diálogo em Lilycove → mãe conduz o jogador → warp para casa.
-5. Garantir um respawn válido e testar reentrada, salvamento e retorno após desmaio/blackout antes de avançar para a cena do Pokémon inicial.
-6. Compilar no branch `lilycove/development`, revisar o diff e inspecionar os logs e artefato da build.
-7. Testar no emulador: jogo novo, cena de chegada, diálogo, transição à casa, saída/reentrada e salvamento. Build bem-sucedida não substitui teste de gameplay.
-
-## Restrições
-- Não apagar o roteiro original do caminhão nem os mapas/recursos de Littleroot nesta etapa.
-- Não mudar a lógica de party ou Pokémon inicial antes que a chegada funcione.
-- Não implementar mecânicas de Contest nesta etapa.
-- Não criar sprites novos ainda; usar gráficos já existentes como placeholders se necessário.
-- Não declarar a cena concluída sem build e teste manual.
-
-## Estado atual
-Apenas investigação e documentação. Nenhum arquivo de gameplay foi alterado ainda.
+## Próxima etapa recomendada
+Implementar a interação real de adoção usando `ITEM_ADOPTION_CARD`, com uma seleção pequena e curada de espécies oficiais, e somente então produzir sprites personalizados para personagens ou objetos que realmente precisem deles.
