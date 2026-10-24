@@ -126,8 +126,8 @@ static void ClearFrontierRecord(void)
 
 static void WarpToLilycoveOpening(void)
 {
-    // Start the new-game flow in Lilycove without invoking the original truck map.
-    SetWarpDestination(MAP_GROUP(MAP_LILYCOVE_CITY), MAP_NUM(MAP_LILYCOVE_CITY), WARP_ID_NONE, 12, 33);
+    // Begin directly at the entrance of the family's temporary home in Lilycove.
+    SetWarpDestination(MAP_GROUP(MAP_LILYCOVE_CITY_HOUSE4), MAP_NUM(MAP_LILYCOVE_CITY_HOUSE4), WARP_ID_NONE, 4, 6);
     WarpIntoMap();
 }
 
