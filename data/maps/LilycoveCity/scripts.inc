@@ -47,8 +47,7 @@ LilycoveCity_EventScript_MomGuideHouseStop::
 	lockall
 	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToHouse
 	waitmovement 0
-	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomEnterHouse
-	waitmovement 0
+	@ Mom reaches the doorway and waits there while the player follows through the real warp.
 	setvar VAR_LILYCOVE_OPENING_STATE, 3
 	msgbox LilycoveCity_Text_MomGuideHouse, MSGBOX_DEFAULT
 	closemessage
@@ -80,10 +79,6 @@ LilycoveCity_Movement_MomWalkToHouse:
 	walk_up
 	walk_up
 	walk_up
-	walk_up
-	step_end
-
-LilycoveCity_Movement_MomEnterHouse:
 	walk_up
 	step_end
 
