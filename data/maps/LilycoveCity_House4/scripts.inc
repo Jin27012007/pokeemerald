@@ -35,6 +35,9 @@ LilycoveCity_House4_EventScript_Mom::
 LilycoveCity_House4_EventScript_AdoptionCard::
 	lock
 	faceplayer
+	msgbox LilycoveCity_House4_Text_BirthdayPresent, MSGBOX_DEFAULT
+	giveitem ITEM_POKE_BALL, 5
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	giveitem ITEM_ADOPTION_CARD
 	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	setvar VAR_LILYCOVE_OPENING_STATE, 2
@@ -58,8 +61,11 @@ LilycoveCity_House4_Text_MomAfterArrival:
 	.string "MOM: I hope we can make wonderful\n"
 	.string "memories here in LILYCOVE.$"
 
+LilycoveCity_House4_Text_BirthdayPresent:
+	.string "A birthday present was left for you.\p"
+	.string "You open it and find some supplies.$"
+
 LilycoveCity_House4_Text_AdoptionCard:
-	.string "A card was tucked under the table.\p"
-	.string "It is an ADOPTION CARD for the\n"
-	.string "SAFARI. You can use it to adopt\n"
-	.string "your first POKéMON there.$"
+	.string "There is an ADOPTION CARD inside, too!\p"
+	.string "You can take it to the SAFARI and\n"
+	.string "adopt your first POKéMON there.$"
