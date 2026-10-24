@@ -1,7 +1,15 @@
 LilycoveCity_House4_MapScripts::
 	map_script MAP_SCRIPT_ON_FRAME_TABLE, LilycoveCity_House4_OnFrame
+	map_script MAP_SCRIPT_ON_LOAD, LilycoveCity_House4_OnLoad
 	map_script MAP_SCRIPT_ON_TRANSITION, LilycoveCity_House4_OnTransition
 	.byte 0
+
+LilycoveCity_House4_OnLoad:
+	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 1, LilycoveCity_House4_OnLoadDone
+	@ Set the initial tile before the player is created on the map.
+	setobjectxyperm LOCALID_PLAYER, 5, 4
+LilycoveCity_House4_OnLoadDone:
+	end
 
 LilycoveCity_House4_OnTransition:
 	goto_if_ge VAR_LILYCOVE_OPENING_STATE, 2, LilycoveCity_House4_EventScript_HideAdoptionCard
@@ -18,21 +26,22 @@ LilycoveCity_House4_OnFrame:
 LilycoveCity_House4_EventScript_FirstArrival::
 	lockall
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
-	@ The player appears beside Mom instead of on the table.
-	setobjectxyperm LOCALID_PLAYER, 5, 4
-	setobjectmovementtype LOCALID_PLAYER, MOVEMENT_TYPE_FACE_LEFT
 	msgbox LilycoveCity_House4_Text_FirstArrival, MSGBOX_DEFAULT
 	closemessage
-	@ A short step-in-place gives the arrival a small animated beat.
-	applymovement LOCALID_PLAYER, LilycoveCity_House4_Movement_ArrivalStep
+	@ Walk from the front of the room toward Mom, then turn to face her.
+	applymovement LOCALID_PLAYER, LilycoveCity_House4_Movement_WalkToMom
 	waitmovement 0
 	msgbox LilycoveCity_House4_Text_MomWelcome, MSGBOX_DEFAULT
 	closemessage
 	releaseall
 	end
 
-LilycoveCity_House4_Movement_ArrivalStep:
-	walk_in_place_faster_right
+LilycoveCity_House4_Movement_WalkToMom:
+	walk_up
+	walk_up
+	walk_up
+	walk_right
+	walk_in_place_faster_up
 	step_end
 
 LilycoveCity_House4_EventScript_Mom::
