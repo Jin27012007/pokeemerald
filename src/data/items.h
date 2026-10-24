@@ -3246,7 +3246,7 @@ const struct Item gItems[] =
 
     [ITEM_ADOPTION_CARD] =
     {
-        .name = _("ADOPTION CARD"),
+        .name = _("CARTAO ADOC."),
         .itemId = ITEM_ADOPTION_CARD,
         .price = 0,
         .description = sAdoptionCardDesc,
