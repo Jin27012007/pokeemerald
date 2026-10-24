@@ -283,8 +283,8 @@ Route121_SafariZoneEntrance_EventScript_AdoptionLeave::
 	end
 
 Route121_SafariZoneEntrance_Text_AdoptionWelcome:
-	.string "Welcome to the SAFARI adoption desk!\\p"
-	.string "Show me your ADOPTION CARD and you\\n"
+	.string "Welcome to the SAFARI adoption desk!\p"
+	.string "Show me your ADOPTION CARD and you\n"
 	.string "can choose a partner to take home.$"
 
 Route121_SafariZoneEntrance_Text_AdoptionSkitty:
@@ -297,17 +297,17 @@ Route121_SafariZoneEntrance_Text_AdoptionVulpix:
 	.string "Would you like to adopt VULPIX?$"
 
 Route121_SafariZoneEntrance_Text_AdoptionStorageFull:
-	.string "Your party and PC are full. Make room\\n"
+	.string "Your party and PC are full. Make room\n"
 	.string "before choosing your new partner.$"
 
 Route121_SafariZoneEntrance_Text_AdoptionComplete:
-	.string "Congratulations! Your new partner is\\n"
+	.string "Congratulations! Your new partner is\n"
 	.string "ready to begin this journey with you.$"
 
 Route121_SafariZoneEntrance_Text_AdoptionNeedCard:
-	.string "You'll need an ADOPTION CARD from\\n"
+	.string "You'll need an ADOPTION CARD from\n"
 	.string "your family before adopting a POKéMON.$"
 
 Route121_SafariZoneEntrance_Text_AdoptionAlreadyDone:
-	.string "You've already adopted your first\\n"
+	.string "You've already adopted your first\n"
 	.string "partner. Take good care of them!$"
