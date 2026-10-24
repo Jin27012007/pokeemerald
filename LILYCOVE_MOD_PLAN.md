@@ -7,20 +7,21 @@ This fork is the working base for a Pokémon Emerald modification focused on Lil
 - Stable baseline/build configuration is on `master`; active development and investigation documentation belong on `lilycove/development`.
 - Codespaces setup: `.devcontainer/devcontainer.json`.
 - Local build helper: `bash scripts/build-modern.sh`.
-- GitHub Actions workflow: `.github/workflows/build.yml`; a successful run uploads `pokeemerald_modern.gba` as artifact `pokeemerald-modern-rom` for seven days.
+- GitHub Actions workflow: `.github/workflows/build.yml`; a successful run uploads `pokeemerald_modern.gba` as artifact `pokeemerald-modern-rom` for 90 days.
 - Baseline build confirmed on 2026-10-23: workflow run [40037449537](https://github.com/Jin27012007/pokeemerald/actions/runs/40037449537), manually dispatched on `master` at commit `2110bd8c0c1b8b326b6f88ff9e3bd5e206c2c410`, concluded `success`. Artifact generation was verified; emulator/gameplay testing is still not confirmed.
 - Current design proposal and phased technical plan: [`docs/PROJECT_PROPOSAL.md`](docs/PROJECT_PROPOSAL.md).
 - First-scene investigation and exact scope: [`docs/FIRST_SCENE_PLAN.md`](docs/FIRST_SCENE_PLAN.md).
-- The latest development work is investigation/documentation only. No gameplay code or ROM mechanics have been changed yet.
+- The opening flow now starts a new game at the Lilycove harbor and moves the player into House4; the first arrival dialogue and birthday gift/adoption card are scripted. The Safari Zone adoption choice and custom art assets are not implemented yet.
 
 ## Project direction confirmed by the user
 The adventure starts with the protagonist arriving by boat at Lilycove, welcomed by their mother; they then go to their new home after moving from the father's home in another region. Pokémon Contests form the main progression and the project is planned in seasons, with new coordinator rivals arriving over time. Lilycove will gain more interactive homes, NPC routines, planting, multiple Pokéblock minigames, and a customizable player home with furniture, dolls, trophies, and other decorations. The game should remain contained within Lilycove. This is a long-term vision; development must begin with a small playable slice and grow incrementally.
 
 ## First-scene status
-- Confirmed technical entry path: `CB2_NewGame()` → `NewGameInitData()` → `WarpToTruck()`; `CB2_NewGame()` also sets `ExecuteTruckSequence` as the field callback.
-- The truck scene's map scripts set the old Littleroot intro state, respawn and dynamic warp. It is unsafe to change only the map ID without replacing the linked old intro state logic.
-- Lilycove harbor has existing ferry behavior and NPC scripts; preserve those while designing the opening.
-- Next code step is to trace references to the intro state and confirm a dedicated persistent state/flag, then implement only the first opening segment. Still no code changes or gameplay verification at this point.
+- `CB2_NewGame()` calls `NewGameInitData()`, but skips the original truck callback for a new game. `NewGameInitData()` uses `WarpToLilycoveOpening()` to send the player to the harbor while retaining normal save initialization.
+- The harbor's on-frame map script plays the arrival dialogue once, hides the harbor-mother object and warps into `LilycoveCity_House4`.
+- House4 contains a mother NPC and a floor gift object using existing object graphics. The gift grants five Poké Balls plus the key item `ITEM_ADOPTION_CARD`; both inventory checks occur before rewards are granted.
+- The adoption card has an item definition, description and reused existing icon. No custom sprite art has been added. The actual Safari Zone adoption interaction remains future work.
+- Existing ferry logic remains in the harbor scripts. Build success is tracked separately from manual emulator/gameplay verification.
 
 ## Milestones
 1. Successful baseline build and artifact generation are confirmed on `master`. A build on experimental code must be run separately.
