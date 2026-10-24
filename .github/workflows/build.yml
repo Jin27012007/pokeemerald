@@ -37,4 +37,4 @@ jobs:
           name: pokeemerald-modern-rom
           path: pokeemerald_modern.gba
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 90
