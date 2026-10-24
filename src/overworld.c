@@ -1539,7 +1539,8 @@ void CB2_NewGame(void)
     PlayTimeCounter_Start();
     ScriptContext_Init();
     UnlockPlayerFieldControls();
-    // Lilycove opening: the original truck sequence is bypassed for new games.
+    // The new-game warp already places the player in the Lilycove opening map.
+    // No truck-scene callback is needed.
     gFieldCallback = NULL;
     gFieldCallback2 = NULL;
     DoMapLoadLoop(&gMain.state);
