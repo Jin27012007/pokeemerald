@@ -1,17 +1,11 @@
 LilycoveCity_House4_MapScripts::
-	map_script MAP_SCRIPT_ON_TRANSITION, LilycoveCity_House4_OnTransition
 	.byte 0
-
-LilycoveCity_House4_OnTransition:
-	end
 
 LilycoveCity_House4_EventScript_FirstArrival::
 	lockall
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
 	msgbox LilycoveCity_House4_Text_FirstArrival, MSGBOX_DEFAULT
 	closemessage
-	applymovement LOCALID_LILYCOVE_OPENING_MOM, LilycoveCity_House4_Movement_MomTurnToPlayer
-	waitmovement 0
 	msgbox LilycoveCity_House4_Text_MomWelcome, MSGBOX_DEFAULT
 	closemessage
 	releaseall
