@@ -33,11 +33,12 @@ LilycoveCity_House4_EventScript_FirstArrival::
 	end
 
 LilycoveCity_House4_Movement_WalkToMom:
+	@ From the entrance at (8,8), keep to the clear right aisle beside the table.
+	walk_up
 	walk_up
 	walk_up
 	walk_up
 	walk_left
-	walk_up
 	walk_in_place_faster_left
 	step_end
 
