@@ -35,11 +35,15 @@ LilycoveCity_House4_EventScript_Mom::
 LilycoveCity_House4_EventScript_AdoptionCard::
 	lock
 	faceplayer
+	@ Check both rewards before giving either one, so a full bag cannot
+	@ let the player repeatedly collect only the POKé BALLS.
+	checkitemspace ITEM_POKE_BALL, 5
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
+	checkitemspace ITEM_ADOPTION_CARD, 1
+	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	msgbox LilycoveCity_House4_Text_BirthdayPresent, MSGBOX_DEFAULT
 	giveitem ITEM_POKE_BALL, 5
-	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	giveitem ITEM_ADOPTION_CARD
-	goto_if_eq VAR_RESULT, FALSE, Common_EventScript_ShowBagIsFull
 	setvar VAR_LILYCOVE_OPENING_STATE, 2
 	removeobject LOCALID_LILYCOVE_ADOPTION_CARD
 	msgbox LilycoveCity_House4_Text_AdoptionCard, MSGBOX_DEFAULT
