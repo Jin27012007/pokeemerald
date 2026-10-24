@@ -3244,13 +3244,14 @@ const struct Item gItems[] =
         .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
     },
 
-    [ITEM_10B] =
+    [ITEM_ADOPTION_CARD] =
     {
-        .name = _("????????"),
-        .itemId = ITEM_NONE,
+        .name = _("ADOPTION CARD"),
+        .itemId = ITEM_ADOPTION_CARD,
         .price = 0,
-        .description = sDummyDesc,
-        .pocket = POCKET_ITEMS,
+        .description = sAdoptionCardDesc,
+        .importance = 1,
+        .pocket = POCKET_KEY_ITEMS,
         .type = ITEM_USE_BAG_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
     },
