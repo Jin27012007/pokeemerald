@@ -3740,6 +3740,8 @@ extern const u32 gItemIcon_SSTicket[];
 extern const u32 gItemIconPalette_SSTicket[];
 extern const u32 gItemIcon_ContestPass[];
 extern const u32 gItemIconPalette_ContestPass[];
+extern const u32 gItemIcon_AdoptionCard[];
+extern const u32 gItemIconPalette_AdoptionCard[];
 extern const u32 gItemIcon_WailmerPail[];
 extern const u32 gItemIconPalette_WailmerPail[];
 extern const u32 gItemIcon_DevonGoods[];
