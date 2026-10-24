@@ -17,7 +17,7 @@
     {
       "local_id": "LOCALID_LILYCOVE_OPENING_MOM",
       "graphics_id": "OBJ_EVENT_GFX_MOM",
-      "x": 4,
+      "x": 6,
       "y": 4,
       "elevation": 3,
       "movement_type": "MOVEMENT_TYPE_FACE_DOWN",
@@ -31,7 +31,7 @@
     {
       "local_id": "LOCALID_LILYCOVE_ADOPTION_CARD",
       "graphics_id": "OBJ_EVENT_GFX_ITEM_BALL",
-      "x": 5,
+      "x": 6,
       "y": 6,
       "elevation": 3,
       "movement_type": "MOVEMENT_TYPE_NONE",
@@ -45,14 +45,14 @@
   ],
   "warp_events": [
     {
-      "x": 3,
+      "x": 8,
       "y": 8,
       "elevation": 0,
       "dest_map": "MAP_LILYCOVE_CITY",
       "dest_warp_id": "11"
     },
     {
-      "x": 4,
+      "x": 9,
       "y": 8,
       "elevation": 0,
       "dest_map": "MAP_LILYCOVE_CITY",
