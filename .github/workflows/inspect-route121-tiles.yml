@@ -29,6 +29,7 @@ jobs:
           cp data/tilesets/secondary/lilycove/palettes/01.pal /tmp/route121-assets/lilycove-palette-01.pal
           cp data/tilesets/secondary/lilycove/palettes/02.pal /tmp/route121-assets/lilycove-palette-02.pal
           cp data/tilesets/secondary/lilycove/palettes/03.pal /tmp/route121-assets/lilycove-palette-03.pal
+          cp data/tilesets/secondary/lilycove/palettes/09.pal /tmp/route121-assets/lilycove-palette-09.pal
           cp data/layouts/Route121/map.bin /tmp/route121-assets/route121-map.bin
           cp include/constants/metatile_labels.h /tmp/route121-assets/metatile-labels.h
           cd /tmp
