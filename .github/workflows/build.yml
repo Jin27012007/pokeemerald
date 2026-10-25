@@ -1,3 +1,4 @@
+# Rebuild trigger for final Lilycove arrival-scene ROM.
 name: Build Pokémon Emerald
 # Triggered builds compile the exact branch commit for ROM testing.
 
