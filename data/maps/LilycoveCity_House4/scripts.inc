@@ -68,6 +68,7 @@ LilycoveCity_House4_EventScript_AdoptionCard::
 	giveitem ITEM_POKE_BALL, 5
 	giveitem ITEM_ADOPTION_CARD
 	setvar VAR_LILYCOVE_OPENING_STATE, 5
+	setflag FLAG_LILYCOVE_ADOPTION_CARD_TAKEN
 	removeobject LOCALID_LILYCOVE_ADOPTION_CARD
 	msgbox LilycoveCity_House4_Text_AdoptionCard, MSGBOX_DEFAULT
 	release
