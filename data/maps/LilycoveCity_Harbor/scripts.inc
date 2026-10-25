@@ -39,8 +39,9 @@ LilycoveCity_Harbor_Text_Arrival:
 	.string "MOVIMENTO NO PORTO.$"
 
 LilycoveCity_Harbor_Text_MomAtHarbor:
-	.string "MAE: CHEGAMOS, {PLAYER}! VAMOS PEGAR\n"
-	.string "NOSSAS COISAS E IR PARA NOSSA CASA.$"
+	.string "MAE: CHEGAMOS, {PLAYER}! NOSSA CASA\n"
+	.string "FICA AO NORTE, SUBINDO A RUA E\n"
+	.string "SEGUINDO ATE A PORTA. VAMOS!$"
 
 LilycoveCity_Harbor_EventScript_FerryAttendant::
 	lock
