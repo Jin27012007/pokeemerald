@@ -26,8 +26,11 @@ LilycoveCity_EventScript_MomGuideFromHarbor::
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
-	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToFirstStop
+	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkOffscreen
 	waitmovement 0
+	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
+	hideobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
+	setvar VAR_LILYCOVE_OPENING_STATE, 1
 	msgbox LilycoveCity_Text_MomGuideStart, MSGBOX_DEFAULT
 	closemessage
 	releaseall
@@ -35,6 +38,9 @@ LilycoveCity_EventScript_MomGuideFromHarbor::
 
 LilycoveCity_EventScript_MomGuideSecondStop::
 	lockall
+	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
+	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
+	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 24
 	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToSecondStop
 	waitmovement 0
 	setvar VAR_LILYCOVE_OPENING_STATE, 2
@@ -56,7 +62,9 @@ LilycoveCity_EventScript_MomGuideHouseStop::
 	releaseall
 	end
 
-LilycoveCity_Movement_MomWalkToFirstStop:
+LilycoveCity_Movement_MomWalkOffscreen:
+	walk_up
+	walk_up
 	walk_up
 	walk_up
 	walk_up
@@ -66,8 +74,6 @@ LilycoveCity_Movement_MomWalkToFirstStop:
 	step_end
 
 LilycoveCity_Movement_MomWalkToSecondStop:
-	walk_up
-	walk_up
 	walk_up
 	walk_up
 	walk_up
