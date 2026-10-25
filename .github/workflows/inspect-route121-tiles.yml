@@ -15,6 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Package relevant tile assets
         run: |
+          git fetch --unshallow origin
           mkdir -p /tmp/route121-assets
           cp data/tilesets/primary/general/tiles.png /tmp/route121-assets/general-tiles.png
           cp data/tilesets/primary/general/metatiles.bin /tmp/route121-assets/general-metatiles.bin
