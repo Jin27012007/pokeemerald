@@ -1,8 +1,2 @@
 LilycoveCity_House4_2F_MapScripts::
-	map_script MAP_SCRIPT_ON_TRANSITION, LilycoveCity_House4_2F_OnTransition
 	.byte 0
-
-LilycoveCity_House4_2F_OnTransition:
-	call SecretBase_EventScript_SetDecorationFlags
-	setvar VAR_SECRET_BASE_INITIALIZED, 0
-	end
