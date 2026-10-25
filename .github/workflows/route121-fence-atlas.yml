@@ -20,6 +20,8 @@ jobs:
           cp data/tilesets/primary/general/tiles.png /tmp/atlas/primary/
           cp data/tilesets/primary/general/metatiles.bin /tmp/atlas/primary/
           cp data/tilesets/primary/general/metatile_attributes.bin /tmp/atlas/primary/
+          mkdir -p /tmp/atlas/primary/palettes
+          cp data/tilesets/primary/general/palettes/*.pal /tmp/atlas/primary/palettes/
           cp include/constants/metatile_labels.h /tmp/atlas/
           cp data/layouts/Route121/map.bin /tmp/atlas/
           zip -qr /tmp/route121-fence-atlas.zip /tmp/atlas
