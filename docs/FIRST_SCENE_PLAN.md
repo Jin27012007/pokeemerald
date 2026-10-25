@@ -24,3 +24,9 @@ Preservar `NewGameInitData()` e seus passos de inicialização; não restaurar o
 
 ## Próxima etapa recomendada
 Testar manualmente a chegada, a retirada do presente e a adoção no emulador. Depois, criar um sprite personalizado para o atendente se isso melhorar a leitura visual da área.
+
+## Ajuste da rota inicial — 2026-10-25
+- A chegada inicial continua no porto e o script de abertura faz a transição para a cidade; a casa da família continua sendo acessada pelo warp normal `MAP_LILYCOVE_CITY_HOUSE4` no índice 11 do mapa da cidade.
+- Foi adicionada uma nota de manutenção no script do porto para explicitar que a rota inicial deve permanecer a pé e que os scripts de ferry não devem ser substituídos por essa sequência.
+- O script ainda usa o warp atual para `MAP_LILYCOVE_CITY` nas coordenadas `(12, 33)`. Não alterar esse destino para House4 diretamente sem validar a cena desejada: isso pularia a rua e a entrada pela porta.
+- Validação automática parcial: `LilycoveCity/map.json` e `LilycoveCity_House4/map.json` declaram a ligação de saída de House4 para o warp 11 da cidade e o warp 11 aponta de volta para House4. A compilação e o teste real no My Boy! ainda são necessários.
