@@ -18,7 +18,8 @@ LilycoveCity_Harbor_EventScript_FirstArrival::
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	msgbox LilycoveCity_Harbor_Text_MomAtHarbor, MSGBOX_DEFAULT
 	closemessage
-	@ Reset the guide sequence and keep Mom visible after the transition.
+	@ The mother leaves the harbor scene and is not visible during the transition.
+	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	setvar VAR_LILYCOVE_OPENING_STATE, 0
 	warp MAP_LILYCOVE_CITY, 12, 33
 	waitstate
