@@ -1,0 +1,40 @@
+name: Inspect Route 121 tileset assets
+
+on:
+  push:
+    branches:
+      - inspect/route121-tiles
+
+permissions:
+  contents: read
+
+jobs:
+  package-assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package relevant tile assets
+        run: |
+          mkdir -p /tmp/route121-assets
+          cp data/tilesets/primary/general/tiles.png /tmp/route121-assets/general-tiles.png
+          cp data/tilesets/primary/general/metatiles.bin /tmp/route121-assets/general-metatiles.bin
+          cp data/tilesets/primary/general/metatile_attributes.bin /tmp/route121-assets/general-attributes.bin
+          cp data/tilesets/primary/general/palettes/02.pal /tmp/route121-assets/general-palette-02.pal
+          cp data/tilesets/primary/general/palettes/03.pal /tmp/route121-assets/general-palette-03.pal
+          cp data/tilesets/primary/general/palettes/04.pal /tmp/route121-assets/general-palette-04.pal
+          cp data/tilesets/primary/general/palettes/05.pal /tmp/route121-assets/general-palette-05.pal
+          cp data/tilesets/secondary/lilycove/tiles.png /tmp/route121-assets/lilycove-tiles.png
+          cp data/tilesets/secondary/lilycove/metatiles.bin /tmp/route121-assets/lilycove-metatiles.bin
+          cp data/tilesets/secondary/lilycove/metatile_attributes.bin /tmp/route121-assets/lilycove-attributes.bin
+          cp data/tilesets/secondary/lilycove/palettes/01.pal /tmp/route121-assets/lilycove-palette-01.pal
+          cp data/tilesets/secondary/lilycove/palettes/02.pal /tmp/route121-assets/lilycove-palette-02.pal
+          cp data/tilesets/secondary/lilycove/palettes/03.pal /tmp/route121-assets/lilycove-palette-03.pal
+          cp data/layouts/Route121/map.bin /tmp/route121-assets/route121-map.bin
+          cp include/constants/metatile_labels.h /tmp/route121-assets/metatile-labels.h
+          cd /tmp
+          zip -r route121-tileset-assets.zip route121-assets
+      - uses: actions/upload-artifact@v4
+        with:
+          name: route121-tileset-assets
+          path: /tmp/route121-tileset-assets.zip
+          retention-days: 1
