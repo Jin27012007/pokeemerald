@@ -20,6 +20,7 @@ LilycoveCity_OnFrame:
 	.2byte 0
 
 @ Mom walks ahead in sections and waits while the player catches up.
+@ Final build checkpoint: Mom stays hidden during off-screen repositioning.
 LilycoveCity_EventScript_MomGuideFromHarbor::
 	lockall
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
