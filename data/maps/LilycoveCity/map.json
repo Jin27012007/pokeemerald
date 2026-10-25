@@ -432,6 +432,15 @@
     {
       "type": "trigger",
       "x": 12,
+      "y": 31,
+      "elevation": 0,
+      "var": "VAR_LILYCOVE_OPENING_STATE",
+      "var_value": "0",
+      "script": "LilycoveCity_EventScript_MomGuideFromHarbor"
+    },
+    {
+      "type": "trigger",
+      "x": 12,
       "y": 27,
       "elevation": 0,
       "var": "VAR_LILYCOVE_OPENING_STATE",
