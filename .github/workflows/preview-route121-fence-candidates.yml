@@ -56,8 +56,6 @@ jobs:
               secondary = global_id >= 512
               local = global_id - 512 if secondary else global_id
               data = smeta if secondary else pmeta
-              pset = spals if secondary else ppals
-              sheet = stiles if secondary else ptiles
               image = Image.new("RGBA", (16,16), (0,0,0,0))
               for layer in range(2):
                   for n in range(4):
@@ -69,11 +67,14 @@ jobs:
                       vf = bool(w & 0x800)
                       if tid == 0:
                           continue
-                      raw = tile_pixels(sheet, tid)
+                      tile_is_secondary = tid >= 512
+                      source_sheet = stiles if tile_is_secondary else ptiles
+                      source_palettes = spals if tile_is_secondary else ppals
+                      raw = tile_pixels(source_sheet, tid)
                       if raw.mode != "P":
                           out = raw.convert("RGBA")
                       else:
-                          colors = palette(pset, pal)
+                          colors = palette(source_palettes, pal)
                           pix = raw.load()
                           out = Image.new("RGBA", (8,8), (0,0,0,0))
                           op = out.load()
