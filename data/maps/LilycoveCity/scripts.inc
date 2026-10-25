@@ -26,7 +26,8 @@ LilycoveCity_EventScript_MomGuideFromHarbor::
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
 	@ Mom appears by the harbor exit, walks north, then disappears off-screen.
-	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 32
+	@ Start to the side of the building so the facade cannot block her route.
+	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 14, 32
 	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkOffscreen
 	waitmovement 0
 	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
@@ -64,14 +65,14 @@ LilycoveCity_EventScript_MomGuideHouseStop::
 	end
 
 LilycoveCity_Movement_MomWalkOffscreen:
-	walk_up
-	walk_up
-	walk_up
-	walk_up
-	walk_up
-	walk_up
-	walk_up
-	walk_up
+	walk_left
+	walk_left
+	walk_left
+	walk_left
+	walk_left
+	walk_left
+	walk_left
+	walk_left
 	step_end
 
 LilycoveCity_Movement_MomWalkToSecondStop:
