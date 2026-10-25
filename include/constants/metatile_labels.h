@@ -510,6 +510,7 @@
 #define METATILE_SecretBase_Fence_Vertical              0x233
 #define METATILE_Lilycove_Fence_Horizontal               0x341
 #define METATILE_Lilycove_Fence_Vertical                 0x343
+#define METATILE_Lilycove_Fence_Vertical_Blue            0x346
 #define METATILE_SecretBase_FireBlastMat_BottomLeft     0x265
 #define METATILE_SecretBase_FireBlastMat_BottomMid      0x266
 #define METATILE_SecretBase_FireBlastMat_BottomRight    0x267
