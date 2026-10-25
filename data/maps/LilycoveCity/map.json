@@ -428,35 +428,7 @@
       "dest_warp_id": "1"
     }
   ],
-  "coord_events": [
-    {
-      "type": "trigger",
-      "x": 12,
-      "y": 31,
-      "elevation": 0,
-      "var": "VAR_LILYCOVE_OPENING_STATE",
-      "var_value": "0",
-      "script": "LilycoveCity_EventScript_MomGuideFromHarbor"
-    },
-    {
-      "type": "trigger",
-      "x": 12,
-      "y": 27,
-      "elevation": 0,
-      "var": "VAR_LILYCOVE_OPENING_STATE",
-      "var_value": "1",
-      "script": "LilycoveCity_EventScript_MomGuideSecondStop"
-    },
-    {
-      "type": "trigger",
-      "x": 12,
-      "y": 21,
-      "elevation": 0,
-      "var": "VAR_LILYCOVE_OPENING_STATE",
-      "var_value": "2",
-      "script": "LilycoveCity_EventScript_MomGuideHouseStop"
-    }
-  ],
+  "coord_events": [],
   "bg_events": [
     {
       "type": "sign",
