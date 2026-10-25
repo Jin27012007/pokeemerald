@@ -1,0 +1,30 @@
+name: Route 121 Fence Atlas Preview
+on:
+  push:
+    branches:
+      - inspect/route121-fence-atlas
+permissions:
+  contents: read
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package tile atlas and source definitions
+        run: |
+          mkdir -p /tmp/atlas/secondary /tmp/atlas/primary
+          cp data/tilesets/secondary/lilycove/tiles.png /tmp/atlas/secondary/
+          cp data/tilesets/secondary/lilycove/metatiles.bin /tmp/atlas/secondary/
+          cp data/tilesets/secondary/lilycove/metatile_attributes.bin /tmp/atlas/secondary/
+          cp data/tilesets/secondary/lilycove/palettes/*.pal /tmp/atlas/secondary/
+          cp data/tilesets/primary/general/tiles.png /tmp/atlas/primary/
+          cp data/tilesets/primary/general/metatiles.bin /tmp/atlas/primary/
+          cp data/tilesets/primary/general/metatile_attributes.bin /tmp/atlas/primary/
+          cp include/constants/metatile_labels.h /tmp/atlas/
+          cp data/layouts/Route121/map.bin /tmp/atlas/
+          zip -qr /tmp/route121-fence-atlas.zip /tmp/atlas
+      - uses: actions/upload-artifact@v4
+        with:
+          name: route121-fence-atlas
+          path: /tmp/route121-fence-atlas.zip
+          retention-days: 1
