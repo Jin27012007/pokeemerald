@@ -26,11 +26,11 @@ LilycoveCity_EventScript_MomGuideFromHarbor::
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
+	@ Mom walks out of the visible port approach and disappears before the player moves.
 	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkOffscreen
 	waitmovement 0
 	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	hideobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
-	setvar VAR_LILYCOVE_OPENING_STATE, 1
 	msgbox LilycoveCity_Text_MomGuideStart, MSGBOX_DEFAULT
 	closemessage
 	releaseall
@@ -38,6 +38,7 @@ LilycoveCity_EventScript_MomGuideFromHarbor::
 
 LilycoveCity_EventScript_MomGuideSecondStop::
 	lockall
+	@ She reappears closer to home only after the player reaches the first waypoint.
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
 	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 24
