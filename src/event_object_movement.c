@@ -1669,8 +1669,10 @@ void TrySpawnObjectEvents(s16 cameraX, s16 cameraY)
                 continue;
 
             if (objectEvent->movementType == MOVEMENT_TYPE_BERRY_TREE_GROWTH
-                && berryTreeId >= BERRY_TREE_ROUTE_121_SOIL_3
-                && berryTreeId <= BERRY_TREE_ROUTE_121_SOIL_32
+                && (berryTreeId == BERRY_TREE_ROUTE_121_SOIL_1
+                    || berryTreeId == BERRY_TREE_ROUTE_121_SOIL_2
+                    || (berryTreeId >= BERRY_TREE_ROUTE_121_SOIL_3
+                        && berryTreeId <= BERRY_TREE_ROUTE_121_SOIL_32))
                 && GetStageByBerryTreeId(berryTreeId) == BERRY_STAGE_NO_BERRY)
             {
                 s16 dx = objectEvent->currentCoords.x - playerX;
@@ -4768,8 +4770,10 @@ static bool8 DoesObjectCollideWithObjectAt(struct ObjectEvent *objectEvent, s16 
             // Empty Route 121 berry plots are soil, not walls. They remain interactive
             // through BerryTreeScript; once a berry grows the visible tree can block movement.
             if (curObject->movementType == MOVEMENT_TYPE_BERRY_TREE_GROWTH
-             && curObject->trainerRange_berryTreeId >= BERRY_TREE_ROUTE_121_SOIL_3
-             && curObject->trainerRange_berryTreeId <= BERRY_TREE_ROUTE_121_SOIL_32
+             && (curObject->trainerRange_berryTreeId == BERRY_TREE_ROUTE_121_SOIL_1
+              || curObject->trainerRange_berryTreeId == BERRY_TREE_ROUTE_121_SOIL_2
+              || (curObject->trainerRange_berryTreeId >= BERRY_TREE_ROUTE_121_SOIL_3
+               && curObject->trainerRange_berryTreeId <= BERRY_TREE_ROUTE_121_SOIL_32))
              && GetStageByBerryTreeId(curObject->trainerRange_berryTreeId) == BERRY_STAGE_NO_BERRY)
                 continue;
 
