@@ -42,3 +42,17 @@ jobs:
               if entries:
                   print(f"y{y}: " + " ".join(entries))
           PY
+
+      - name: Upload Route 121 graphics and layout sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: route121-map-source-assets
+          path: |
+            data/layouts/Route121/map.bin
+            data/tilesets/primary/general/tiles.png
+            data/tilesets/primary/general/metatiles.bin
+            data/tilesets/primary/general/metatile_attributes.bin
+            data/tilesets/secondary/lilycove/tiles.png
+            data/tilesets/secondary/lilycove/metatiles.bin
+            data/tilesets/secondary/lilycove/metatile_attributes.bin
+            include/constants/metatile_labels.h
