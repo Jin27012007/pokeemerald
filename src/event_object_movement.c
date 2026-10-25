@@ -4713,6 +4713,14 @@ static bool8 DoesObjectCollideWithObjectAt(struct ObjectEvent *objectEvent, s16 
         curObject = &gObjectEvents[i];
         if (curObject->active && curObject != objectEvent)
         {
+            // Empty Route 121 berry plots are soil, not walls. They remain interactive
+            // through BerryTreeScript; once a berry grows the visible tree can block movement.
+            if (curObject->movementType == MOVEMENT_TYPE_BERRY_TREE_GROWTH
+             && curObject->invisible
+             && curObject->trainerRange_berryTreeId >= BERRY_TREE_ROUTE_121_SOIL_3
+             && curObject->trainerRange_berryTreeId <= BERRY_TREE_ROUTE_121_SOIL_32)
+                continue;
+
             if ((curObject->currentCoords.x == x && curObject->currentCoords.y == y) || (curObject->previousCoords.x == x && curObject->previousCoords.y == y))
             {
                 if (AreElevationsCompatible(objectEvent->currentElevation, curObject->currentElevation))
