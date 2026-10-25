@@ -1646,6 +1646,41 @@ void TrySpawnObjectEvents(s16 cameraX, s16 cameraY)
 {
     u8 i;
     u8 objectCount;
+    u8 playerObjectEventId = gPlayerAvatar.objectEventId;
+    struct ObjectEvent *playerObjectEvent = NULL;
+
+    if (playerObjectEventId < OBJECT_EVENTS_COUNT && gObjectEvents[playerObjectEventId].active)
+        playerObjectEvent = &gObjectEvents[playerObjectEventId];
+
+    // Keep empty Route 121 berry plots as real map objects only while the player is beside them.
+    // This lets the original 16-object runtime pool service all 30 garden coordinates without
+    // filling it with invisible, empty plots that cannot currently be interacted with.
+    if (playerObjectEvent != NULL)
+    {
+        s16 playerX = playerObjectEvent->currentCoords.x;
+        s16 playerY = playerObjectEvent->currentCoords.y;
+
+        for (i = 0; i < OBJECT_EVENTS_COUNT; i++)
+        {
+            struct ObjectEvent *objectEvent = &gObjectEvents[i];
+            u16 berryTreeId = objectEvent->trainerRange_berryTreeId;
+
+            if (!objectEvent->active || objectEvent == playerObjectEvent)
+                continue;
+
+            if (objectEvent->movementType == MOVEMENT_TYPE_BERRY_TREE_GROWTH
+                && berryTreeId >= BERRY_TREE_ROUTE_121_SOIL_3
+                && berryTreeId <= BERRY_TREE_ROUTE_121_SOIL_32
+                && GetStageByBerryTreeId(berryTreeId) == BERRY_STAGE_NO_BERRY)
+            {
+                s16 dx = objectEvent->currentCoords.x - playerX;
+                s16 dy = objectEvent->currentCoords.y - playerY;
+
+                if (dx < -1 || dx > 1 || dy < -1 || dy > 1)
+                    RemoveObjectEvent(objectEvent);
+            }
+        }
+    }
 
     if (gMapHeader.events != NULL)
     {
@@ -1669,7 +1704,24 @@ void TrySpawnObjectEvents(s16 cameraX, s16 cameraY)
 
             if (top <= npcY && bottom >= npcY && left <= npcX && right >= npcX
                 && !FlagGet(template->flagId))
+            {
+                if (template->movementType == MOVEMENT_TYPE_BERRY_TREE_GROWTH
+                    && template->trainerRange_berryTreeId >= BERRY_TREE_ROUTE_121_SOIL_3
+                    && template->trainerRange_berryTreeId <= BERRY_TREE_ROUTE_121_SOIL_32
+                    && GetStageByBerryTreeId(template->trainerRange_berryTreeId) == BERRY_STAGE_NO_BERRY)
+                {
+                    if (playerObjectEvent == NULL)
+                        continue;
+
+                    if (npcX < playerObjectEvent->currentCoords.x - 1
+                        || npcX > playerObjectEvent->currentCoords.x + 1
+                        || npcY < playerObjectEvent->currentCoords.y - 1
+                        || npcY > playerObjectEvent->currentCoords.y + 1)
+                        continue;
+                }
+
                 TrySpawnObjectEventTemplate(template, gSaveBlock1Ptr->location.mapNum, gSaveBlock1Ptr->location.mapGroup, cameraX, cameraY);
+            }
         }
     }
 }
