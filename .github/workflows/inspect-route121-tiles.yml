@@ -19,17 +19,12 @@ jobs:
           cp data/tilesets/primary/general/tiles.png /tmp/route121-assets/general-tiles.png
           cp data/tilesets/primary/general/metatiles.bin /tmp/route121-assets/general-metatiles.bin
           cp data/tilesets/primary/general/metatile_attributes.bin /tmp/route121-assets/general-attributes.bin
-          cp data/tilesets/primary/general/palettes/02.pal /tmp/route121-assets/general-palette-02.pal
-          cp data/tilesets/primary/general/palettes/03.pal /tmp/route121-assets/general-palette-03.pal
-          cp data/tilesets/primary/general/palettes/04.pal /tmp/route121-assets/general-palette-04.pal
-          cp data/tilesets/primary/general/palettes/05.pal /tmp/route121-assets/general-palette-05.pal
+          for f in data/tilesets/primary/general/palettes/*.pal; do cp "$f" "/tmp/route121-assets/general-$(basename "$f")"; done
           cp data/tilesets/secondary/lilycove/tiles.png /tmp/route121-assets/lilycove-tiles.png
           cp data/tilesets/secondary/lilycove/metatiles.bin /tmp/route121-assets/lilycove-metatiles.bin
           cp data/tilesets/secondary/lilycove/metatile_attributes.bin /tmp/route121-assets/lilycove-attributes.bin
-          cp data/tilesets/secondary/lilycove/palettes/01.pal /tmp/route121-assets/lilycove-palette-01.pal
-          cp data/tilesets/secondary/lilycove/palettes/02.pal /tmp/route121-assets/lilycove-palette-02.pal
-          cp data/tilesets/secondary/lilycove/palettes/03.pal /tmp/route121-assets/lilycove-palette-03.pal
-          cp data/tilesets/secondary/lilycove/palettes/09.pal /tmp/route121-assets/lilycove-palette-09.pal
+          for f in data/tilesets/secondary/lilycove/palettes/*.pal; do cp "$f" "/tmp/route121-assets/lilycove-$(basename "$f")"; done
+          git show e3a9b17eee3c8c8f25846b3d538c3d4d74854a0c:data/layouts/Route121/map.bin > /tmp/route121-assets/route121-clean-map.bin
           cp data/layouts/Route121/map.bin /tmp/route121-assets/route121-map.bin
           cp include/constants/metatile_labels.h /tmp/route121-assets/metatile-labels.h
           cd /tmp
