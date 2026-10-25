@@ -57,6 +57,13 @@
       "elevation": 0,
       "dest_map": "MAP_LILYCOVE_CITY",
       "dest_warp_id": "11"
+    },
+    {
+      "x": 8,
+      "y": 2,
+      "elevation": 0,
+      "dest_map": "MAP_LILYCOVE_CITY_HOUSE4_2F",
+      "dest_warp_id": "0"
     }
   ],
   "coord_events": [],
