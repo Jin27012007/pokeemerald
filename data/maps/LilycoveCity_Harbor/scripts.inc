@@ -18,7 +18,8 @@ LilycoveCity_Harbor_EventScript_FirstArrival::
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	msgbox LilycoveCity_Harbor_Text_MomAtHarbor, MSGBOX_DEFAULT
 	closemessage
-	@ The mother leaves the harbor scene and is not visible during the transition.
+	@ Keep the opening route on foot: the player exits the harbor into the city,
+	@ then follows the northbound street to the family home (House4).
 	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	setvar VAR_LILYCOVE_OPENING_STATE, 0
 	warp MAP_LILYCOVE_CITY, 12, 33
@@ -42,7 +43,6 @@ LilycoveCity_Harbor_Text_MomAtHarbor:
 	.string "MAE: CHEGAMOS, {PLAYER}! NOSSA CASA\n"
 	.string "FICA AO NORTE, SUBINDO A RUA E\n"
 	.string "SEGUINDO ATE A PORTA. VAMOS!$"
-
 LilycoveCity_Harbor_EventScript_FerryAttendant::
 	lock
 	faceplayer
