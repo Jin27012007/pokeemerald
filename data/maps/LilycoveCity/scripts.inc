@@ -23,17 +23,10 @@ LilycoveCity_OnFrame:
 LilycoveCity_EventScript_MomGuideFromHarbor::
 	lockall
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
-	@ Hide her before moving her to the next area, so no on-screen teleport is shown.
+	@ Keep Mom hidden while relocating her beyond the camera toward the house.
 	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	hideobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
-	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 18
-	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
-	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
-	@ She walks ahead toward the house while still outside the player's camera view.
-	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkOffscreen
-	waitmovement 0
-	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
-	hideobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
+	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 14
 	msgbox LilycoveCity_Text_MomGuideStart, MSGBOX_DEFAULT
 	closemessage
 	releaseall
@@ -41,12 +34,10 @@ LilycoveCity_EventScript_MomGuideFromHarbor::
 
 LilycoveCity_EventScript_MomGuideSecondStop::
 	lockall
-	@ Mom is already waiting ahead, placed while off-screen during the previous segment.
+	@ Reveal her only at the house door, well outside the camera when this trigger fires.
+	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 14
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
-	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 16
-	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToSecondStop
-	waitmovement 0
 	setvar VAR_LILYCOVE_OPENING_STATE, 2
 	msgbox LilycoveCity_Text_MomGuideWait, MSGBOX_DEFAULT
 	closemessage
