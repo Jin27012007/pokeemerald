@@ -70,16 +70,21 @@ jobs:
                       if tid == 0:
                           continue
                       raw = tile_pixels(sheet, tid)
-                      colors = palette(pset, pal)
-                      pix = raw.load()
-                      out = Image.new("RGBA", (8,8), (0,0,0,0))
-                      op = out.load()
-                      for yy in range(8):
-                          for xx in range(8):
-                              idx = pix[xx, yy]
-                              if idx < len(colors):
-                                  r,g,b = colors[idx]
-                                  op[xx,yy] = (r,g,b,255 if idx else 0)
+                      if raw.mode != "P":
+                          out = raw.convert("RGBA")
+                      else:
+                          colors = palette(pset, pal)
+                          pix = raw.load()
+                          out = Image.new("RGBA", (8,8), (0,0,0,0))
+                          op = out.load()
+                          for yy in range(8):
+                              for xx in range(8):
+                                  idx = pix[xx, yy]
+                                  if isinstance(idx, tuple):
+                                      raise RuntimeError(f"Unexpected pixel tuple for metatile {global_id}, tile {tid}: {idx}")
+                                  if idx < len(colors):
+                                      r,g,b = colors[idx]
+                                      op[xx,yy] = (r,g,b,255 if idx else 0)
                       if hf: out = out.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
                       if vf: out = out.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
                       x = (n%2)*8
