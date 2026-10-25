@@ -1,0 +1,115 @@
+name: Preview Route 121 fence metatiles
+on:
+  push:
+    branches:
+      - inspect/route121-fence-candidates
+permissions:
+  contents: read
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Render candidate metatiles
+        run: |
+          python -m pip install --quiet pillow
+          python - <<'PY'
+          from pathlib import Path
+          import struct
+          from PIL import Image, ImageDraw, ImageFont
+
+          root = Path(".")
+          pbase = root / "data/tilesets/primary/general"
+          sbase = root / "data/tilesets/secondary/lilycove"
+          ptiles = Image.open(pbase / "tiles.png").convert("P")
+          stiles = Image.open(sbase / "tiles.png").convert("P")
+
+          def read_palettes(folder):
+              out = {}
+              for p in folder.glob("*.pal"):
+                  lines = p.read_text().splitlines()[3:]
+                  try:
+                      out[int(p.stem)] = [tuple(map(int, ln.split())) for ln in lines if ln.strip()]
+                  except Exception:
+                      pass
+              return out
+
+          ppals = read_palettes(pbase / "palettes")
+          spals = read_palettes(sbase / "palettes")
+          pmeta = (pbase / "metatiles.bin").read_bytes()
+          smeta = (sbase / "metatiles.bin").read_bytes()
+          pattrs = (pbase / "metatile_attributes.bin").read_bytes()
+          satts = (sbase / "metatile_attributes.bin").read_bytes()
+
+          def palette(folder_pal, n):
+              return folder_pal.get(n, [(0,0,0)]*16)
+
+          def tile_pixels(sheet, tile_id):
+              tid = tile_id if tile_id < 512 else tile_id - 512
+              x = (tid % 16) * 8
+              y = (tid // 16) * 8
+              if x + 8 > sheet.width or y + 8 > sheet.height:
+                  return Image.new("RGBA", (8,8), (255,0,255,255))
+              return sheet.crop((x,y,x+8,y+8))
+
+          def metatile(global_id):
+              secondary = global_id >= 512
+              local = global_id - 512 if secondary else global_id
+              data = smeta if secondary else pmeta
+              pset = spals if secondary else ppals
+              sheet = stiles if secondary else ptiles
+              image = Image.new("RGBA", (16,16), (0,0,0,0))
+              for layer in range(2):
+                  for n in range(4):
+                      i = local*16 + (layer*4+n)*2
+                      w = struct.unpack_from("<H", data, i)[0]
+                      tid = w & 1023
+                      pal = (w >> 12) & 15
+                      hf = bool(w & 0x400)
+                      vf = bool(w & 0x800)
+                      if tid == 0:
+                          continue
+                      raw = tile_pixels(sheet, tid)
+                      colors = palette(pset, pal)
+                      pix = raw.load()
+                      out = Image.new("RGBA", (8,8), (0,0,0,0))
+                      op = out.load()
+                      for yy in range(8):
+                          for xx in range(8):
+                              idx = pix[xx, yy]
+                              if idx < len(colors):
+                                  r,g,b = colors[idx]
+                                  op[xx,yy] = (r,g,b,255 if idx else 0)
+                      if hf: out = out.transpose(Image.Transpose.FLIP_LEFT_RIGHT)
+                      if vf: out = out.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+                      x = (n%2)*8
+                      y = (n//2)*8
+                      if layer == 0:
+                          image.alpha_composite(out,(x,y))
+                      else:
+                          image.alpha_composite(out,(x,y))
+              return image
+
+          ids = list(range(536, 585)) + list(range(800, 862))
+          # Add the exact tree-leaf fragments and their surrounding IDs from the primary set.
+          ids += [4, 14, 37, 38, 39, 121, 124, 125, 145, 260, 261, 454, 455, 462, 463]
+          ids = list(dict.fromkeys(ids))
+          cols, cellw, cellh, scale = 8, 64, 54, 3
+          rows = (len(ids)+cols-1)//cols
+          sheet_out = Image.new("RGB",(cols*cellw,rows*cellh),(232,239,230))
+          draw = ImageDraw.Draw(sheet_out)
+          for k, mid in enumerate(ids):
+              x=(k%cols)*cellw
+              y=(k//cols)*cellh
+              draw.text((x+2,y+1),str(mid),fill=(20,30,20))
+              im=metatile(mid).resize((16*scale,16*scale),Image.Resampling.NEAREST)
+              sheet_out.paste(im,(x+4,y+11),im)
+              draw.rectangle((x,y,x+cellw-1,y+cellh-1),outline=(135,155,135))
+          sheet_out.save("/tmp/route121-metatiles.png")
+          print("wrote",len(ids),"metatiles",sheet_out.size)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: route121-metatile-preview
+          path: /tmp/route121-metatiles.png
+          retention-days: 1
