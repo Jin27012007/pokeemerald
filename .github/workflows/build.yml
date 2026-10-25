@@ -41,3 +41,5 @@ jobs:
           path: pokeemerald_modern.gba
           if-no-files-found: error
           retention-days: 90
+
+# Rebuild exact commit after Route 121 landscape changes.
