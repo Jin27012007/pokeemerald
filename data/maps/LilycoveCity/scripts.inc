@@ -17,7 +17,6 @@ LilycoveCity_OnLoad:
 	end
 
 LilycoveCity_OnFrame:
-	map_script_2 VAR_LILYCOVE_OPENING_STATE, 0, LilycoveCity_EventScript_MomGuideFromHarbor
 	.2byte 0
 
 @ Mom walks ahead in sections and waits while the player catches up.
@@ -26,7 +25,8 @@ LilycoveCity_EventScript_MomGuideFromHarbor::
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
-	@ Mom walks out of the visible port approach and disappears before the player moves.
+	@ Mom appears by the harbor exit, walks north, then disappears off-screen.
+	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 32
 	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkOffscreen
 	waitmovement 0
 	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
