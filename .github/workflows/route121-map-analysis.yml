@@ -1,0 +1,44 @@
+name: Inspect Route 121 layout
+
+on:
+  push:
+    branches:
+      - lilycove/development
+    paths:
+      - .github/workflows/route121-map-analysis.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-layout:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: lilycove/development
+      - name: Inspect Route 121 blocks without lossy text conversion
+        run: |
+          python3 - <<'PY'
+          import collections, struct
+          from pathlib import Path
+          p = Path("data/layouts/Route121/map.bin")
+          raw = p.read_bytes()
+          blocks = struct.unpack("<1600H", raw)
+          print(f"FILE={p} BYTES={len(raw)} BLOCKS={len(blocks)}")
+          print("TOP LOW-10-BIT METATILE IDS:")
+          for key, count in collections.Counter(v & 0x3ff for v in blocks).most_common(100):
+              print(f"  id=0x{key:03X} count={count}")
+          print("TOP ELEVATION FLAGS:")
+          for key, count in sorted(collections.Counter(v >> 12 for v in blocks).items()):
+              print(f"  elevation=0x{key:X} count={count}")
+          print("HIGH ELEVATION CELLS (D-F), ROW BY ROW:")
+          for y in range(20):
+              entries = []
+              for x in range(80):
+                  v = blocks[y * 80 + x]
+                  if (v >> 12) >= 0xD:
+                      entries.append(f"x{x}=0x{v:04X}(id=0x{v & 0x3ff:03X},col={(v >> 10)&3},elev={v>>12})")
+              if entries:
+                  print(f"y{y}: " + " ".join(entries))
+          PY
