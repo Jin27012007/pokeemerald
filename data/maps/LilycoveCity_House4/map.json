@@ -15,7 +15,7 @@
   "connections": null,
   "object_events": [
     {
-      "local_id": "LOCALID_LILYCOVE_OPENING_MOM",
+      "local_id": "LOCALID_LILYCOVE_HOUSE4_MOM",
       "graphics_id": "OBJ_EVENT_GFX_MOM",
       "x": 6,
       "y": 4,
