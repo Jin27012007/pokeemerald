@@ -23,11 +23,13 @@ LilycoveCity_OnFrame:
 LilycoveCity_EventScript_MomGuideFromHarbor::
 	lockall
 	setvar VAR_LILYCOVE_OPENING_STATE, 1
+	@ Hide her before moving her to the next area, so no on-screen teleport is shown.
+	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
+	hideobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
+	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 18
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
-	@ Mom appears by the harbor exit, walks north, then disappears off-screen.
-	@ Start to the side of the building so the facade cannot block her route.
-	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 14, 32
+	@ She walks ahead toward the house while still outside the player's camera view.
 	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkOffscreen
 	waitmovement 0
 	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
@@ -39,10 +41,10 @@ LilycoveCity_EventScript_MomGuideFromHarbor::
 
 LilycoveCity_EventScript_MomGuideSecondStop::
 	lockall
-	@ She reappears closer to home only after the player reaches the first waypoint.
+	@ Mom is already waiting ahead, placed while off-screen during the previous segment.
 	clearflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
 	showobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
-	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 24
+	setobjectxyperm LOCALID_LILYCOVE_OPENING_CITY_MOM, 12, 16
 	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToSecondStop
 	waitmovement 0
 	setvar VAR_LILYCOVE_OPENING_STATE, 2
@@ -53,31 +55,21 @@ LilycoveCity_EventScript_MomGuideSecondStop::
 
 LilycoveCity_EventScript_MomGuideHouseStop::
 	lockall
-	applymovement LOCALID_LILYCOVE_OPENING_CITY_MOM, LilycoveCity_Movement_MomWalkToHouse
-	waitmovement 0
-	@ Mom reaches the doorway and waits there while the player follows through the real warp.
+	@ Mom stays at the doorway; entering the house changes maps naturally.
 	setvar VAR_LILYCOVE_OPENING_STATE, 3
 	msgbox LilycoveCity_Text_MomGuideHouse, MSGBOX_DEFAULT
 	closemessage
-	setflag FLAG_HIDE_LILYCOVE_OPENING_HARBOR_MOM
-	hideobjectat LOCALID_LILYCOVE_OPENING_CITY_MOM, MAP_LILYCOVE_CITY
 	releaseall
 	end
 
 LilycoveCity_Movement_MomWalkOffscreen:
-	walk_left
-	walk_left
-	walk_left
-	walk_left
-	walk_left
-	walk_left
-	walk_left
-	walk_left
+	walk_up
+	walk_up
+	walk_up
+	walk_up
 	step_end
 
 LilycoveCity_Movement_MomWalkToSecondStop:
-	walk_up
-	walk_up
 	walk_up
 	walk_up
 	step_end
