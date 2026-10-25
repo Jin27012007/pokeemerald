@@ -112,10 +112,45 @@ jobs:
               sheet_out.paste(im,(x+4,y+11),im)
               draw.rectangle((x,y,x+cellw-1,y+cellh-1),outline=(135,155,135))
           sheet_out.save("/tmp/route121-metatiles.png")
-          print("wrote",len(ids),"metatiles",sheet_out.size)
+
+          # Tile-level atlas: this exposes alternate vertical posts or fence pieces
+          # that may be reused to build a matching orientation.
+          def tile_atlas(pal_id):
+              colors = palette(spals, pal_id)
+              cellw, cellh, scale, cols = 40, 42, 4, 16
+              rows = 32
+              canvas = Image.new("RGB", (cols*cellw, rows*cellh), (234,239,232))
+              dr = ImageDraw.Draw(canvas)
+              for tid in range(512):
+                  x=(tid%cols)*cellw
+                  y=(tid//cols)*cellh
+                  sx=(tid%16)*8
+                  sy=(tid//16)*8
+                  raw=stiles.crop((sx,sy,sx+8,sy+8)).convert("P")
+                  pix=raw.load()
+                  tile=Image.new("RGBA",(8,8),(0,0,0,0))
+                  tp=tile.load()
+                  for yy in range(8):
+                      for xx in range(8):
+                          idx=pix[xx,yy]
+                          if idx and idx < len(colors):
+                              r,g,b=colors[idx]
+                              tp[xx,yy]=(r,g,b,255)
+                  tile=tile.resize((8*scale,8*scale),Image.Resampling.NEAREST)
+                  canvas.paste(tile,(x+4,y+12),tile)
+                  dr.text((x+2,y+1),str(tid+512),fill=(20,30,20))
+                  dr.rectangle((x,y,x+cellw-1,y+cellh-1),outline=(135,155,135))
+              return canvas
+
+          tile_atlas(8).save("/tmp/route121-secondary-tiles-p8.png")
+          tile_atlas(9).save("/tmp/route121-secondary-tiles-p9.png")
+          print("wrote",len(ids),"metatiles and tile atlases")
           PY
       - uses: actions/upload-artifact@v4
         with:
           name: route121-metatile-preview
-          path: /tmp/route121-metatiles.png
+          path: |
+            /tmp/route121-metatiles.png
+            /tmp/route121-secondary-tiles-p8.png
+            /tmp/route121-secondary-tiles-p9.png
           retention-days: 1
