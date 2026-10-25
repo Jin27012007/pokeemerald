@@ -85,6 +85,11 @@
 #define BERRY_TREE_ROUTE_121_ASPEAR   48
 #define BERRY_TREE_ROUTE_121_RAWST    49
 #define BERRY_TREE_ROUTE_121_CHESTO   50
+// Reserved IDs for removed Route 121 plots; kept for the global berry-reset script.
+#define BERRY_TREE_ROUTE_121_SOIL_1    51
+#define BERRY_TREE_ROUTE_121_NANAB_1   52
+#define BERRY_TREE_ROUTE_121_NANAB_2   53
+#define BERRY_TREE_ROUTE_121_SOIL_2    54
 #define BERRY_TREE_ROUTE_115_BLUK_1   55
 #define BERRY_TREE_ROUTE_115_BLUK_2   56
 #define BERRY_TREE_UNUSED             57
