@@ -144,7 +144,63 @@ jobs:
 
           tile_atlas(8).save("/tmp/route121-secondary-tiles-p8.png")
           tile_atlas(9).save("/tmp/route121-secondary-tiles-p9.png")
-          print("wrote",len(ids),"metatiles and tile atlases")
+
+          # Test arrangements of existing blue fence component tiles as a vertical post.
+          def render_one(global_tid, pal_id):
+              secondary = global_tid >= 512
+              sheet = stiles if secondary else ptiles
+              pset = spals if secondary else ppals
+              raw = tile_pixels(sheet, global_tid)
+              if raw.mode != "P":
+                  return raw.convert("RGBA")
+              colors = palette(pset, pal_id)
+              src = raw.load()
+              out = Image.new("RGBA", (8,8), (0,0,0,0))
+              dst = out.load()
+              for yy in range(8):
+                  for xx in range(8):
+                      idx = src[xx,yy]
+                      if idx and idx < len(colors):
+                          r,g,b=colors[idx]
+                          dst[xx,yy]=(r,g,b,255)
+              return out
+
+          candidates = [
+              ("HORIZONTAL_REF", [839,867,855,883]),
+              ("A", [867,868,870,871]),
+              ("B", [867,870,871,872]),
+              ("C", [868,869,871,872]),
+              ("D", [870,871,872,883]),
+              ("E", [867,870,883,872]),
+              ("F", [867,868,871,872]),
+              ("G", [868,870,871,883]),
+              ("H", [870,871,886,887]),
+              ("I", [839,867,871,872]),
+              ("J", [867,870,855,883]),
+              ("K", [868,869,870,871]),
+              ("L", [870,883,871,855]),
+          ]
+          cols, cellw, cellh, scale = 4, 120, 120, 5
+          canvas = Image.new("RGB",(cols*cellw,((len(candidates)+cols-1)//cols)*cellh),(232,239,230))
+          dr = ImageDraw.Draw(canvas)
+          base_ids = [3,2,2,3]
+          for k,(name,overlay_ids) in enumerate(candidates):
+              x=(k%cols)*cellw; y=(k//cols)*cellh
+              tile = Image.new("RGBA",(16,16),(0,0,0,0))
+              # Base grass layer.
+              for n,tid in enumerate(base_ids):
+                  t=render_one(tid,2)
+                  tile.alpha_composite(t,((n%2)*8,(n//2)*8))
+              # Fence overlay (palette 8).
+              for n,tid in enumerate(overlay_ids):
+                  t=render_one(tid,8)
+                  tile.alpha_composite(t,((n%2)*8,(n//2)*8))
+              enlarged=tile.resize((16*scale,16*scale),Image.Resampling.NEAREST)
+              canvas.paste(enlarged,(x+12,y+22),enlarged)
+              dr.text((x+2,y+2),name+" "+str(overlay_ids),fill=(15,25,15))
+              dr.rectangle((x,y,x+cellw-1,y+cellh-1),outline=(135,155,135))
+          canvas.save("/tmp/route121-vertical-candidates.png")
+          print("wrote",len(ids),"metatiles, tile atlases, and vertical candidates")
           PY
       - uses: actions/upload-artifact@v4
         with:
@@ -153,4 +209,5 @@ jobs:
             /tmp/route121-metatiles.png
             /tmp/route121-secondary-tiles-p8.png
             /tmp/route121-secondary-tiles-p9.png
+            /tmp/route121-vertical-candidates.png
           retention-days: 1
