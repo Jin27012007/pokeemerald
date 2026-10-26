@@ -1,0 +1,31 @@
+name: Route 121 Debug Assets
+
+on:
+  push:
+    branches:
+      - fix/route121-corridor-and-fence-art
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package current map and tileset sources
+        run: |
+          mkdir -p /tmp/route121-debug/primary /tmp/route121-debug/secondary /tmp/route121-debug/layout
+          cp data/layouts/Route121/map.bin data/layouts/Route121/border.bin /tmp/route121-debug/layout/
+          cp data/layouts/layouts.json /tmp/route121-debug/layout/
+          cp data/tilesets/primary/general/tiles.png data/tilesets/primary/general/metatiles.bin data/tilesets/primary/general/metatile_attributes.bin /tmp/route121-debug/primary/
+          cp data/tilesets/primary/general/palettes/*.pal /tmp/route121-debug/primary/
+          cp data/tilesets/secondary/lilycove/tiles.png data/tilesets/secondary/lilycove/metatiles.bin data/tilesets/secondary/lilycove/metatile_attributes.bin /tmp/route121-debug/secondary/
+          cp data/tilesets/secondary/lilycove/palettes/*.pal /tmp/route121-debug/secondary/
+          cp include/constants/metatile_labels.h /tmp/route121-debug/
+          cd /tmp && zip -qr route121-debug-assets.zip route121-debug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: route121-debug-assets
+          path: /tmp/route121-debug-assets.zip
+          retention-days: 1
