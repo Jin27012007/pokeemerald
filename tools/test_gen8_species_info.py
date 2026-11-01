@@ -123,6 +123,19 @@ def check_macro_expansion_and_target_conditionals():
     conditional_fields = module.extract_designated_fields(resolved)
     assert conditional_fields["expYield"] == "280", conditional_fields
 
+    guarded = """
+#ifdef P_FAMILY_MOTHIM
+#if P_UPDATED_EXP_YIELDS >= GEN_8
+    .expYield = 148,
+#else
+    .expYield = 159,
+#endif
+#endif
+"""
+    guarded_resolved = module.resolve_source_conditionals(guarded, 8)
+    guarded_fields = module.extract_designated_fields(guarded_resolved)
+    assert guarded_fields["expYield"] == "148", guarded_fields
+
 
 def check_real_form_initializer_macros():
     # Macro-based family records are common for form-heavy canonical species.
