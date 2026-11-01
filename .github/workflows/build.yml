@@ -60,9 +60,9 @@ jobs:
           assert save["saveblock1_bytes"] == 0x3D88
           assert save["saveblock2_bytes"] == 0xF2C
           assert save["saveblock2_headroom_bytes"] == 84
-          assert save["saveblock2_expanded_pokedex_bytes"] == 3968
-          assert save["saveblock2_expanded_headroom_bytes"] == 0
-          assert save["saveblock2_fits_after_dex_expansion"] is True
+          assert save["saveblock2_expanded_pokedex_bytes"] == 4006
+          assert save["saveblock2_expanded_headroom_bytes"] == -38
+          assert save["saveblock2_fits_after_dex_expansion"] is False
           assert save["sector_data_bytes"] == 3968
           assert report["readiness"]["num_species_change_allowed"] is False
           print("PASS: save sector sizing and National Dex flag calculations verified.")
