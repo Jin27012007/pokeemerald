@@ -417,8 +417,6 @@
 #define SPECIES_CHIMECHO 411
 #define SPECIES_EGG 412
 
-// National Dex expansion will be added after all species-indexed tables are generated.
-#define SPECIES_EGG 412
 #define NUM_SPECIES SPECIES_EGG
 
 #define SPECIES_UNOWN_B (NUM_SPECIES + 1)
