@@ -76,3 +76,13 @@ This confirms the migration order: canonical species mapping -> full move
 identifier reconciliation -> species metadata/evolutions/learnsets -> Pokédex
 strings/order/cries -> graphics -> species count/save expansion. Do not raise
 `NUM_SPECIES` until each stage passes the generator's validation.
+
+
+## Reproducible compatibility audit added
+
+`tools/audit_gen8_import.py` now compares the checked-in 898-species manifest,
+CFRU species/dex/move definitions and CFRU level-up learnset blocks against
+Emerald's current IDs and move constants. It writes
+`reports/gen8_import_compatibility.json` in CI. The audit does not rewrite C
+tables and does not renumber moves. This prevents invalid partial imports while
+the full movement/contest compatibility layer is unresolved.
