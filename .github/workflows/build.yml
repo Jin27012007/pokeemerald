@@ -74,6 +74,9 @@ jobs:
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
+      - name: Generate explicit canonical source tables and audit pending dependencies
+        run: python3 tools/audit_gen8_pending_tables.py
+
       - name: Verify generated staging sources are tracked and complete
         run: |
           test -s include/gen8_species_map.h
@@ -87,6 +90,8 @@ jobs:
           test -s reports/gen8-conversion/species_info_by_national_dex.json
           test -s reports/gen8-conversion/species_info_field_coverage.json
           test -s reports/gen8-conversion/emerald_species_info_compatibility.json
+          test -s data/pokemon/gen8_reference_tables.json
+          test -s reports/gen8-conversion/pending_tables_report.json
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -102,9 +107,17 @@ jobs:
               "reports/gen8-conversion/species_info_by_national_dex.json",
               "reports/gen8-conversion/species_info_field_coverage.json",
               "reports/gen8-conversion/emerald_species_info_compatibility.json",
+              "data/pokemon/gen8_reference_tables.json",
+              "reports/gen8-conversion/pending_tables_report.json",
           ]
           missing = [p for p in expected if not Path(p).is_file() or Path(p).stat().st_size == 0]
           assert not missing, f"Missing or empty generated files: {missing}"
+          table_data = json.load(open("data/pokemon/gen8_reference_tables.json", encoding="utf-8"))
+          pending = json.load(open("reports/gen8-conversion/pending_tables_report.json", encoding="utf-8"))
+          assert len(table_data["species"]) == 898
+          assert pending["summary"]["canonical_species_rows"] == 898
+          assert pending["source_tables_complete"] is True
+          assert pending["num_species_change_allowed"] is False
           report = json.load(open("reports/gen8-conversion/conversion_report.json", encoding="utf-8"))
           assert report["counts"]["canonical_dex_entries"] == 898
           assert report["counts"]["existing_species"] == 386
@@ -144,6 +157,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gen8-conversion-report
-          path: reports/gen8-conversion/
+          path: |
+            reports/gen8-conversion/
+            data/pokemon/gen8_reference_tables.json
           if-no-files-found: error
           retention-days: 90
