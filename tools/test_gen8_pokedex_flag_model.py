@@ -5,7 +5,6 @@ This is a pure host-side model; it does not write flash or modify save structs.
 It proves the required behavior for seen (3 copies) and caught (2 copies).
 """
 from __future__ import annotations
-import random
 
 DEX_COUNT = 898
 FLAG_BYTES = (DEX_COUNT + 7) // 8
@@ -97,9 +96,15 @@ def main():
     assert not model.get_caught(898)
     assert not model.get_seen(897)
     assert model.get_caught(897)
-    # A caught flag without all the expected duplicate seen flags is cleared.
+    # A caught bit without the matching seen bit/copies is cleared.
     model.set_caught(1)
     assert not model.get_caught(1)
+    # Independent mirror divergence for a different National Dex entry.
+    model.set_seen(500)
+    model.set_caught(500)
+    model.flip_copy_for_test("sb1_seen_a", 500)
+    assert not model.get_caught(500)
+    assert not model.get_seen(500)
     # Bound checks: national 0 and 899 must not be silently accepted.
     for invalid in (0, 899):
         try:
