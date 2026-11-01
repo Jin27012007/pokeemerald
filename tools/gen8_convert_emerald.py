@@ -277,7 +277,7 @@ def parse_species_info(source_text: str, target_info_text: str,
         if friendship_raw and re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", friendship_raw):
             friendship = int(friendship_raw, 0)
         elif friendship_raw == "STANDARD_FRIENDSHIP":
-            friendship = 50 if record["generation"] == 8 else 70
+            friendship = 50 if record["generation"] >= 8 else 70
         else:
             friendship = None
             problems.append(f"unresolved_friendship:{friendship_raw}")
