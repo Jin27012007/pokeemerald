@@ -594,6 +594,7 @@ def source_table_inventory() -> dict:
     ability_use = {}
     item_use = {}
     type_use = set()
+    egg_use = set()
     for dex, mapping, _, source, fields in source_rows:
         for name in re.findall(r"\bABILITY_([A-Z0-9_]+)\b", fields.get("abilities", "")):
             ability_use.setdefault(name, set()).add(dex)
@@ -602,6 +603,7 @@ def source_table_inventory() -> dict:
                 if name != "NONE":
                     item_use.setdefault(name, set()).add(dex)
         type_use.update(re.findall(r"\bTYPE_([A-Z0-9_]+)\b", fields.get("types", "")))
+        egg_use.update(re.findall(r"\bEGG_GROUP_([A-Z0-9_]+)\b", fields.get("eggGroups", "")))
     ability_rows = []
     for name, dexes in sorted(ability_use.items()):
         source_fields = conv.extract_designated_fields(
