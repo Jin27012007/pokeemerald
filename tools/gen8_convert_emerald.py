@@ -815,9 +815,15 @@ def generate(check: bool = False) -> dict:
     source_info_text = "\n".join(source_info_texts.values())
     source_symbol_generation = {}
     source_symbol_macros = {}
-    # Global family macro catalog: each generation's macros are first
-    # collected separately and later overlaid in deterministic source order.
-    source_family_macro_catalog = {}
+    # Global macro catalog from Expansion's constants and all family files.
+    # It is used for shared config macros (STANDARD_FRIENDSHIP, MON_TYPES,
+    # MON_EGG_GROUPS, PERCENT_FEMALE) and species-specific helper aliases.
+    source_family_macro_catalog = extract_c_macros(
+        read(VENDOR / "include/constants/pokemon.h")
+    )
+    source_family_macro_catalog.update(extract_c_macros(
+        read(VENDOR / "include/constants/abilities.h")
+    ))
     for generation, path in zip(SOURCE_GENERATIONS, source_info_files):
         family_text = source_info_texts[path.name]
         family_macros = extract_c_macros(family_text)
