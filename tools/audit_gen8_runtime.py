@@ -66,6 +66,8 @@ def main() -> int:
     current_species_bytes = 4 * ((412 + 7) // 8)
     reserved = re.search(r"unused_3598\[(0x[0-9A-Fa-f]+)\]", save1)
     reserved_save1_bytes = int(reserved.group(1), 16) if reserved else 0
+    if reserved_save1_bytes != 0x180:
+        raise RuntimeError(f"Unexpected SaveBlock1 reserved area: {reserved_save1_bytes:#x}")
 
     source_info_blocks = len(re.findall(r"^\s*\[SPECIES_[A-Z0-9_]+\]\s*=", source_info, re.M))
     source_fields = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", source_info, re.M))
@@ -119,6 +121,7 @@ def main() -> int:
             "additional_flag_bytes_needed": required_total_flag_bytes - current_species_bytes,
             "single_sector_extension_payload_bytes": sector_bytes - 16,
             "double_buffer_extension_bytes": 2 * (required_total_flag_bytes + 16),
+            "saveblock1_candidate_extension_capacity_bytes": reserved_save1_bytes,
             "pokedex_struct_bytes": 0x78,
             "note": (
                 "SaveBlock1 and SaveBlock2 are sector-bounded. Sectors 30 and 31 are "
