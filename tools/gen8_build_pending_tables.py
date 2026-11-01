@@ -667,7 +667,7 @@ def source_table_inventory() -> dict:
     growth_use = {
         symbol
         for dex, mapping, _, source, fields in source_rows
-        for symbol in re.findall(r"\\bGROWTH_([A-Z0-9_]+)\\b", fields.get("growthRate", ""))
+        for symbol in re.findall(r"\bGROWTH_([A-Z0-9_]+)\b", fields.get("growthRate", ""))
     }
     growth_rate_rows = [{
         "growth_rate_symbol": name,
@@ -679,7 +679,7 @@ def source_table_inventory() -> dict:
     missing_growth_rates = sorted(name for name in growth_use if name not in target_growth_ids)
 
     source_evolution_enum = re.search(
-        r"enum\\s+EvolutionMethods\\s*\\{([^}]*)\\}",
+        r"enum\s+EvolutionMethods\s*\{([^}]*)\}",
         source_pokemon_text,
         re.S,
     )
