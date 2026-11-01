@@ -118,7 +118,7 @@ def main() -> int:
             "current_species_flag_bytes": current_species_bytes,
             "additional_flag_bytes_needed": required_total_flag_bytes - current_species_bytes,
             "single_sector_extension_payload_bytes": sector_bytes - 16,
-            "double_buffer_extension_bytes": 2 * (required_seen_owned_bytes + 16),
+            "double_buffer_extension_bytes": 2 * (required_total_flag_bytes + 16),
             "pokedex_struct_bytes": 0x78,
             "note": (
                 "SaveBlock1 and SaveBlock2 are sector-bounded. Sectors 30 and 31 are "
