@@ -321,7 +321,7 @@ def source_table_inventory() -> dict:
     shared_dex_text = read(VENDOR / "src/data/pokemon/species_info/shared_dex_text.h")
     shared_dex_text_values = {}
     shared_pattern = re.compile(
-        r"const\\s+u8\\s+(g[A-Za-z0-9_]+PokedexText)\\s*\\[\\]\\s*=\\s*_\\((.*?)\\);",
+        r"const\s+u8\s+(g[A-Za-z0-9_]+PokedexText)\s*\[\]\s*=\s*_\((.*?)\);",
         re.S,
     )
     for match in shared_pattern.finditer(shared_dex_text):
