@@ -1,34 +1,70 @@
-# Gen 8 conversion — staging and runtime audit
+# Gen 8 storage architecture and SpeciesInfo conversion
 
-Run `python3 tools/gen8_convert_emerald.py` and then `python3 tools/audit_gen8_runtime.py` from the repository root.
+This phase has two goals: quantify the existing save/RAM limits and extract the
+small subset of Gen 8 SpeciesInfo that maps to Emerald's battle-stat record.
+It intentionally does not allocate species IDs, change NUM_SPECIES, or write
+SaveBlock1/SaveBlock2/PokemonStorage.
 
-## Generated source files
+## Architecture findings
 
-- `include/gen8_species_map.h` and `src/data/gen8/species_map.c`: a compilable auxiliary lookup from National Dex 1–898 to Emerald internal species IDs. Existing Emerald identities keep their current numeric IDs; the 512 not-yet-imported base species map to `SPECIES_NONE`.
-- `include/gen8_conversion_status.h`: generated readiness constants. `GEN8_NUM_SPECIES_EXPANSION_ALLOWED` remains 0.
-- `data/pokemon/gen8_species_map.json`: machine-readable Dex identity table.
-- `data/pokemon/gen8_move_dependencies.json`: source move dependencies beyond Emerald's existing move range.
-- `data/pokemon/gen8_level_up_learnsets.json`: 1,104 learnset blocks parsed from the Expansion's actual `struct LevelUpMove` syntax.
-- `reports/gen8-conversion/`: mapping files, move inventory, missing move symbols, runtime blocker report and summary.
+- Emerald stores seen/owned National Dex flags in SaveBlock2's Pokedex record
+  and mirrors other flag bytes into SaveBlock1. The flag array size is derived
+  from NUM_SPECIES, not NATIONAL_DEX_COUNT.
+- SaveBlock1 is a fixed 0x3D88-byte structure assigned four 3968-byte data
+  sectors. SaveBlock2 is assigned one sector; PokemonStorage is assigned nine.
+  Increasing those structs in place can overflow the allocated sectors.
+- The current internal species bound includes Egg and legacy Unown handling.
+  Unown form IDs are defined after NUM_SPECIES; changing the bound moves those
+  aliases. The custom species reservation is not itself a complete Gen 8
+  integration.
+- 898 National Dex entries need 113 bytes per seen/owned bitset (226 bytes
+  total). That is small enough for a single 3968-byte sector, but a robust
+  extension needs a version, magic, checksum, monotonic save counter and
+  double-buffer/recovery policy. Sectors 30/31 are already used by Trainer Hill
+  and Recorded Battle and must not be reused without a deliberate redesign.
+- The Gen 8 vendor snapshot includes 186 Gen 8 SpeciesInfo blocks among its
+  family data; it is not a complete 512-record dataset. Fields for front/back
+  sprites, animation, icons, cry, Pokédex text, forms and evolutions do not
+  belong to vanilla's compact struct SpeciesInfo.
 
-GitHub Actions uploads both the compiled ROM and the report directory as separate artifacts.
+## Generated outputs
 
-## Validated staging counts
+Run:
 
-The current successful CI report found 898 canonical National Dex identities, with 386 matching existing Emerald species and 512 requiring future internal IDs. It parsed 1,104 learnset blocks, with 17,044 level/move entries and 732 distinct learnset move symbols. 419 of those symbols are not present in the vanilla Emerald move constants.
+```sh
+python3 tools/audit_gen8_runtime.py
+python3 tools/gen8_convert_emerald.py
+```
 
-The pinned source header contains 186 SpeciesInfo records, not a complete 898-record table. The separate Gen 8 SpeciesInfo family file has conditional family data and Expansion-only field references. It is not safe to copy that file into Emerald's live `gSpeciesInfo`.
+The report directory contains:
+- `storage_architecture_audit.json`: sector capacities, bitset requirements,
+  identifier gaps and explicit readiness gates.
+- `species_info_compact.json`: raw, reviewable compact-stat candidates for
+  source records whose type/ability/egg-group/item identifiers can be mapped.
+- `species_info_unresolved.json`: records that need an explicit identifier
+  mapping or more complete source data.
+- `conversion_report.json`, species mapping, learnsets and move dependency
+  inventories.
 
-## Runtime blockers
+## SpeciesInfo mapping rule
 
-`tools/audit_gen8_runtime.py` generates `integration_blockers.json` and `integration_blockers.md`. It inventories missing abilities, items, types, BattleMove and ContestMove records, extra species metadata fields, evolution method references, cry-name mismatches and known memory limits.
+Only values representable in `struct SpeciesInfo` are candidates:
+base stats, catch rate, experience yield, EV yields, gender ratio, egg cycles,
+friendship, growth rate, types, egg groups, abilities, held items and body
+color. Expansion-only values (sprite pointers, animations, names, descriptions,
+height/weight, cries, form changes, extra abilities, and flags) remain outside
+the compact runtime record.
 
-The vendored snapshot lacks the Expansion's battle move definitions and does not include the corresponding Gen 8 graphics or audio asset payloads. It is not enough to extract numeric learnsets; each referenced new move needs a correct battle implementation and Contest category/effect/combo data before it can be used in a Contest-focused game.
+Numeric enum values are never copied by their numeric source value. They must
+be looked up by symbolic name in vanilla Emerald. Missing identifiers are
+reported, never aliased to unrelated items/abilities/moves.
 
-## Why NUM_SPECIES remains blocked
+## NUM_SPECIES gate
 
-The latest successful vanilla compile reports EWRAM at 95.26%, IWRAM at 92.82%, SaveBlock1 at 99.24%, SaveBlock2 at 97.88%, and Pokémon Storage at 94.49%. SaveBlock1 has only 120 bytes remaining in that baseline. Expanding structures or adding new Pokémon without redesigning the save strategy is unsafe.
-
-Before changing `NUM_SPECIES`, the next implementation milestones are: define a save-compatible species storage strategy; complete the missing SpeciesInfo records and translate every enum; supply Gen 8 battle definitions and Contest data; generate target-compatible evolutions and Pokédex strings; add graphics, palettes, icons and cries; then audit all species-indexed tables, loops, arrays, dex navigation, storage, trades, and save serialization.
-
-No production species ID, move ID, live SpeciesInfo table or save structure is changed by the staging layer. A successful CI build proves the original Emerald runtime plus the auxiliary mapping compiles; it does not mean Gen 8 Pokémon are already playable.
+The generated readiness report keeps `num_species_change_allowed=false`.
+Before allocation: settle the extension sector layout and dual-copy recovery
+tests; obtain complete 512-species SpeciesInfo; map or implement missing
+abilities/items/Fairy type; finish evolution, move battle/Contest records,
+Pokédex text, cry/audio assets, graphics/palettes/icons; audit all species-index
+tables, Unown offsets, save serialization, link/trade and scripts; then build,
+measure EWRAM/IWRAM and execute a new-game/save/reload emulator test.
