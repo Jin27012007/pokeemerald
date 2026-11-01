@@ -121,3 +121,36 @@ The duplicate provisional `SPECIES_EGG` line was removed. The original Emerald
 species header remains valid: all original species IDs and the Egg sentinel
 retain their prior values. Gen 8 additions are still pending the complete
 table-generation phase.
+
+
+## Correção dos números e segunda fonte de dados (2026-11-01)
+
+O log completo do GitHub Actions, execução `41329512283` no commit
+`644a0b2f445fe973d889dd8782e5c8fc4f3619da`, registra os valores exatos
+produzidos pelo auditor CFRU:
+
+- 512 espécies canônicas novas para o intervalo National Dex 387-898.
+- 507 blocos de learnset localizados de 512; cinco continuam sem resolução.
+- 646 identificadores de movimentos distintos encontrados nesses learnsets.
+- 500 identificadores de movimento ainda ausentes na tabela Emerald.
+
+Portanto, os números anteriores de 487/510 espécies e "aproximadamente 500"
+movimentos eram estimativas incorretas. O job terminou com sucesso porque o
+auditor está em modo informativo, não porque a migração esteja pronta. A etapa
+de compilação confirmou apenas que a ROM-base moderna continua compilando.
+
+Como segunda fonte de dados, foram adicionados quatro arquivos de referência do
+`rh-hideout/pokeemerald-expansion`, fixados no commit
+`c460a8661dfa0598ae25d42a968c690ecbf489c6`, em
+`tools/vendor/pokeemerald-expansion/`: IDs de espécies, IDs de movimentos,
+registros de espécies da Gen 8 e learnsets da Gen 8. Essa fonte é baseada em
+Emerald e contém estruturas mais próximas do alvo, mas seus macros, flags,
+formas, assets e campos extras também não são compatíveis diretamente com
+vanilla Emerald. Os arquivos foram armazenados como referência e não são
+incluídos no build.
+
+O próximo passo técnico é construir um conversor para os campos compatíveis
+com as estruturas atuais de Emerald e emitir uma lista explícita dos campos
+que exigem adaptação (abilities, types, evolution methods, move IDs e gráficos).
+Nenhum ID de espécie existente foi alterado e `NUM_SPECIES` permanece
+inalterado até a geração e validação de todas as tabelas.
