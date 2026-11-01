@@ -161,6 +161,7 @@ def generate(check: bool = False) -> dict:
     learnsets = extract_learnsets(read(SRC_LEARNSETS))
     source_info_text = read(SRC_SPECIES_INFO)
     target_info_text = read(DST_INFO)
+    (ROOT / "src/data/gen8").mkdir(parents=True, exist_ok=True)
 
     # The pinned source enum's IDs 1..898 correspond to canonical National Dex.
     by_dex = {}
@@ -266,7 +267,7 @@ def generate(check: bool = False) -> dict:
         # Commit-safe and buildable C scaffolding. New species remain unmapped,
         # so this table can coexist with vanilla NUM_SPECIES unchanged.
         write(ROOT / "include/gen8_species_map.h", emit_species_header())
-        write(ROOT / "src/data/gen8_species_map.c", emit_species_c(species_map))
+        write(ROOT / "src/data/gen8/species_map.c", emit_species_c(species_map))
         write(ROOT / "include/gen8_conversion_status.h", emit_readiness_header(counts))
         write_json(ROOT / "data/pokemon/gen8_species_map.json", species_map)
         write_json(ROOT / "data/pokemon/gen8_move_dependencies.json", move_dependencies)
