@@ -92,6 +92,38 @@ def check_expansion_brace_on_next_line():
     assert fields["eggGroups"] == "MON_EGG_GROUPS(EGG_GROUP_MONSTER, EGG_GROUP_GRASS)", fields
 
 
+def check_macro_expansion_and_target_conditionals():
+    source = r"""
+#define BASE_STATS(type) \
+    { \
+        .baseHP = 60, \
+        .types = MON_TYPES(type), \
+        .expYield = (P_UPDATED_EXP_YIELDS >= GEN_8) ? 280 : 200, \
+    }
+#define NESTED_STATS(type) BASE_STATS(type)
+    [SPECIES_TESTMON] = NESTED_STATS(TYPE_DARK),
+    """
+    macros = module.extract_c_macros(source)
+    rows = module.balanced_species_records(source)
+    assert len(rows) == 1, rows
+    expanded = module.expand_c_macro_text(rows[0]["body"], macros)
+    fields = module.extract_designated_fields(expanded)
+    assert fields["baseHP"] == "60", fields
+    assert fields["types"] == "MON_TYPES(TYPE_DARK)", fields
+    assert fields["expYield"] == "(P_UPDATED_EXP_YIELDS >= GEN_8) ? 280 : 200", fields
+
+    conditional = """
+#if P_UPDATED_EXP_YIELDS >= GEN_8
+    .expYield = 280,
+#else
+    .expYield = 200,
+#endif
+"""
+    resolved = module.resolve_source_conditionals(conditional, 8)
+    conditional_fields = module.extract_designated_fields(resolved)
+    assert conditional_fields["expYield"] == "280", conditional_fields
+
+
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
@@ -118,6 +150,7 @@ def main():
     check_nested_designated_initializers()
     check_balanced_species_record_strings()
     check_expansion_brace_on_next_line()
+    check_macro_expansion_and_target_conditionals()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
