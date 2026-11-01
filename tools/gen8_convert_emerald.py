@@ -218,6 +218,11 @@ def expand_c_macro_text(text: str, macros: dict, depth: int = 0) -> str:
     """Expand local family macros needed for SpeciesInfo compact fields."""
     if depth > 12 or not macros:
         return text
+    # Family headers contain #if/#else macro variants (e.g. type and ability
+    # changes by P_UPDATED_*). The converter targets Gen 8 policy, so choose
+    # those macro definitions before expansion instead of keeping whichever
+    # #define happened to appear last in the file.
+    text = resolve_source_conditionals(text, TARGET_GAME_GENERATION)
     result = text
     for _ in range(8):
         changed = False
@@ -508,6 +513,10 @@ def parse_species_info(source_text: str, target_info_text: str,
         if raw is None:
             return None
         raw = " ".join(raw.split())
+        # Resolve preprocessor-selected and simple object-like macros before
+        # parsing primitive values. This handles fields such as PIKACHU_DEFENSE,
+        # GENGAR_SP_DEF, MEOWTH_ABILITIES, and conditional type aliases.
+        raw = expand_c_macro_text(raw, source_symbol_macros.get("__catalog__", {}))
         # Resolve well-understood Expansion generation switches, with the
         # source generation interpreted as the compatibility level.
         conditionals = [
