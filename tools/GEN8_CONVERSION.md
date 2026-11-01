@@ -23,7 +23,7 @@ species IDs, change NUM_SPECIES, or write SaveBlock1/SaveBlock2/PokemonStorage.
   extension needs a version, magic, checksum, monotonic save counter and
   double-buffer/recovery policy. Sectors 30/31 are already used by Trainer Hill
   and Recorded Battle and must not be reused without a deliberate redesign.
-- The vendor snapshot includes Gen 4-9 family headers. Family headers contain
+- The vendor snapshot includes Gen 1-8 family headers. Family headers contain
   multiple forms and may share a National Dex number; the audit selects the
   canonical symbol for each Dex entry and preserves sibling forms separately.
 - Emerald's SpeciesInfo has two 8-bit ability slots; Expansion uses three
