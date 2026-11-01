@@ -96,3 +96,11 @@ under `tools/vendor/cfru/`, pinned to upstream CFRU commit
 reproducible and independent of a moving upstream branch at build time. The
 snapshot is limited to species constants, National Dex constants, move
 constants, and level-up learnsets; no engine hooks or binary assets are copied.
+
+## Important source-format correction
+
+CFRU's `level_up_learnsets.c` keeps Gen 4-8 additions in a large commented
+block before the closing comment marker. The source audit intentionally scans
+those declarations as source data, but a production importer must extract
+only those blocks and validate every referenced move symbol. It must not
+uncomment or compile this upstream file as-is.
