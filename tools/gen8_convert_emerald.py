@@ -613,6 +613,9 @@ def parse_species_info(source_text: str, target_info_text: str,
                 fields[field] = resolve_source_conditionals(
                     fields[field], TARGET_GAME_GENERATION
                 )
+                fields[field] = expand_c_macro_text(
+                    fields[field], source_symbol_macros.get("__catalog__", {})
+                )
                 resolved_scalar = resolve_generation_expression(
                     fields[field], TARGET_GAME_GENERATION
                 )
