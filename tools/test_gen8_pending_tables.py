@@ -88,6 +88,17 @@ def test_numeric_define_catalog_with_comments():
     assert values == {"LEVEL": 4, "ITEM": 7, "SPIN": 8}, values
 
 
+def test_cry_table_labels():
+    source = """gCryTable::
+    cry Cry_Bulbasaur
+    cry Cry_MrMime
+gCryTable_Reverse::
+    cry_reverse Cry_Bulbasaur
+"""
+    labels = module.parse_cry_table_labels(source)
+    assert labels == {"bulbasaur", "mrmime"}, labels
+
+
 def test_named_array_inventory():
     source = '''
     static const u16 sExampleFormSpeciesIdTable[] = {
@@ -112,6 +123,7 @@ def main():
     test_text_fragments()
     test_conditional_shared_pokedex_text_pointer()
     test_numeric_define_catalog_with_comments()
+    test_cry_table_labels()
     test_named_array_inventory()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
 
