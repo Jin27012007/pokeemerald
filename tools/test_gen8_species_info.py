@@ -210,7 +210,9 @@ def check_gen8_stats_conditionals_use_target_generation():
         ("(P_UPDATED_FRIENDSHIP >= GEN_8) ? 50 : 70", 50),
     ]
     for raw, expected in cases:
-        compact = " ".join(raw.split()).strip("() ")
+        compact = " ".join(raw.split())
+        compact = compact.strip("() ")
+        compact = compact.replace(") ?", " ?")
         m = module.re.fullmatch(
             r"(?P<flag>P_UPDATED_[A-Z0-9_]+)\s*>=\s*GEN_(?P<gen>\d+)\s*\?\s*(?P<yes>-?\d+)\s*:\s*(?P<no>-?\d+)",
             compact,
