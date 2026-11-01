@@ -294,6 +294,17 @@ def check_family_macro_preprocessor_selection():
     assert fields["baseHP"] == "65", fields
     assert fields["types"] == "MON_TYPES(TYPE_FAIRY)", fields
 
+def check_generic_gen8_conditional_values():
+    cases = [
+        ("P_UPDATED_STATS >= GEN_6 || P_UPDATED_STATS == GEN_1 ? 50 : 40", "50"),
+        ("(P_UPDATED_EVS >= GEN_4) ? 1 : 2", "1"),
+        ("(P_UPDATED_TYPES >= GEN_6 ? TYPE_FAIRY : TYPE_NORMAL)", "TYPE_FAIRY"),
+        ("(P_UPDATED_TYPES >= GEN_2 ? TYPE_STEEL : TYPE_ELECTRIC)", "TYPE_STEEL"),
+    ]
+    for expression, expected in cases:
+        actual = module.resolve_c_ternary_expression(expression, module.TARGET_GAME_GENERATION)
+        assert actual == expected, (expression, actual, expected)
+
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
@@ -329,6 +340,7 @@ def main():
     check_family_guards_are_included_in_source_catalog()
     check_wrapped_standard_friendship_ternary()
     check_family_macro_preprocessor_selection()
+    check_generic_gen8_conditional_values()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
