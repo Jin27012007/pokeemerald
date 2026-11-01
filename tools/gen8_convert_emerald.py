@@ -713,7 +713,11 @@ def parse_species_info(source_text: str, target_info_text: str,
 
         ability_raw = fields.get("abilities", "")
         # The designated-field scanner already removed ".abilities =" and
-        # the outer braces; parse the initializer contents directly.
+        # the outer braces; resolve shared family aliases before parsing.
+        ability_raw = expand_c_macro_text(
+            ability_raw, source_symbol_macros.get("__catalog__", {})
+        )
+        ability_raw = expand_c_macro_text(ability_raw, macros)
         ability_names = re.findall(r"ABILITY_([A-Z0-9_]+)", ability_raw)
         ability_pair = None
         hidden_ability = None
