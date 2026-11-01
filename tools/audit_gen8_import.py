@@ -74,6 +74,9 @@ def main() -> int:
             raise RuntimeError("Manifest is not exactly the canonical 898-species list")
 
         target_species = parse_defines(read(TARGET_FILES["species"]), "SPECIES_")
+        # NUM_SPECIES and derived Unown form aliases are macros, not standalone
+        # integer definitions, so they are intentionally excluded here.
+        target_species.pop("EGG", None)
         target_moves = parse_defines(read(TARGET_FILES["moves"]), "MOVE_")
         source_species = parse_defines(read(SOURCE_FILES["species"]), "SPECIES_")
         source_dex = parse_defines(read(SOURCE_FILES["pokedex"]), "NATIONAL_DEX_")
