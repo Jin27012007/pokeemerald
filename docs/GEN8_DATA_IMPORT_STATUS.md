@@ -113,3 +113,11 @@ species definitions for special forms in the vendored CFRU header. The parser
 now accepts repeated definitions only when their numeric values match, and
 continues to reject conflicting values. No species or move identifiers have
 been rewritten in Emerald.
+
+
+## Species header cleanup
+
+The duplicate provisional `SPECIES_EGG` line was removed. The original Emerald
+species header remains valid: all original species IDs and the Egg sentinel
+retain their prior values. Gen 8 additions are still pending the complete
+table-generation phase.
