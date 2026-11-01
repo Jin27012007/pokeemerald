@@ -666,6 +666,25 @@ def parse_species_info(source_text: str, target_info_text: str,
         dex_value = nat_match.group(1) if nat_match else None
         raw_common_item = common_raw
         raw_rare_item = rare_raw
+        source_required_fields = {
+            "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
+            "baseSpDefense", "catchRate", "expYield", "genderRatio", "eggCycles",
+            "friendship", "growthRate", "types", "eggGroups", "abilities",
+            "bodyColor",
+        }
+        source_missing_fields = sorted(source_required_fields - set(fields))
+        source_complete = not source_missing_fields
+        runtime_gaps = []
+        if hidden_ability is not None and hidden_ability > 255:
+            runtime_gaps.append("hidden_ability_id_exceeds_u8")
+        if len(ability_names) > 2 and hidden_ability not in (None, ability_values.get("NONE", 0)):
+            runtime_gaps.append("third_ability_slot_not_in_emerald_struct")
+        if "FAIRY" in re.findall(r"TYPE_([A-Z0-9_]+)", fields.get("types", "")):
+            runtime_gaps.append("fairy_type_not_in_emerald_enum")
+        if any(problem.startswith(("unknown_ability:", "unknown_hidden_ability:")) for problem in problems):
+            runtime_gaps.append("source_ability_missing_from_emerald_target")
+        if any(problem.startswith("unknown_item:") for problem in problems):
+            runtime_gaps.append("source_held_item_missing_from_emerald_target")
         record_data = {
             "species_symbol": record["symbol"],
             "generation": record["generation"],
@@ -683,6 +702,10 @@ def parse_species_info(source_text: str, target_info_text: str,
             "item_common": item_values.get(common_name),
             "item_rare": item_values.get(rare_name),
             "body_color": body_color,
+            "source_complete": source_complete,
+            "source_missing_fields": source_missing_fields,
+            "compact_compatible": not problems,
+            "runtime_gaps": sorted(set(runtime_gaps)),
             "status": "compact_fields_resolved" if not problems else "manual_mapping_required",
             "unresolved": problems,
         }
