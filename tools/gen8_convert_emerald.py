@@ -180,8 +180,16 @@ def write_json(path: Path, value) -> None:
     write(path, json.dumps(value, indent=2, ensure_ascii=False) + "\n")
 
 def parse_species_info(source_text: str, target_info_text: str,
-                       type_text: str, ability_text: str, item_text: str) -> dict:
+                       type_text: str, ability_text: str, item_text: str,
+                       source_symbol_generation: dict[str, int]) -> dict:
     records = balanced_species_records(source_text)
+    for record in records:
+        generation = source_symbol_generation.get(record["symbol"])
+        if generation is None:
+            raise RuntimeError(
+                "SpeciesInfo source generation missing for " + record["symbol"]
+            )
+        record["generation"] = generation
     type_values = {x["symbol"]: x["id"] for x in symbols(type_text, "TYPE_")}
     ability_values = {x["symbol"]: x["id"] for x in symbols(ability_text, "ABILITY_")}
     egg_values = {x["symbol"]: x["id"] for x in symbols(type_text, "EGG_GROUP_")}
@@ -365,12 +373,24 @@ def generate(check: bool = False) -> dict:
     source_info_texts = {path.name: read(path) for path in source_info_files}
     source_learnset_texts = {path.name: read(path) for path in source_learnset_files}
     source_info_text = "\n".join(source_info_texts.values())
+    source_symbol_generation = {}
+    for generation, path in zip(SOURCE_GENERATIONS, source_info_files):
+        for record in balanced_species_records(source_info_texts[path.name]):
+            symbol = record["symbol"]
+            if symbol in source_symbol_generation:
+                raise RuntimeError(
+                    "Duplicate SpeciesInfo designator across source generations: " + symbol
+                )
+            source_symbol_generation[symbol] = generation
     target_info_text = read(DST_INFO)
     learnsets = []
     for generation, path in zip(SOURCE_GENERATIONS, source_learnset_files):
         learnsets.extend(extract_learnsets(source_learnset_texts[path.name], generation))
     type_text, ability_text, item_text = read(DST_POKEMON_CONSTANTS), read(DST_ABILITIES), read(DST_ITEMS)
-    info_result = parse_species_info(source_info_text, target_info_text, type_text, ability_text, item_text)
+    info_result = parse_species_info(
+        source_info_text, target_info_text, type_text, ability_text, item_text,
+        source_symbol_generation,
+    )
     info_by_symbol = {}
     for record in info_result["compact_records"] + info_result["unresolved_records"]:
         if record["species_symbol"] in info_by_symbol:
