@@ -68,6 +68,9 @@ jobs:
           print("PASS: save sector sizing and National Dex flag calculations verified.")
           PY
 
+      - name: Test Gen 8 SpeciesInfo parsers and source mappings
+        run: python3 tools/test_gen8_species_info.py
+
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
