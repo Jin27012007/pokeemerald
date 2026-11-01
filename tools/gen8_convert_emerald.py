@@ -198,9 +198,11 @@ def parse_species_info(source_text: str, target_info_text: str,
     out, unresolved = [], []
     scalar_fields = (
         "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
-        "baseSpDefense", "catchRate", "expYield", "evYield_HP",
-        "evYield_Attack", "evYield_Defense", "evYield_Speed",
-        "evYield_SpAttack", "evYield_SpDefense", "eggCycles",
+        "baseSpDefense", "catchRate", "expYield", "eggCycles",
+    )
+    ev_fields = (
+        "evYield_HP", "evYield_Attack", "evYield_Defense", "evYield_Speed",
+        "evYield_SpAttack", "evYield_SpDefense",
     )
 
     def resolve_gender(raw):
@@ -226,15 +228,20 @@ def parse_species_info(source_text: str, target_info_text: str,
         for field in scalar_fields:
             raw = fields.get(field)
             if raw is None:
-                if field.startswith("evYield_"):
-                    values[field] = 0
-                    continue
                 problems.append(f"missing_scalar:{field}")
-                continue
-            if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
+            elif re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
                 values[field] = int(raw, 0)
             else:
                 problems.append(f"unresolved_scalar:{field}:{raw}")
+
+        for field in ev_fields:
+            raw = fields.get(field)
+            if raw is None:
+                values[field] = 0
+            elif re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
+                values[field] = int(raw, 0)
+            else:
+                problems.append(f"unresolved_ev_yield:{field}:{raw}")
 
         gender_raw = fields.get("genderRatio")
         gender_ratio = resolve_gender(gender_raw)
@@ -244,9 +251,9 @@ def parse_species_info(source_text: str, target_info_text: str,
         friendship_raw = fields.get("friendship")
         if friendship_raw and re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", friendship_raw):
             friendship = int(friendship_raw, 0)
+        elif friendship_raw == "STANDARD_FRIENDSHIP":
+            friendship = 50 if record["generation"] == 8 else 70
         else:
-            # Expansion's STANDARD_FRIENDSHIP differs from vanilla Emerald.
-            # Do not borrow the vanilla value; leave it blocked until sourced.
             friendship = None
             problems.append(f"unresolved_friendship:{friendship_raw}")
 
@@ -289,15 +296,18 @@ def parse_species_info(source_text: str, target_info_text: str,
             body,
         )
         ability_pair = None
+        hidden_ability = None
         if ability_match:
             names = [ability_match.group(1), ability_match.group(2)]
-            hidden = ability_match.group(3)
-            if hidden and hidden != "NONE":
-                problems.append(f"third_ability_not_supported:{hidden}")
+            hidden = ability_match.group(3) or "NONE"
             if any(name not in ability_values for name in names):
                 problems.extend(f"unknown_ability:{name}" for name in names if name not in ability_values)
             else:
                 ability_pair = [ability_values[name] for name in names]
+            if hidden not in ability_values:
+                problems.append(f"unknown_hidden_ability:{hidden}")
+            else:
+                hidden_ability = ability_values[hidden]
         else:
             problems.append("unresolved_abilities")
 
@@ -328,6 +338,7 @@ def parse_species_info(source_text: str, target_info_text: str,
             "types": type_pair,
             "egg_groups": egg_pair,
             "abilities": ability_pair,
+            "hidden_ability": hidden_ability,
             "item_common": item_values.get(common_name),
             "item_rare": item_values.get(rare_name),
             "body_color": body_color,
@@ -421,6 +432,7 @@ def generate(check: bool = False) -> dict:
         "learnset_source_files": len(source_learnset_files),
         "species_info_compact_records": len(info_result["compact_records"]),
         "species_info_unresolved_records": len(info_result["unresolved_records"]),
+        "species_info_hidden_abilities_resolved": sum(1 for row in info_result["compact_records"] + info_result["unresolved_records"] if row["hidden_ability"] is not None),
         "missing_species_info_for_new_dex_species": len(missing_species_info),
     }
     report = {
