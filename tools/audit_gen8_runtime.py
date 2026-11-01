@@ -128,6 +128,7 @@ def main() -> int:
             "saveblock2_headroom_bytes": sector_bytes - save2_bytes,
             "saveblock2_expanded_pokedex_bytes": save2_expanded_bytes,
             "saveblock2_expanded_headroom_bytes": save2_expanded_headroom_bytes,
+            "saveblock2_fits_after_dex_expansion": save2_expanded_bytes <= sector_bytes,
             "pokemon_storage_bytes": storage_bytes,
             "pokemon_storage_capacity_bytes": 9 * sector_bytes,
             "national_dex_count": dex_count,
