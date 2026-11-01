@@ -584,10 +584,10 @@ def generate(check: bool = False) -> dict:
         "ability_slot_3_runtime_compatible": False,
         "source_ability_enum_width_bits": 16,
         "emerald_ability_slot_width_bits": 8,
-        "all_source_ability_ids_fit_emerald_slot": max((x["id"] for x in info_result["source_enum_domains"]["abilities"].values()), default=0) <= 255,
+        "all_source_ability_ids_fit_emerald_slot": max(info_result["source_enum_domains"]["abilities"].values(), default=0) <= 255,
         "source_item_enum_width_bits": 16,
         "emerald_item_slot_width_bits": 16,
-        "all_source_item_ids_fit_emerald_slot": max((x["id"] for x in info_result["source_enum_domains"]["items"].values()), default=0) <= 65535,
+        "all_source_item_ids_fit_emerald_slot": max(info_result["source_enum_domains"]["items"].values(), default=0) <= 65535,
         "fairy_type_supported_in_emerald": "FAIRY" in {x["symbol"] for x in symbols(type_text, "TYPE_")},
         "source_only_fields_require_runtime_work": ["third_ability_slot", "new_abilities", "new_items", "fairy_type"],
     }
