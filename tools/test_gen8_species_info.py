@@ -277,6 +277,22 @@ def check_wrapped_standard_friendship_ternary():
 
 
 
+
+def check_family_macro_preprocessor_selection():
+    source = """
+#if P_FAMILY_ALCREMIE
+#define ALCREMIE_TEST_INFO { .baseHP = 65, .types = MON_TYPES(TYPE_FAIRY) }
+#else
+#define ALCREMIE_TEST_INFO { .baseHP = 0, .types = MON_TYPES(TYPE_NONE) }
+#endif
+"""
+    selected = module.resolve_source_conditionals(source, 8)
+    macros = module.extract_c_macros(selected)
+    expanded = module.expand_c_macro_text("ALCREMIE_TEST_INFO", macros)
+    fields = module.extract_designated_fields(expanded)
+    assert fields["baseHP"] == "65", fields
+    assert fields["types"] == "MON_TYPES(TYPE_FAIRY)", fields
+
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
@@ -311,6 +327,7 @@ def main():
     check_actual_speciesinfo_generation8_target_resolution()
     check_family_guards_are_included_in_source_catalog()
     check_wrapped_standard_friendship_ternary()
+    check_family_macro_preprocessor_selection()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
