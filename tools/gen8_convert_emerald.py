@@ -178,18 +178,12 @@ def write(path: Path, content: str) -> None:
 def write_json(path: Path, value) -> None:
     write(path, json.dumps(value, indent=2, ensure_ascii=False) + "\\n")
 
-def parse_species_info(source_text: str, target_text: str,
+def parse_species_info(source_text: str, target_info_text: str,
                        type_text: str, ability_text: str, item_text: str) -> dict:
     records = balanced_species_records(source_text)
-    type_names = {x["symbol"] for x in symbols(type_text, "TYPE_")}
-    ability_names = {x["symbol"] for x in symbols(ability_text, "ABILITY_")}
-    item_names = {x["symbol"] for x in re.finditer(r"^\s*ITEM_([A-Z0-9_]+)\s*,", item_text, re.M)}
-    # Correct the set from the enum-like item list; its order determines numeric IDs.
-    item_names = set(re.findall(r"^\s*ITEM_([A-Z0-9_]+)\s*,", item_text, re.M))
-    egg_names = set(re.findall(r"^#define EGG_GROUP_([A-Z0-9_]+)\s+", type_text, re.M))
-    base_ability_values = {
-        x["symbol"]: x["id"] for x in symbols(ability_text, "ABILITY_")
-    }
+    type_values = {x["symbol"]: x["id"] for x in symbols(type_text, "TYPE_")}
+    ability_values = {x["symbol"]: x["id"] for x in symbols(ability_text, "ABILITY_")}
+    egg_values = {x["symbol"]: x["id"] for x in symbols(type_text, "EGG_GROUP_")}
     item_values = {}
     enum_index = -1
     for line in item_text.splitlines():
@@ -197,73 +191,119 @@ def parse_species_info(source_text: str, target_text: str,
         if m:
             enum_index += 1
             item_values[m.group(1)] = enum_index
-    type_values = {x["symbol"]: x["id"] for x in symbols(type_text, "TYPE_")}
-    egg_values = {x["symbol"]: x["id"] for x in symbols(type_text, "EGG_GROUP_")}
-    target_field_set = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", target_text, re.M))
-    output, unresolved = [], []
+
+    out, unresolved = [], []
+    scalar_fields = (
+        "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
+        "baseSpDefense", "catchRate", "expYield", "evYield_HP",
+        "evYield_Attack", "evYield_Defense", "evYield_Speed",
+        "evYield_SpAttack", "evYield_SpDefense", "genderRatio",
+        "eggCycles", "friendship", "growthRate",
+    )
     for record in records:
-        f = extract_designated_fields(record["body"])
-        def scalar(field, default=None):
-            raw = f.get(field)
-            if raw is None:
-                return default
-            return int(raw, 0) if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw) else default
-        def enum_one(field, prefix, allowed, value_map):
-            m = re.search(rf"\b{prefix}_([A-Z0-9_]+)\b", record["body"])
-            if not m:
-                return None
-            name = m.group(1)
-            if name not in allowed:
-                return {"unresolved": name}
-            return value_map.get(name)
-        tmatch = re.search(r"\.types\s*=\s*MON_TYPES\(\s*TYPE_([A-Z0-9_]+)(?:\s*,\s*TYPE_([A-Z0-9_]+))?\s*\)", record["body"])
-        ematch = re.search(r"\.eggGroups\s*=\s*MON_EGG_GROUPS\(\s*EGG_GROUP_([A-Z0-9_]+)\s*,\s*EGG_GROUP_([A-Z0-9_]+)\s*\)", record["body"])
-        amatch = re.search(r"\.abilities\s*=\s*\{\s*ABILITY_([A-Z0-9_]+)\s*,\s*ABILITY_([A-Z0-9_]+)(?:\s*,\s*ABILITY_([A-Z0-9_]+))?\s*\}", record["body"])
-        imatch = re.search(r"\.itemRare\s*=\s*ITEM_([A-Z0-9_]+)", record["body"])
+        body = record["body"]
+        fields = extract_designated_fields(body)
         problems = []
+        values = {}
+        for field in scalar_fields:
+            raw = fields.get(field)
+            if raw is None:
+                if field.startswith("evYield_"):
+                    values[field] = 0
+                    continue
+                problems.append(f"missing_scalar:{field}")
+                continue
+            if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
+                values[field] = int(raw, 0)
+            else:
+                problems.append(f"unresolved_scalar:{field}:{raw}")
+
+        # Type mapping supports MON_TYPES(TYPE_X) or MON_TYPES(TYPE_X, TYPE_Y).
+        type_match = re.search(
+            r"\.types\s*=\s*MON_TYPES\(\s*TYPE_([A-Z0-9_]+)(?:\s*,\s*TYPE_([A-Z0-9_]+))?\s*\)",
+            body,
+        )
         type_pair = None
-        if tmatch:
-            type_pair = [tmatch.group(1), tmatch.group(2) or tmatch.group(1)]
-            for n in type_pair:
-                if n not in type_names:
-                    problems.append(f"unknown_type:{n}")
+        if type_match:
+            names = [type_match.group(1), type_match.group(2) or type_match.group(1)]
+            if any(name not in type_values for name in names):
+                problems.extend(f"unknown_type:{name}" for name in names if name not in type_values)
+            else:
+                type_pair = [type_values[name] for name in names]
+        else:
+            problems.append("unresolved_types")
+
+        egg_match = re.search(
+            r"\.eggGroups\s*=\s*MON_EGG_GROUPS\(\s*EGG_GROUP_([A-Z0-9_]+)\s*,\s*EGG_GROUP_([A-Z0-9_]+)\s*\)",
+            body,
+        )
         egg_pair = None
-        if ematch:
-            egg_pair = [ematch.group(1), ematch.group(2)]
-            for n in egg_pair:
-                if n not in egg_names:
-                    problems.append(f"unknown_egg_group:{n}")
+        if egg_match:
+            names = [egg_match.group(1), egg_match.group(2)]
+            if any(name not in egg_values for name in names):
+                problems.extend(f"unknown_egg_group:{name}" for name in names if name not in egg_values)
+            else:
+                egg_pair = [egg_values[name] for name in names]
+        else:
+            problems.append("unresolved_egg_groups")
+
+        ability_match = re.search(
+            r"\.abilities\s*=\s*\{\s*ABILITY_([A-Z0-9_]+)\s*,\s*ABILITY_([A-Z0-9_]+)(?:\s*,\s*ABILITY_([A-Z0-9_]+))?\s*\}",
+            body,
+        )
         ability_pair = None
-        if amatch:
-            ability_pair = [amatch.group(1), amatch.group(2)]
-            for n in ability_pair:
-                if n not in ability_names:
-                    problems.append(f"unknown_ability:{n}")
-        rare_item = imatch.group(1) if imatch else "ITEM_NONE"
-        if rare_item not in item_names:
-            problems.append(f"unknown_item:{rare_item}")
-        compact = {
+        if ability_match:
+            names = [ability_match.group(1), ability_match.group(2)]
+            if any(name not in ability_values for name in names):
+                problems.extend(f"unknown_ability:{name}" for name in names if name not in ability_values)
+            else:
+                ability_pair = [ability_values[name] for name in names]
+        else:
+            problems.append("unresolved_abilities")
+
+        rare_item_match = re.search(r"\.itemRare\s*=\s*ITEM_([A-Z0-9_]+)", body)
+        common_item_match = re.search(r"\.itemCommon\s*=\s*ITEM_([A-Z0-9_]+)", body)
+        # The source may omit itemCommon or itemRare; missing means ITEM_NONE.
+        rare_name = rare_item_match.group(1) if rare_item_match else "NONE"
+        common_name = common_item_match.group(1) if common_item_match else "NONE"
+        if rare_name not in item_values:
+            problems.append(f"unknown_item:{rare_name}")
+        if common_name not in item_values:
+            problems.append(f"unknown_item:{common_name}")
+
+        body_color_match = re.search(r"\.bodyColor\s*=\s*BODY_COLOR_([A-Z0-9_]+)", body)
+        body_color_names = {
+            "RED": 0, "BLUE": 1, "YELLOW": 2, "GREEN": 3, "BLACK": 4,
+            "BROWN": 5, "PURPLE": 6, "GRAY": 7, "WHITE": 8, "PINK": 9
+        }
+        body_color = None
+        if body_color_match and body_color_match.group(1) in body_color_names:
+            body_color = body_color_names[body_color_match.group(1)]
+        else:
+            problems.append("unresolved_body_color")
+
+        record_data = {
             "species_symbol": record["symbol"],
-            "base_stats": {k: scalar(k) for k in COMPACT_FIELDS[:6]},
-            "catch_rate": scalar("catchRate"),
-            "exp_yield": scalar("expYield"),
-            "ev_yields": {k: scalar("evYield_" + k, 0) for k in ("HP","Attack","Defense","Speed","SpAttack","SpDefense")},
-            "gender_ratio_raw": f.get("genderRatio"),
-            "egg_cycles": scalar("eggCycles"),
-            "friendship_raw": f.get("friendship"),
-            "growth_rate_raw": f.get("growthRate"),
+            "statistics": values,
             "types": type_pair,
             "egg_groups": egg_pair,
             "abilities": ability_pair,
-            "body_color_raw": f.get("bodyColor"),
-            "rare_item": rare_item,
+            "item_common": item_values.get(common_name) if common_name in item_values else None,
+            "item_rare": item_values.get(rare_name) if rare_name in item_values else None,
+            "body_color": body_color,
+            "status": "compact_fields_resolved" if not problems else "manual_mapping_required",
             "unresolved": problems,
         }
-        if not problems and type_pair and egg_pair and ability_pair:
-            output.append(compact)
+        if not problems:
+            out.append(record_data)
         else:
-            unresolved.append({"species_symbol": record["symbol"], "unresolved": problems or ["initializer_requires_manual_parse"]})
-    return {"source_record_count": len(records), "compact_records": output, "unresolved_records": unresolved}
+            unresolved.append(record_data)
+
+    return {
+        "source_record_count": len(records),
+        "compact_records": out,
+        "unresolved_records": unresolved,
+    }
 
 def generate(check: bool = False) -> dict:
     source_species = symbols(read(SRC_SPECIES), "SPECIES_", enum=True)
