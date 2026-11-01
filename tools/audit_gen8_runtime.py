@@ -38,7 +38,7 @@ def main() -> int:
     pokemon_constants = read(ROOT / "include/constants/pokemon.h")
     vendor_info_dir = ROOT / "tools/vendor/pokeemerald-expansion/src/data/pokemon/species_info"
     vendor_info_files = sorted(vendor_info_dir.glob("*.h"))
-    source_info = "\\n".join(read(path) for path in vendor_info_files)
+    source_info = "\n".join(read(path) for path in vendor_info_files)
     if not vendor_info_files:
         raise RuntimeError("No vendored Expansion SpeciesInfo headers found")
     target_info = read(ROOT / "src/data/pokemon/species_info.h")
