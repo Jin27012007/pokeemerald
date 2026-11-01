@@ -1,25 +1,27 @@
-# Gen 8 conversion package — stage 1
+# Gen 8 conversion — stage 2
 
-This stage extracts source data into reviewable JSON/CSV. It deliberately does not emit C runtime tables, edit existing species IDs, change move IDs, or alter NUM_SPECIES.
+The conversion extractor is a data-normalization stage, not a runtime species expansion.
 
-## Run
+## Outputs
 
-```sh
-python3 tools/gen8_convert_emerald.py
-python3 tools/gen8_convert_emerald.py --check
-```
+Run `python3 tools/gen8_convert_emerald.py`. The generated `reports/gen8-conversion/` directory contains:
 
-Generated artifacts under `reports/gen8-conversion/`:
-- `conversion_report.json`: coverage and blockers.
-- `species_records_raw.json`: balanced raw SpeciesInfo initializer bodies for Gen 8 family entries.
-- `learnsets_raw.json`: extracted learnset rows.
-- `species_id_mapping_template.json`: National Dex to future internal-ID mapping skeleton.
-- `move_mapping_template.json` and `move_dependencies.csv`: all new source moves after the Gen 3 range, with no invented Emerald IDs.
+- `conversion_report.json`: scope, counts, dependency gates, and readiness.
+- `species_id_mapping.json`: complete canonical National Dex mapping, with existing Emerald internal IDs retained and new IDs left unset.
+- `new_species_mapping.json`: new species only; no aliases or alternate forms counted as additional National Dex species.
+- `species_info_compatible_candidates.json`: raw Gen 8 record blocks plus candidate values for fields whose names also exist in Emerald.
+- `learnsets_raw.json`: level/move pairs extracted from source.
+- `move_mapping_template.json` and `move_dependencies.csv`: the new source moves and unresolved Emerald definitions.
+- `missing_learnset_moves.json`: every distinct learnset move symbol absent from Emerald.
 
-## Important limitations
+## Safety
 
-The vendored Emerald Expansion snapshot supplies Gen 8 species info and learnsets, but it does not supply a compatible vanilla Emerald evolution table, complete Pokédex descriptions, or cry assets/mappings. The source species info contains conditional family macros and expansion-only fields. Those are retained as raw data, never compiled into vanilla Emerald.
+The script never writes C runtime source. It never edits species IDs, move IDs, `NUM_SPECIES`, save structures, evolution, Pokédex, or cry tables.
 
-New Gen 8 learnsets reference moves not present in vanilla Emerald. Each new move needs a full Emerald move definition and a Contest classification/effect compatible with this project. The current package labels these dependencies; it does not silently map them to unrelated moves.
+A field-name overlap is not automatically a semantic conversion. Ability IDs, type definitions, item IDs, growth curves, gender percentages, and egg group enums must be translated and validated separately. The Gen 8 source uses family feature flags and Expansion-only fields.
 
-Runtime C tables, graphics tables, cry tables, species IDs, and NUM_SPECIES stay unchanged until each data dependency is resolved and validated.
+## Remaining gates
+
+The vendored source does not include a Gen 8-to-Emerald evolution table, nor Gen 8 cry files/audio mapping in the Emerald sound format. Its Pokédex entry descriptions are embedded in Expansion SpeciesInfo, but the target uses a separate national-indexed table and localized string assets. All 487 new move constants need full battle records, and every new move used by the imported learnsets needs a Contest category, effect, and combo policy.
+
+No new species should be activated in the runtime build until these dependencies and memory/save budgets are validated.
