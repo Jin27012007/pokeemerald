@@ -98,9 +98,10 @@ def main():
     assert not model.get_caught(898)
     assert model.get_seen(897)
     assert model.get_caught(897)
-    # A caught bit without the matching seen bit/copies is cleared.
-    model.set_caught(1)
-    assert not model.get_caught(1)
+    # A caught bit without any matching seen copies is cleared on a fresh save.
+    caught_only = DexFlagModel()
+    caught_only.set_caught(1)
+    assert not caught_only.get_caught(1)
     # Independent mirror divergence for a different National Dex entry.
     model.set_seen(500)
     model.set_caught(500)
