@@ -76,6 +76,11 @@ def test_conditional_shared_pokedex_text_pointer():
         "gSilvallyNormalPokedexText : gSilvallyMemoryPokedexText)"
     )
     assert module.resolve_shared_text_pointer(expression, shared) == "gSilvallyNormalPokedexText"
+    ambiguous = (
+        "(TYPE_FIRE == TYPE_WATER ? "
+        "gSilvallyNormalPokedexText : gSilvallyMemoryPokedexText)"
+    )
+    assert module.resolve_shared_text_pointer(ambiguous, shared) is None
 
 
 def test_numeric_define_catalog_with_comments():
