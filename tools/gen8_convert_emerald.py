@@ -383,34 +383,33 @@ def parse_species_info(source_text: str, target_info_text: str,
         if egg_pair is None:
             problems.append(f"unresolved_egg_groups:{egg_raw}")
 
-        ability_match = re.search(
-            r"\.abilities\s*=\s*\{\s*ABILITY_([A-Z0-9_]+)\s*,\s*ABILITY_([A-Z0-9_]+)(?:\s*,\s*ABILITY_([A-Z0-9_]+))?\s*\}",
-            body,
-        )
+        ability_raw_match = re.search(r"\.abilities\s*=\s*\{([^}]*)\}", body, re.S)
         ability_pair = None
         hidden_ability = None
-        if ability_match:
-            names = [ability_match.group(1), ability_match.group(2)]
-            hidden = ability_match.group(3) or "NONE"
-            if any(name not in ability_values for name in names):
-                problems.extend(f"unknown_ability:{name}" for name in names if name not in ability_values)
-            else:
-                ability_pair = [ability_values[name] for name in names]
-            if hidden not in ability_values:
-                problems.append(f"unknown_hidden_ability:{hidden}")
-            else:
-                hidden_ability = ability_values[hidden]
+        ability_names = re.findall(r"ABILITY_([A-Z0-9_]+)", ability_raw_match.group(1)) if ability_raw_match else []
+        if not ability_names:
+            problems.append(f"unresolved_abilities:{ability_raw_match.group(1) if ability_raw_match else None}")
         else:
-            problems.append("unresolved_abilities")
+            ability_names = (ability_names + ["NONE", "NONE", "NONE"])[:3]
+            if any(name not in ability_values for name in ability_names):
+                problems.extend(f"unknown_ability:{name}" for name in ability_names if name not in ability_values)
+            else:
+                ability_pair = [ability_values[name] for name in ability_names[:2]]
+                hidden_ability = ability_values[ability_names[2]]
 
-        rare_item_match = re.search(r"\.itemRare\s*=\s*ITEM_([A-Z0-9_]+)", body)
-        common_item_match = re.search(r"\.itemCommon\s*=\s*ITEM_([A-Z0-9_]+)", body)
-        rare_name = rare_item_match.group(1) if rare_item_match else "NONE"
-        common_name = common_item_match.group(1) if common_item_match else "NONE"
+        rare_raw = fields.get("itemRare")
+        common_raw = fields.get("itemCommon")
+        rare_match = re.search(r"ITEM_([A-Z0-9_]+)", rare_raw or "")
+        common_match = re.search(r"ITEM_([A-Z0-9_]+)", common_raw or "")
+        rare_name = rare_match.group(1) if rare_match else "NONE"
+        common_name = common_match.group(1) if common_match else "NONE"
+        item_compatibility = {"common": "mapped", "rare": "mapped"}
         if rare_name not in item_values:
             problems.append(f"unknown_item:{rare_name}")
+            item_compatibility["rare"] = "source_only"
         if common_name not in item_values:
             problems.append(f"unknown_item:{common_name}")
+            item_compatibility["common"] = "source_only"
 
         color_match = re.search(r"\.bodyColor\s*=\s*BODY_COLOR_([A-Z0-9_]+)", body)
         color_values = {
