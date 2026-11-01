@@ -45,6 +45,19 @@ SOURCE_ORDERS = VENDOR / "src/data/pokemon/pokedex_orders.h"
 SOURCE_CRY = VENDOR / "sound/cry_tables.inc"
 
 TEXT_FIELDS = ("speciesName", "categoryName", "description")
+REQUIRED_GRAPHIC_ASSETS = (
+    "front.png", "anim_front.png", "back.png", "icon.png",
+    "footprint.png", "normal.pal", "shiny.pal",
+)
+GRAPHICS_SPECIAL_SLUGS = {
+    "nidoran-f": "nidoran_f", "nidoran-m": "nidoran_m",
+    "mr-mime": "mr_mime", "ho-oh": "ho_oh", "mime-jr": "mime_jr",
+    "porygon-z": "porygon_z", "type-null": "type_null",
+    "jangmo-o": "jangmo_o", "hakamo-o": "hakamo_o", "kommo-o": "kommo_o",
+    "tapu-koko": "tapu_koko", "tapu-lele": "tapu_lele",
+    "tapu-bulu": "tapu_bulu", "tapu-fini": "tapu_fini",
+    "mr-rime": "mr_rime", "sirfetchd": "sirfetchd", "flabebe": "flabebe",
+}
 GRAPHICS_FIELDS = (
     "frontPic", "backPic", "palette", "shinyPalette", "iconSprite",
     "frontPicFemale", "backPicFemale", "paletteFemale", "shinyPaletteFemale",
@@ -282,6 +295,12 @@ def source_table_inventory() -> dict:
     canonical = json.loads(read(CANONICAL))
     species_map = json.loads(read(SPECIES_MAP))
     learnsets = json.loads(read(LEARNSETS))
+    manifest = json.loads(read(DATA / "gen8_species_manifest.json"))
+    manifest_by_dex = {
+        row["national_dex"]: row for row in manifest.get("species", [])
+    }
+    if len(manifest_by_dex) != 898:
+        raise RuntimeError("National Dex asset manifest must contain exactly 898 entries")
     info_by_symbol = {
         row["species_symbol"]: row
         for row in compact + unresolved
@@ -403,47 +422,82 @@ def source_table_inventory() -> dict:
             })
         pokedex_rows.append(row)
 
-    # Cry pointers and assembly table labels are different domains: validate
-    # the source symbol association, but do not claim audio bytes are vendored.
+    # Cry pointers, source labels and Emerald labels are separate domains.
+    # Compare both assembly tables; label presence still does not imply that
+    # every species has a compatible cry ID mapping or payload assignment.
     cry_text = read(SOURCE_CRY)
-    cry_start = cry_text.find("gCryTable::")
-    cry_end = cry_text.find("gCryTable_Reverse::", cry_start + 1)
-    if cry_start < 0 or cry_end < 0:
-        raise RuntimeError("Could not locate Expansion gCryTable boundaries")
-    cry_table_symbols = re.findall(r"^\s*cry\s+(Cry_[A-Za-z0-9_]+)", cry_text[cry_start:cry_end], re.M)
-    cry_set = {normalize_cry(symbol) for symbol in cry_table_symbols}
+    target_cry_text = read(ROOT / "sound/cry_tables.inc")
+    def cry_table_labels(text: str) -> set[str]:
+        start = text.find("gCryTable::")
+        end = text.find("gCryTable_Reverse::", start + 1)
+        if start < 0 or end < 0:
+            raise RuntimeError("Could not locate gCryTable boundaries")
+        labels = re.findall(r"^\s*cry\s+(Cry_[A-Za-z0-9_]+)", text[start:end], re.M)
+        return {normalize_cry(label) for label in labels}
+    source_cry_set = cry_table_labels(cry_text)
+    target_cry_set = cry_table_labels(target_cry_text)
     cry_rows = []
     missing_cries = []
+    missing_target_cries = []
     for dex, mapping, _, source, fields in source_rows:
         cry_symbol = fields.get("cryId")
-        matched = bool(cry_symbol and normalize_cry(cry_symbol) in cry_set)
+        normalized_cry = normalize_cry(cry_symbol) if cry_symbol else None
+        source_matched = bool(normalized_cry and normalized_cry in source_cry_set)
+        target_matched = bool(normalized_cry and normalized_cry in target_cry_set)
         row = {
             "national_dex": dex,
             "species_symbol": mapping["source_symbol"],
             "cry_symbol": cry_symbol,
-            "source_cry_table_match": matched,
+            "source_cry_table_match": source_matched,
+            "emerald_cry_table_match": target_matched,
             "audio_asset_imported": False,
         }
-        if not matched:
+        if not source_matched:
             missing_cries.append(row)
+        if not target_matched:
+            missing_target_cries.append(row)
         cry_rows.append(row)
 
-    # Graphics references are complete data pointers, not image files. The
-    # Expansion vendor deliberately excludes all Pokémon sprite/audio assets.
+    # Graphics references and Emerald asset payloads are different data.
+    # This audits the current target folder layout without copying or
+    # fabricating images. Forms use the same explicit slug policy as the
+    # existing strict Gen 8 graphics preflight.
     graphics_rows = []
     missing_graphics_refs = []
+    missing_target_graphics_assets = []
     for dex, mapping, _, source, fields in source_rows:
         refs = {field: fields.get(field) for field in GRAPHICS_FIELDS}
         required = ("frontPic", "backPic", "palette", "shinyPalette", "iconSprite")
         missing = [field for field in required if not refs.get(field)]
         if missing:
             missing_graphics_refs.append({"national_dex": dex, "species_symbol": mapping["source_symbol"], "missing": missing})
+        manifest_row = manifest_by_dex[dex]
+        slug = manifest_row["slug"]
+        folder_name = GRAPHICS_SPECIAL_SLUGS.get(slug, slug.replace("-", "_"))
+        asset_folder = ROOT / "graphics/pokemon" / folder_name
+        asset_presence = {
+            asset: (asset_folder / asset).is_file()
+            for asset in REQUIRED_GRAPHIC_ASSETS
+        }
+        missing_assets = [asset for asset, present in asset_presence.items() if not present]
+        if missing_assets:
+            missing_target_graphics_assets.append({
+                "national_dex": dex,
+                "species_symbol": mapping["source_symbol"],
+                "slug": slug,
+                "folder": str(asset_folder.relative_to(ROOT)),
+                "missing_assets": missing_assets,
+            })
         graphics_rows.append({
             "national_dex": dex,
             "species_symbol": mapping["source_symbol"],
+            "national_dex_slug": slug,
             "source_graphics_references": refs,
             "required_reference_fields_missing": missing,
-            "asset_payload_imported": False,
+            "target_asset_folder": str(asset_folder.relative_to(ROOT)),
+            "target_asset_presence": asset_presence,
+            "target_graphics_assets_complete": not missing_assets,
+            "asset_payload_imported_by_this_stage": False,
         })
 
     # Form pointers are resolved to their source table definitions while their
@@ -817,8 +871,12 @@ def source_table_inventory() -> dict:
         "cry_rows": len(cry_rows),
         "cry_rows_matching_source_table": len(cry_rows) - len(missing_cries),
         "missing_cry_table_matches": len(missing_cries),
+        "cry_rows_matching_emerald_table": len(cry_rows) - len(missing_target_cries),
+        "missing_emerald_cry_table_matches": len(missing_target_cries),
         "graphics_reference_rows": len(graphics_rows),
         "graphics_rows_with_required_references": len(graphics_rows) - len(missing_graphics_refs),
+        "target_graphics_asset_complete_rows": sum(1 for row in graphics_rows if row["target_graphics_assets_complete"]),
+        "target_graphics_asset_incomplete_rows": len(missing_target_graphics_assets),
         "source_graphics_asset_payload_imported": False,
         "form_species_tables_referenced": len(referenced_form_species),
         "form_change_tables_referenced": len(referenced_form_changes),
@@ -900,7 +958,9 @@ def source_table_inventory() -> dict:
         "unresolved_evolutions": unresolved_evolutions,
         "unresolved_pokedex_text": unresolved_text,
         "missing_cries": missing_cries,
+        "missing_emerald_cry_table_matches": missing_target_cries,
         "missing_graphics_references": missing_graphics_refs,
+        "missing_target_graphics_assets": missing_target_graphics_assets,
         "missing_form_tables": missing_form_tables,
         "pokedex_order_failures": order_failures,
         "missing_source_move_definitions": missing_move_definitions,
