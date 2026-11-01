@@ -104,3 +104,12 @@ block before the closing comment marker. The source audit intentionally scans
 those declarations as source data, but a production importer must extract
 only those blocks and validate every referenced move symbol. It must not
 uncomment or compile this upstream file as-is.
+
+
+## Progress: automated parser validation
+
+The first CI execution of the compatibility auditor exposed repeated identical
+species definitions for special forms in the vendored CFRU header. The parser
+now accepts repeated definitions only when their numeric values match, and
+continues to reject conflicting values. No species or move identifiers have
+been rewritten in Emerald.
