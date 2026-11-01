@@ -74,7 +74,7 @@ def main() -> int:
         raise RuntimeError(f"Unexpected SaveBlock1 reserved area: {reserved_save1_bytes:#x}")
 
     source_info_blocks = len(re.findall(r"^\s*\[SPECIES_[A-Z0-9_]+\]\s*=", source_info, re.M))
-    source_info_symbols = re.findall(r"^\\s*\\[SPECIES_([A-Z0-9_]+)\\]\\s*=", source_info, re.M)
+    source_info_symbols = re.findall(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=, source_info, re.M)
     source_info_unique_symbols = sorted(set(source_info_symbols))
     source_info_duplicate_designators = len(source_info_symbols) - len(source_info_unique_symbols)
     source_fields = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", source_info, re.M))
