@@ -243,6 +243,40 @@ def check_actual_speciesinfo_generation8_target_resolution():
         assert actual == expected, (raw, actual, expected)
 
 
+def check_family_guards_are_included_in_source_catalog():
+    assert module.evaluate_source_condition("P_FAMILY_ALCREMIE", 8) is True
+    assert module.evaluate_source_condition("P_FAMILY_CHARIZARD", 8) is True
+    assert module.evaluate_source_condition("P_UPDATED_EXP_YIELDS >= GEN_8", 8) is True
+    assert module.evaluate_source_condition("P_UPDATED_EXP_YIELDS >= GEN_9", 8) is False
+
+
+def check_wrapped_standard_friendship_ternary():
+    raw = "((P_UPDATED_FRIENDSHIP >= GEN_8) ? 50 : 70)"
+    compact = " ".join(raw.split())
+    while compact.startswith("(") and compact.endswith(")"):
+        depth = 0
+        fully_wrapped = True
+        for idx, char in enumerate(compact):
+            if char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+                if depth == 0 and idx != len(compact) - 1:
+                    fully_wrapped = False
+                    break
+        if not fully_wrapped or depth != 0:
+            break
+        compact = compact[1:-1].strip()
+    match = module.re.fullmatch(
+        r"\(?P_UPDATED_FRIENDSHIP\s*>=\s*GEN_(\d+)\)?\s*\?\s*(\d+)\s*:\s*(\d+)",
+        compact,
+    )
+    assert match, compact
+    assert int(match.group(2)) == 8
+    assert int(match.group(3)) == 50
+
+
+
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
@@ -275,6 +309,8 @@ def main():
     check_ability_initializer_contents_are_parsed()
     check_gen8_stats_conditionals_use_target_generation()
     check_actual_speciesinfo_generation8_target_resolution()
+    check_family_guards_are_included_in_source_catalog()
+    check_wrapped_standard_friendship_ternary()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
