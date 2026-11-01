@@ -546,11 +546,26 @@ def parse_species_info(source_text: str, target_info_text: str,
             return min(254, int(float(match.group(1)) * 255 / 100))
         return resolve_generation_expression(raw, 3)
 
+    compact_macro_fields = (
+        "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
+        "baseSpDefense", "catchRate", "expYield", "evYield_HP",
+        "evYield_Attack", "evYield_Defense", "evYield_Speed",
+        "evYield_SpAttack", "evYield_SpDefense", "genderRatio",
+        "eggCycles", "friendship", "growthRate", "types", "eggGroups",
+        "abilities", "itemCommon", "itemRare", "bodyColor", "natDexNum",
+    )
+
     for record in records:
+        raw_body = record["body"]
+        raw_fields = extract_designated_fields(raw_body)
         macros = source_symbol_macros.get(record["symbol"], {})
-        body = expand_c_macro_text(record["body"], macros)
-        body = resolve_source_conditionals(body, TARGET_GAME_GENERATION)
-        fields = extract_designated_fields(body)
+        fields = dict(raw_fields)
+        for field in compact_macro_fields:
+            if field in fields:
+                fields[field] = expand_c_macro_text(fields[field], macros)
+                fields[field] = resolve_source_conditionals(
+                    fields[field], TARGET_GAME_GENERATION
+                )
         problems = []
         values = {}
         for field in scalar_fields:
@@ -649,7 +664,8 @@ def parse_species_info(source_text: str, target_info_text: str,
             "species_symbol": record["symbol"],
             "generation": record["generation"],
             "national_dex_symbol": dex_value,
-            "source_raw": fields,
+            "source_raw": raw_fields,
+            "resolved_source_fields": fields,
             "statistics": values,
             "gender_ratio": gender_ratio,
             "friendship": friendship,
