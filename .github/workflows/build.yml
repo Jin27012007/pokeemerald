@@ -83,6 +83,10 @@ jobs:
           test -s data/pokemon/gen8_level_up_learnsets.json
           test -s data/pokemon/gen8_species_info_compact.json
           test -s data/pokemon/gen8_species_info_unresolved.json
+          test -s data/pokemon/gen8_species_info_by_national_dex.json
+          test -s reports/gen8-conversion/species_info_by_national_dex.json
+          test -s reports/gen8-conversion/species_info_field_coverage.json
+          test -s reports/gen8-conversion/emerald_species_info_compatibility.json
           python3 - <<'PY'
           import json
           from pathlib import Path
@@ -94,6 +98,10 @@ jobs:
               "data/pokemon/gen8_level_up_learnsets.json",
               "data/pokemon/gen8_species_info_compact.json",
               "data/pokemon/gen8_species_info_unresolved.json",
+              "data/pokemon/gen8_species_info_by_national_dex.json",
+              "reports/gen8-conversion/species_info_by_national_dex.json",
+              "reports/gen8-conversion/species_info_field_coverage.json",
+              "reports/gen8-conversion/emerald_species_info_compatibility.json",
           ]
           missing = [p for p in expected if not Path(p).is_file() or Path(p).stat().st_size == 0]
           assert not missing, f"Missing or empty generated files: {missing}"
@@ -101,6 +109,9 @@ jobs:
           assert report["counts"]["canonical_dex_entries"] == 898
           assert report["counts"]["existing_species"] == 386
           assert report["counts"]["new_species"] == 512
+          assert report["counts"]["canonical_species_info_covered"] == 898
+          assert report["counts"]["canonical_species_info_missing"] == 0
+          assert report["readiness"]["species_info_complete"] is True
           assert report["readiness"]["num_species_change_allowed"] is False
           print("PASS: staged 898-entry map; 386 existing IDs preserved; 512 new IDs unallocated.")
           PY
