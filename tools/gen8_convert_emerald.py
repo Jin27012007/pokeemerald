@@ -643,11 +643,33 @@ def parse_species_info(source_text: str, target_info_text: str,
 
         type_raw = fields.get("types")
         type_pair = resolve_macro_pair(type_raw, "MON_TYPES", "TYPE_", type_values)
+        if type_pair is None and type_raw:
+            type_alias = expand_c_macro_text(type_raw, source_symbol_macros.get("__catalog__", {}))
+            type_alias = type_alias.strip()
+            if re.fullmatch(r"\{\s*TYPE_[A-Z0-9_]+\s*,\s*TYPE_[A-Z0-9_]+\s*\}", type_alias):
+                type_names = re.findall(r"TYPE_([A-Z0-9_]+)", type_alias)
+                if all(name in type_values for name in type_names):
+                    type_pair = [type_values[name] for name in type_names]
+            elif re.fullmatch(r"TYPE_[A-Z0-9_]+", type_alias):
+                name = type_alias.removeprefix("TYPE_")
+                if name in type_values:
+                    type_pair = [type_values[name], type_values[name]]
         if type_pair is None:
             problems.append(f"unresolved_types:{type_raw}")
 
         egg_raw = fields.get("eggGroups")
         egg_pair = resolve_macro_pair(egg_raw, "MON_EGG_GROUPS", "EGG_GROUP_", egg_values)
+        if egg_pair is None and egg_raw:
+            egg_alias = expand_c_macro_text(egg_raw, source_symbol_macros.get("__catalog__", {})).strip()
+            alias_match = re.fullmatch(
+                r"MON_EGG_GROUPS\(\s*EGG_GROUP_([A-Z0-9_]+)(?:\s*,\s*EGG_GROUP_([A-Z0-9_]+))?\s*\)",
+                egg_alias,
+            )
+            if alias_match:
+                first = alias_match.group(1)
+                second = alias_match.group(2) or first
+                if first in egg_values and second in egg_values:
+                    egg_pair = [egg_values[first], egg_values[second]]
         if egg_pair is None:
             problems.append(f"unresolved_egg_groups:{egg_raw}")
 
