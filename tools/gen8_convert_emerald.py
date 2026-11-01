@@ -843,6 +843,15 @@ def generate(check: bool = False) -> dict:
         candidates = info_candidates_by_dex.get(dex, [])
         row = target_species_by_dex.get(dex)
         if row is None:
+            # Preserve the exact canonical source symbol first. Several Dex
+            # base forms are explicitly named *_NORMAL, *_PLANT, *_HERO, etc.
+            # BASE_ALIASES is for mapping those forms to Emerald's base ID;
+            # it must not be used to erase the source initializer identity.
+            row = info_by_symbol.get(national_symbol)
+        if row is None:
+            row = next((candidate for candidate in candidates
+                        if candidate["species_symbol"] == national_symbol), None)
+        if row is None:
             row = next((candidate for candidate in candidates
                         if candidate["species_symbol"] == preferred_symbol), None)
         if row is None:
