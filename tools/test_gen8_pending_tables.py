@@ -78,6 +78,16 @@ def test_conditional_shared_pokedex_text_pointer():
     assert module.resolve_shared_text_pointer(expression, shared) == "gSilvallyNormalPokedexText"
 
 
+def test_numeric_define_catalog_with_comments():
+    source = """
+#define EVO_LEVEL 4 // level-up evolution
+#define EVO_ITEM 7 /* item evolution */
+#define EVO_SPIN 8
+"""
+    values = module.numeric_define_catalog(source, "EVO_")
+    assert values == {"LEVEL": 4, "ITEM": 7, "SPIN": 8}, values
+
+
 def test_named_array_inventory():
     source = '''
     static const u16 sExampleFormSpeciesIdTable[] = {
@@ -101,6 +111,7 @@ def main():
     test_evolution_expressions()
     test_text_fragments()
     test_conditional_shared_pokedex_text_pointer()
+    test_numeric_define_catalog_with_comments()
     test_named_array_inventory()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
 
