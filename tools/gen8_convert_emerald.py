@@ -517,8 +517,28 @@ def parse_species_info(source_text: str, target_info_text: str,
         # parsing primitive values. This handles fields such as PIKACHU_DEFENSE,
         # GENGAR_SP_DEF, MEOWTH_ABILITIES, and conditional type aliases.
         raw = expand_c_macro_text(raw, source_symbol_macros.get("__catalog__", {}))
-        # Resolve well-understood Expansion generation switches, with the
-        # source generation interpreted as the compatibility level.
+        # Resolve chained preprocessor arithmetic/boolean conditions from
+        # selected Gen 8 branch. This includes e.g. "P_UPDATED_STATS >= GEN_6
+        # || P_UPDATED_STATS == GEN_1 ? 50 : 40" after macro expansion.
+        flag_expr = re.fullmatch(
+            r"(P_UPDATED_[A-Z0-9_]+)\s*(>=|>|<=|<|==|!=)\s*GEN_(\d+)"
+            r"(?:\s*\|\|\s*P_UPDATED_[A-Z0-9_]+\s*(>=|>|<=|<|==|!=)\s*GEN_(\d+))?",
+            raw,
+        )
+        if flag_expr:
+            def compare(lhs, op, rhs):
+                return {
+                    ">=": lhs >= rhs, ">": lhs > rhs, "<=": lhs <= rhs,
+                    "<": lhs < rhs, "==": lhs == rhs, "!=": lhs != rhs,
+                }[op]
+            first = compare(TARGET_GAME_GENERATION, flag_expr.group(2), int(flag_expr.group(3)))
+            second = (
+                compare(TARGET_GAME_GENERATION, flag_expr.group(4), int(flag_expr.group(5)))
+                if flag_expr.group(4) else False
+            )
+            return int(first or second)
+        # Resolve well-understood Expansion generation switches against the
+        # target game's configured policy, never against the species' origin gen.
         conditionals = [
             (r"\(?P_UPDATED_EXP_YIELDS\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
              lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
