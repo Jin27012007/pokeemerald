@@ -23,6 +23,7 @@ SRC_LEARNSET_DIR = VENDOR / "src/data/pokemon/level_up_learnsets"
 SRC_SPECIES_INFO_DIR = VENDOR / "src/data/pokemon/species_info"
 SOURCE_GENERATIONS = (1, 2, 3, 4, 5, 6, 7, 8)
 LEARNSET_GENERATIONS = (4, 5, 6, 7, 8)
+TARGET_GAME_GENERATION = 8
 
 DST_SPECIES = ROOT / "include/constants/species.h"
 DST_MOVES = ROOT / "include/constants/moves.h"
@@ -460,7 +461,8 @@ def parse_species_info(source_text: str, target_info_text: str,
                        type_text: str, ability_text: str, item_text: str,
                        source_symbol_generation: dict[str, int],
                        source_ability_text: str, source_item_text: str,
-                       source_pokemon_text: str) -> dict:
+                       source_pokemon_text: str,
+                       source_symbol_macros: dict[str, dict]) -> dict:
     records = balanced_species_records(source_text)
     for record in records:
         generation = source_symbol_generation.get(record["symbol"])
@@ -545,7 +547,9 @@ def parse_species_info(source_text: str, target_info_text: str,
         return resolve_generation_expression(raw, 3)
 
     for record in records:
-        body = record["body"]
+        macros = source_symbol_macros.get(record["symbol"], {})
+        body = expand_c_macro_text(record["body"], macros)
+        body = resolve_source_conditionals(body, TARGET_GAME_GENERATION)
         fields = extract_designated_fields(body)
         problems = []
         values = {}
@@ -554,7 +558,7 @@ def parse_species_info(source_text: str, target_info_text: str,
             if raw is None:
                 problems.append(f"missing_scalar:{field}")
             else:
-                resolved = resolve_generation_expression(raw, record["generation"])
+                resolved = resolve_generation_expression(raw, TARGET_GAME_GENERATION)
                 if resolved is None:
                     problems.append(f"unresolved_scalar:{field}:{raw}")
                 else:
@@ -578,7 +582,7 @@ def parse_species_info(source_text: str, target_info_text: str,
         
         friendship_raw = fields.get("friendship")
         if friendship_raw == "STANDARD_FRIENDSHIP":
-            friendship = 50 if record["generation"] >= 8 else 70
+            friendship = 50 if TARGET_GAME_GENERATION >= 8 else 70
         else:
             friendship = resolve_generation_expression(friendship_raw, record["generation"])
         if friendship is None:
@@ -689,14 +693,18 @@ def generate(check: bool = False) -> dict:
     source_learnset_texts = {path.name: read(path) for path in source_learnset_files}
     source_info_text = "\n".join(source_info_texts.values())
     source_symbol_generation = {}
+    source_symbol_macros = {}
     for generation, path in zip(SOURCE_GENERATIONS, source_info_files):
-        for record in balanced_species_records(source_info_texts[path.name]):
+        family_text = source_info_texts[path.name]
+        family_macros = extract_c_macros(family_text)
+        for record in balanced_species_records(family_text):
             symbol = record["symbol"]
             if symbol in source_symbol_generation:
                 raise RuntimeError(
                     "Duplicate SpeciesInfo designator across source generations: " + symbol
                 )
             source_symbol_generation[symbol] = generation
+            source_symbol_macros[symbol] = family_macros
     target_info_text = read(DST_INFO)
     learnsets = []
     for generation, path in zip(LEARNSET_GENERATIONS, source_learnset_files):
@@ -708,7 +716,7 @@ def generate(check: bool = False) -> dict:
     info_result = parse_species_info(
         source_info_text, target_info_text, type_text, ability_text, item_text,
         source_symbol_generation, source_ability_text, source_item_text,
-        source_pokemon_text,
+        source_pokemon_text, source_symbol_macros,
     )
     info_by_symbol = {}
     for record in info_result["compact_records"] + info_result["unresolved_records"]:
