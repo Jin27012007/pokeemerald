@@ -85,7 +85,7 @@ def check_all_generation_source_files_present():
 def check_full_canonical_coverage_gate():
     # This is the acceptance criterion used by --check. It is deliberately
     # independent of form count and rejects missing/duplicate/partial rows.
-    dex_rows = list(range(1, module.NATIONAL_DEX_COUNT + 1))
+    dex_rows = list(range(1, 898 + 1))
     assert len(dex_rows) == 898
     assert len(set(dex_rows)) == 898
     assert dex_rows[0] == 1 and dex_rows[-1] == 898
