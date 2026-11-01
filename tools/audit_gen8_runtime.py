@@ -55,7 +55,7 @@ def main() -> int:
     sector_bytes = int(sector_match.group(1))
 
     save1_bytes = struct_size(save1, 0x3D88)
-    save2_bytes = struct_size(save2, 0x6A0)
+    save2_bytes = struct_size(save2, 0xF2C)
     storage_bytes = struct_size(storage, 0x83C3)
     dex_count = 898
     dex_bytes_per_set = (dex_count + 7) // 8
