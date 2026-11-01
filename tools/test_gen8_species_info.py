@@ -228,7 +228,7 @@ def check_actual_speciesinfo_generation8_target_resolution():
         ("P_UPDATED_STATS >= GEN_2 ? 109 : 85", 109),
         ("(P_UPDATED_EXP_YIELDS >= GEN_8) ? 300 : 270", 300),
         ("(P_UPDATED_FRIENDSHIP >= GEN_8) ? 50 : 70", 50),
-        ("P_UPDATED_STATS >= GEN_9 ? 120 : 130", 0),
+        ("P_UPDATED_STATS >= GEN_9 ? 120 : 130", 130),
     ]
     for raw, expected in cases:
         compact = " ".join(raw.split()).strip("() ").replace(") ?", " ?")
