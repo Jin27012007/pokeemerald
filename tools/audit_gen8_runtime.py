@@ -61,10 +61,16 @@ def main() -> int:
     save1_bytes = struct_size(save1, 0x3D88)
     save2_bytes = struct_size(save2, 0xF2C)
     storage_bytes = struct_size(storage, 0x83C3)
+    # The exact save format stores two alternating 14-sector slots. This
+    # audit intentionally models a staged extension in unused SaveBlock1 RAM
+    # space and does not resize any production structure.
     dex_count = 898
     dex_bytes_per_set = (dex_count + 7) // 8
     current_dex_bytes_per_set = 52
     current_pokedex_bytes = 0x10 + 2 * current_dex_bytes_per_set
+    expanded_pokedex_bytes = 0x10 + 2 * dex_bytes_per_set
+    save2_expanded_bytes = save2_bytes + (expanded_pokedex_bytes - current_pokedex_bytes)
+    save2_expanded_headroom_bytes = sector_bytes - save2_expanded_bytes
     # The current redundant model has three seen copies and one owned copy:
     # SaveBlock2 seen + SaveBlock2 owned + SaveBlock1 seen1 + seen2.
     required_seen_owned_bytes = 2 * dex_bytes_per_set
@@ -120,6 +126,8 @@ def main() -> int:
             "saveblock2_bytes": save2_bytes,
             "saveblock2_capacity_bytes": sector_bytes,
             "saveblock2_headroom_bytes": sector_bytes - save2_bytes,
+            "saveblock2_expanded_pokedex_bytes": save2_expanded_bytes,
+            "saveblock2_expanded_headroom_bytes": save2_expanded_headroom_bytes,
             "pokemon_storage_bytes": storage_bytes,
             "pokemon_storage_capacity_bytes": 9 * sector_bytes,
             "national_dex_count": dex_count,
@@ -134,6 +142,7 @@ def main() -> int:
             "double_buffer_extension_bytes": 2 * (required_total_flag_bytes + 16),
             "saveblock1_candidate_extension_capacity_bytes": reserved_save1_bytes,
             "pokedex_struct_bytes": current_pokedex_bytes,
+            "expanded_pokedex_struct_bytes": expanded_pokedex_bytes,
             "note": (
                 "The Pokedex member is 0x78 bytes with the current 52-byte dex flag arrays and grows when NUM_DEX_FLAG_BYTES changes. SaveBlock1 and SaveBlock2 are sector-bounded. Sectors 30 and 31 are "
                 "currently reserved for Trainer Hill and Recorded Battle. No sector "
@@ -164,6 +173,7 @@ def main() -> int:
         },
         "readiness": {
             "save_extension_sector_plan_validated": False,
+            "saveblock2_fits_after_dex_expansion": save2_expanded_bytes <= sector_bytes,
             "save_extension_read_write_tests": False,
             "species_info_complete": False,
             "species_info_source_coverage_proven": False,
