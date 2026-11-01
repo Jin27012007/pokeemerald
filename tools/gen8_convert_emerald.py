@@ -512,11 +512,13 @@ def parse_species_info(source_text: str, target_info_text: str,
         # source generation interpreted as the compatibility level.
         conditionals = [
             (r"\(P_UPDATED_EXP_YIELDS\s*>=\s*GEN_(\d+)\)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
-             lambda m: int(m.group(2) if generation >= int(m.group(1)) else m.group(3))),
+             lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
             (r"P_UPDATED_STATS\s*>=\s*GEN_(\d+)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
-             lambda m: int(m.group(2) if generation >= int(m.group(1)) else m.group(3))),
+             lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
+            (r"P_UPDATED_STATS\s*>=\s*GEN_(\d+)\s*\?\s*(-?\d+)",
+             lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else 0)),
             (r"\(P_UPDATED_FRIENDSHIP\s*>=\s*GEN_(\d+)\)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
-             lambda m: int(m.group(2) if generation >= int(m.group(1)) else m.group(3))),
+             lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
         ]
         for pattern, resolver in conditionals:
             match = re.fullmatch(pattern, raw)
@@ -630,12 +632,14 @@ def parse_species_info(source_text: str, target_info_text: str,
         if egg_pair is None:
             problems.append(f"unresolved_egg_groups:{egg_raw}")
 
-        ability_raw_match = re.search(r"\.abilities\s*=\s*\{([^}]*)\}", fields.get("abilities", ""))
+        ability_raw = fields.get("abilities", "")
+        # The designated-field scanner already removed ".abilities =" and
+        # the outer braces; parse the initializer contents directly.
+        ability_names = re.findall(r"ABILITY_([A-Z0-9_]+)", ability_raw)
         ability_pair = None
         hidden_ability = None
-        ability_names = re.findall(r"ABILITY_([A-Z0-9_]+)", ability_raw_match.group(1)) if ability_raw_match else []
         if not ability_names:
-            problems.append(f"unresolved_abilities:{ability_raw_match.group(1) if ability_raw_match else None}")
+            problems.append(f"unresolved_abilities:{ability_raw or None}")
         else:
             ability_names = (ability_names + ["NONE", "NONE", "NONE"])[:3]
             if any(name not in ability_values for name in ability_names):
