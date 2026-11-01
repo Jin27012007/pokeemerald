@@ -181,7 +181,9 @@ def write_json(path: Path, value) -> None:
 
 def parse_species_info(source_text: str, target_info_text: str,
                        type_text: str, ability_text: str, item_text: str,
-                       source_symbol_generation: dict[str, int]) -> dict:
+                       source_symbol_generation: dict[str, int],
+                       source_ability_text: str, source_item_text: str,
+                       source_pokemon_text: str) -> dict:
     records = balanced_species_records(source_text)
     for record in records:
         generation = source_symbol_generation.get(record["symbol"])
@@ -190,17 +192,15 @@ def parse_species_info(source_text: str, target_info_text: str,
                 "SpeciesInfo source generation missing for " + record["symbol"]
             )
         record["generation"] = generation
-    type_values = {x["symbol"]: x["id"] for x in symbols(type_text, "TYPE_")}
-    ability_values = {x["symbol"]: x["id"] for x in symbols(ability_text, "ABILITY_")}
-    egg_values = {x["symbol"]: x["id"] for x in symbols(type_text, "EGG_GROUP_")}
-    growth_values = {x["symbol"]: x["id"] for x in symbols(type_text, "GROWTH_")}
-    item_values = {}
-    enum_index = -1
-    for line in item_text.splitlines():
-        m = re.match(r"^\s*ITEM_([A-Z0-9_]+)\s*,", line)
-        if m:
-            enum_index += 1
-            item_values[m.group(1)] = enum_index
+    # Source enum IDs are Expansion IDs, not Emerald IDs. Keep both domains
+    # explicit so source values are never accidentally mistaken for runtime IDs.
+    type_values = {x["symbol"]: x["id"] for x in symbols(source_pokemon_text, "TYPE_", enum=True)}
+    egg_values = {x["symbol"]: x["id"] for x in symbols(source_pokemon_text, "EGG_GROUP_", enum=True)}
+    growth_values = {x["symbol"]: x["id"] for x in symbols(source_pokemon_text, "GROWTH_", enum=True)}
+    ability_values = {x["symbol"]: x["id"] for x in symbols(source_ability_text, "ABILITY_", enum=True)}
+    item_values = {x["symbol"]: x["id"] for x in symbols(source_item_text, "ITEM_", enum=True)}
+    if not all((type_values, egg_values, growth_values, ability_values, item_values)):
+        raise RuntimeError("Expansion source enum catalog is incomplete")
 
     out, unresolved = [], []
     scalar_fields = (
@@ -387,9 +387,13 @@ def generate(check: bool = False) -> dict:
     for generation, path in zip(SOURCE_GENERATIONS, source_learnset_files):
         learnsets.extend(extract_learnsets(source_learnset_texts[path.name], generation))
     type_text, ability_text, item_text = read(DST_POKEMON_CONSTANTS), read(DST_ABILITIES), read(DST_ITEMS)
+    source_ability_text = read(VENDOR / "include/constants/abilities.h")
+    source_item_text = read(VENDOR / "include/constants/items.h")
+    source_pokemon_text = read(VENDOR / "include/constants/pokemon.h")
     info_result = parse_species_info(
         source_info_text, target_info_text, type_text, ability_text, item_text,
-        source_symbol_generation,
+        source_symbol_generation, source_ability_text, source_item_text,
+        source_pokemon_text,
     )
     info_by_symbol = {}
     for record in info_result["compact_records"] + info_result["unresolved_records"]:
