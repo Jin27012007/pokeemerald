@@ -354,7 +354,7 @@ def generate(check: bool = False) -> dict:
     source_learnset_files = [SRC_LEARNSET_DIR / f"gen_{generation}.h" for generation in SOURCE_GENERATIONS]
     source_info_texts = {path.name: read(path) for path in source_info_files}
     source_learnset_texts = {path.name: read(path) for path in source_learnset_files}
-    source_info_text = "\\n".join(source_info_texts.values())
+    source_info_text = "\n".join(source_info_texts.values())
     target_info_text = read(DST_INFO)
     learnsets = []
     for generation, path in zip(SOURCE_GENERATIONS, source_learnset_files):
@@ -402,9 +402,11 @@ def generate(check: bool = False) -> dict:
         "canonical_dex_entries": len(species_map), "existing_species": existing_count,
         "new_species": len(new_species), "source_moves_gen1_8": len({x["id"] for x in source_moves if x["id"] <= 847}),
         "learnset_blocks": len(learnsets), "learnset_move_entries": sum(len(x["moves"]) for x in learnsets),
+        "learnset_generations": list(SOURCE_GENERATIONS),
         "distinct_learnset_moves": len(used_moves), "missing_learnset_moves": len(missing_moves),
         "species_info_blocks": info_result["source_record_count"],
         "species_info_source_files": len(source_info_files),
+        "species_info_generation_files": [path.name for path in source_info_files],
         "learnset_source_files": len(source_learnset_files),
         "species_info_compact_records": len(info_result["compact_records"]),
         "species_info_unresolved_records": len(info_result["unresolved_records"]),
