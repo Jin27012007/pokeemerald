@@ -28,3 +28,22 @@ The workflow is configured to run on this branch. The expected first action is a
 
 ## CI behavior correction
 The asset checker now supports `--report-only` for the normal ROM build. This reports missing imported resources without marking the base Emerald build as a failed compile. Running it without that flag remains a strict readiness gate and returns a failing exit code until all graphics are present. This separates two different states: a valid base ROM build and a completed Gen 8 data migration.
+
+
+## Source compatibility audit (CFRU)
+
+Audited source: `Skeli789/Complete-Fire-Red-Upgrade` on its `master` branch.
+The source defines 905 National Dex numbers (1-905), while the requested target
+scope for this project remains the 898 species through Gen 8. The source species
+constants also include regional forms and G-Max forms, with 1,268 species
+constants in total. They are not a drop-in replacement for Emerald's 411
+species-internal IDs. The importer must select canonical National Dex species
+1-898, preserve Emerald's existing internal IDs where applicable, and generate
+a deterministic mapping for missing species. Forms outside the canonical 898
+must not be inserted accidentally.
+
+The CFRU repository is a FireRed-based project and stores data in different
+layouts. It is being used as a data reference only; its battle-engine hooks,
+assembly patches, save code, and FireRed engine files are out of scope.
+
+No species IDs, save fields, or C tables have been expanded in this audit.
