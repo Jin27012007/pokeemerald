@@ -279,6 +279,41 @@ def parse_species_info(source_text: str, target_info_text: str,
         "evYield_SpAttack", "evYield_SpDefense",
     )
 
+    def resolve_generation_expression(raw, generation):
+        if raw is None:
+            return None
+        raw = " ".join(raw.split())
+        # Resolve well-understood Expansion generation switches, with the
+        # source generation interpreted as the compatibility level.
+        conditionals = [
+            (r"\(P_UPDATED_EXP_YIELDS\s*>=\s*GEN_(\d+)\)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
+             lambda m: int(m.group(2) if generation >= int(m.group(1)) else m.group(3))),
+            (r"P_UPDATED_STATS\s*>=\s*GEN_(\d+)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
+             lambda m: int(m.group(2) if generation >= int(m.group(1)) else m.group(3))),
+            (r"\(P_UPDATED_FRIENDSHIP\s*>=\s*GEN_(\d+)\)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
+             lambda m: int(m.group(2) if generation >= int(m.group(1)) else m.group(3))),
+        ]
+        for pattern, resolver in conditionals:
+            match = re.fullmatch(pattern, raw)
+            if match:
+                return resolver(match)
+        if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
+            return int(raw, 0)
+        return None
+
+    def resolve_macro_pair(raw, macro_name, prefix, domain):
+        match = re.fullmatch(
+            rf"{macro_name}\(\s*{prefix}([A-Z0-9_]+)(?:\s*,\s*{prefix}([A-Z0-9_]+))?\s*\)",
+            raw or "",
+        )
+        if not match:
+            return None
+        first = match.group(1)
+        second = match.group(2) or first
+        if first not in domain or second not in domain:
+            return None
+        return [domain[first], domain[second]]
+
     def resolve_gender(raw):
         if raw == "MON_GENDERLESS":
             return 0xFF
@@ -288,11 +323,9 @@ def parse_species_info(source_text: str, target_info_text: str,
             return 0xFE
         match = re.fullmatch(r"PERCENT_FEMALE\(\s*(\d+(?:\.\d+)?)\s*\)", raw or "")
         if match:
-            # Vanilla stores the female threshold as an 8-bit ratio.
+            # Expansion's macro: min(254, ((percent * 255) / 100)).
             return min(254, int(float(match.group(1)) * 255 / 100))
-        if raw and re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
-            return int(raw, 0)
-        return None
+        return resolve_generation_expression(raw, 3)
 
     for record in records:
         body = record["body"]
@@ -303,19 +336,23 @@ def parse_species_info(source_text: str, target_info_text: str,
             raw = fields.get(field)
             if raw is None:
                 problems.append(f"missing_scalar:{field}")
-            elif re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
-                values[field] = int(raw, 0)
             else:
-                problems.append(f"unresolved_scalar:{field}:{raw}")
+                resolved = resolve_generation_expression(raw, record["generation"])
+                if resolved is None:
+                    problems.append(f"unresolved_scalar:{field}:{raw}")
+                else:
+                    values[field] = resolved
 
         for field in ev_fields:
             raw = fields.get(field)
             if raw is None:
                 values[field] = 0
-            elif re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
-                values[field] = int(raw, 0)
             else:
-                problems.append(f"unresolved_ev_yield:{field}:{raw}")
+                resolved = resolve_generation_expression(raw, record["generation"])
+                if resolved is None:
+                    problems.append(f"unresolved_ev_yield:{field}:{raw}")
+                else:
+                    values[field] = resolved
 
         gender_raw = fields.get("genderRatio")
         gender_ratio = resolve_gender(gender_raw)
@@ -323,12 +360,11 @@ def parse_species_info(source_text: str, target_info_text: str,
             problems.append(f"unresolved_gender_ratio:{gender_raw}")
         
         friendship_raw = fields.get("friendship")
-        if friendship_raw and re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", friendship_raw):
-            friendship = int(friendship_raw, 0)
-        elif friendship_raw == "STANDARD_FRIENDSHIP":
+        if friendship_raw == "STANDARD_FRIENDSHIP":
             friendship = 50 if record["generation"] >= 8 else 70
         else:
-            friendship = None
+            friendship = resolve_generation_expression(friendship_raw, record["generation"])
+        if friendship is None:
             problems.append(f"unresolved_friendship:{friendship_raw}")
 
         growth_raw = fields.get("growthRate")
@@ -337,33 +373,15 @@ def parse_species_info(source_text: str, target_info_text: str,
         if growth_rate is None:
             problems.append(f"unresolved_growth_rate:{growth_raw}")
 
-        type_match = re.search(
-            r"\.types\s*=\s*MON_TYPES\(\s*TYPE_([A-Z0-9_]+)(?:\s*,\s*TYPE_([A-Z0-9_]+))?\s*\)",
-            body,
-        )
-        type_pair = None
-        if type_match:
-            names = [type_match.group(1), type_match.group(2) or type_match.group(1)]
-            if any(name not in type_values for name in names):
-                problems.extend(f"unknown_type:{name}" for name in names if name not in type_values)
-            else:
-                type_pair = [type_values[name] for name in names]
-        else:
-            problems.append("unresolved_types")
+        type_raw = fields.get("types")
+        type_pair = resolve_macro_pair(type_raw, "MON_TYPES", "TYPE_", type_values)
+        if type_pair is None:
+            problems.append(f"unresolved_types:{type_raw}")
 
-        egg_match = re.search(
-            r"\.eggGroups\s*=\s*MON_EGG_GROUPS\(\s*EGG_GROUP_([A-Z0-9_]+)\s*,\s*EGG_GROUP_([A-Z0-9_]+)\s*\)",
-            body,
-        )
-        egg_pair = None
-        if egg_match:
-            names = [egg_match.group(1), egg_match.group(2)]
-            if any(name not in egg_values for name in names):
-                problems.extend(f"unknown_egg_group:{name}" for name in names if name not in egg_values)
-            else:
-                egg_pair = [egg_values[name] for name in names]
-        else:
-            problems.append("unresolved_egg_groups")
+        egg_raw = fields.get("eggGroups")
+        egg_pair = resolve_macro_pair(egg_raw, "MON_EGG_GROUPS", "EGG_GROUP_", egg_values)
+        if egg_pair is None:
+            problems.append(f"unresolved_egg_groups:{egg_raw}")
 
         ability_match = re.search(
             r"\.abilities\s*=\s*\{\s*ABILITY_([A-Z0-9_]+)\s*,\s*ABILITY_([A-Z0-9_]+)(?:\s*,\s*ABILITY_([A-Z0-9_]+))?\s*\}",
