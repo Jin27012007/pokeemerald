@@ -74,6 +74,9 @@ def main() -> int:
         raise RuntimeError(f"Unexpected SaveBlock1 reserved area: {reserved_save1_bytes:#x}")
 
     source_info_blocks = len(re.findall(r"^\s*\[SPECIES_[A-Z0-9_]+\]\s*=", source_info, re.M))
+    source_info_symbols = re.findall(r"^\\s*\\[SPECIES_([A-Z0-9_]+)\\]\\s*=", source_info, re.M)
+    source_info_unique_symbols = sorted(set(source_info_symbols))
+    source_info_duplicate_designators = len(source_info_symbols) - len(source_info_unique_symbols)
     source_fields = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", source_info, re.M))
     target_fields = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", target_info, re.M))
     missing_fields = sorted(source_fields - target_fields)
@@ -136,10 +139,15 @@ def main() -> int:
         "source_inventory": {
             "vendored_species_info_files": [path.name for path in vendor_info_files],
             "vendored_species_info_file_count": len(vendor_info_files),
+            "gen8_species_info_unique_symbol_count": len(source_info_unique_symbols),
+            "gen8_species_info_duplicate_designators": source_info_duplicate_designators,
         },
         "data": {
             "vendored_species_info_files": [path.name for path in vendor_info_files],
             "gen8_species_info_records": source_info_blocks,
+            "unique_gen8_species_info_species": len(source_info_unique_symbols),
+            "duplicate_gen8_species_info_designators": source_info_duplicate_designators,
+            "species_info_symbols_sample": source_info_unique_symbols[:12],
             "species_info_fields_not_in_vanilla": missing_fields,
             "new_moves_after_gen3_through_gen8": new_moves_after_gen3,
             "learnset_blocks": learnset_blocks,
