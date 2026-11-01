@@ -126,6 +126,8 @@ def main() -> int:
             "saveblock2_bytes": save2_bytes,
             "saveblock2_capacity_bytes": sector_bytes,
             "saveblock2_headroom_bytes": sector_bytes - save2_bytes,
+            "saveblock2_expanded_pokedex_bytes": save2_bytes + (2 * dex_bytes_per_set - 2 * current_dex_bytes_per_set),
+            "saveblock2_expanded_headroom_bytes": sector_bytes - (save2_bytes + 2 * dex_bytes_per_set - 2 * current_dex_bytes_per_set),
             "saveblock2_expanded_pokedex_bytes": save2_expanded_bytes,
             "saveblock2_expanded_headroom_bytes": save2_expanded_headroom_bytes,
             "pokemon_storage_bytes": storage_bytes,
@@ -142,6 +144,7 @@ def main() -> int:
             "double_buffer_extension_bytes": 2 * (required_total_flag_bytes + 16),
             "saveblock1_candidate_extension_capacity_bytes": reserved_save1_bytes,
             "pokedex_struct_bytes": current_pokedex_bytes,
+            "expanded_pokedex_struct_bytes": 0x10 + 2 * dex_bytes_per_set,
             "expanded_pokedex_struct_bytes": expanded_pokedex_bytes,
             "note": (
                 "The Pokedex member is 0x78 bytes with the current 52-byte dex flag arrays and grows when NUM_DEX_FLAG_BYTES changes. SaveBlock1 and SaveBlock2 are sector-bounded. Sectors 30 and 31 are "
@@ -173,6 +176,7 @@ def main() -> int:
         },
         "readiness": {
             "save_extension_sector_plan_validated": False,
+            "saveblock2_fits_after_dex_expansion": save2_bytes + (2 * dex_bytes_per_set - 2 * current_dex_bytes_per_set) <= sector_bytes,
             "saveblock2_fits_after_dex_expansion": save2_expanded_bytes <= sector_bytes,
             "save_extension_read_write_tests": False,
             "species_info_complete": False,
