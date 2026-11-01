@@ -318,7 +318,13 @@ def resolve_source_conditionals(text: str, target_generation: int) -> str:
             continue
         kind, expression = directive.group(1), directive.group(2).strip()
         if kind in ("if", "ifdef", "ifndef"):
-            condition = evaluate_source_condition(expression, target_generation) if kind == "if" else False
+            if kind == "if":
+                condition = evaluate_source_condition(expression, target_generation)
+            else:
+                # Family feature guards describe source availability, not the
+                # target Generation. Keep the family source blocks for audit;
+                # their contents are filtered later by explicit species IDs.
+                condition = True
             frame = {"parent": active, "taken": condition, "active": active and condition}
             stack.append(frame)
             active = frame["active"]
