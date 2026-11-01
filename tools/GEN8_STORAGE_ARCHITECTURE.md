@@ -42,3 +42,12 @@ The next SpeciesInfo phase must:
 ## Release gate
 
 `NUM_SPECIES` and the 512 new internal IDs remain untouched until storage architecture, save migration/round-trip tests, complete SpeciesInfo, and all species-indexed runtime tables are independently validated.
+
+
+## Save-sector trace findings
+
+The live save writer maps fourteen sectors per rotating save slot: sector 0 is SaveBlock2, sectors 1–4 are SaveBlock1, and sectors 5–13 are Pokémon storage. Normal saves and link saves use these slot-backed locations; the special-sector API accepts only sector 30 (Trainer Hill) and 31 (Recorded Battle). The Hall of Fame occupies sectors 28–29. None of these special sectors can be considered free extension storage without breaking an existing feature.
+
+The SaveBlock1 reserved region at offset 0x3598 has 0x180 bytes. This is a plausible in-struct payload candidate, but is not yet approved for use. SaveBlock1 is split into four 3968-byte chunks and the whole save alternates between two slots. An extension there would be duplicated in both slots on full saves. A correct implementation still needs version markers, initialization of old saves, and tests proving the extension is copied and loaded consistently without colliding with save checksum logic or encryption-key relocation.
+
+The 898-entry dex bitsets require 113 bytes each. Three seen copies plus one owned copy require 452 bytes; the baseline four arrays occupy 208 bytes, so the incremental requirement is 244 bytes. The 0x180 reserved block can contain this payload with 140 bytes spare, but only after read/write and migration tests validate the design. This is not permission to alter SaveBlock1 or NUM_DEX_FLAG_BYTES.
