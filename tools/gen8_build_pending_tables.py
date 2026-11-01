@@ -315,11 +315,28 @@ def source_table_inventory() -> dict:
             "source_has_evolution_pointer": raw is not None,
         })
 
-    # Pokédex text and dimensions: retain the exact source expressions and
-    # decoded string fragments; macros/pointers remain visible, never guessed.
+    # Pokédex text and dimensions: decode inline strings and resolve the
+    # small set of shared g<Name>PokedexText symbols from the pinned header.
+    # The original pointer/expression remains recorded beside the decoded text.
+    shared_dex_text = read(VENDOR / "src/data/pokemon/species_info/shared_dex_text.h")
+    shared_dex_text_values = {}
+    shared_pattern = re.compile(
+        r"const\\s+u8\\s+(g[A-Za-z0-9_]+PokedexText)\\s*\\[\\]\\s*=\\s*_\\((.*?)\\);",
+        re.S,
+    )
+    for match in shared_pattern.finditer(shared_dex_text):
+        shared_dex_text_values[match.group(1)] = string_fragments(match.group(2))
     pokedex_rows = []
     unresolved_text = []
     for dex, mapping, _, source, fields in source_rows:
+        description_expression = fields.get("description")
+        description_pointer = (
+            description_expression
+            if description_expression in shared_dex_text_values else None
+        )
+        description_values = string_fragments(description_expression or "")
+        if not description_values and description_pointer:
+            description_values = shared_dex_text_values[description_pointer]
         row = {
             "national_dex": dex,
             "species_symbol": mapping["source_symbol"],
@@ -328,8 +345,9 @@ def source_table_inventory() -> dict:
             "species_name_fragments": string_fragments(fields.get("speciesName", "")),
             "category_expression": fields.get("categoryName"),
             "category_fragments": string_fragments(fields.get("categoryName", "")),
-            "description_expression": fields.get("description"),
-            "description_fragments": string_fragments(fields.get("description", "")),
+            "description_expression": description_expression,
+            "description_pointer_symbol": description_pointer,
+            "description_fragments": description_values,
             "height_dm": fields.get("height"),
             "weight_hg": fields.get("weight"),
             "national_dex_symbol": fields.get("natDexNum"),
@@ -339,9 +357,12 @@ def source_table_inventory() -> dict:
             unresolved_text.append({
                 "national_dex": dex,
                 "species_symbol": mapping["source_symbol"],
-                "missing_or_indirect": [
-                    key for key in ("speciesName", "categoryName", "description")
-                    if not row[key + ("_expression" if key != "speciesName" else "_expression")]
+                "missing_fields": [
+                    field for field, ok in (
+                        ("speciesName", bool(row["species_name_fragments"])),
+                        ("categoryName", bool(row["category_fragments"])),
+                        ("description", bool(row["description_fragments"])),
+                    ) if not ok
                 ],
             })
         pokedex_rows.append(row)
