@@ -293,25 +293,40 @@ def expand_c_macro_text(text: str, macros: dict, depth: int = 0) -> str:
 
 
 def evaluate_source_condition(condition: str, target_generation: int) -> bool:
+    """Evaluate the finite source macro conditions used by SpeciesInfo."""
     condition = condition.strip().strip("() ").strip()
-    match = re.fullmatch(
-        r"(?:P_UPDATED_[A-Z0-9_]+)\s*(>=|>|<=|<|==|!=)\s*GEN_(\d+)",
-        condition,
-    )
-    if match:
+    # P_UPDATED_* flags are configured to the target game's generation.
+    compare_re = re.compile(r"P_UPDATED_[A-Z0-9_]+\s*(>=|>|<=|<|==|!=)\s*GEN_(\d+)")
+    def compare(match):
         op, gen = match.group(1), int(match.group(2))
         return {
             ">=": target_generation >= gen, ">": target_generation > gen,
             "<=": target_generation <= gen, "<": target_generation < gen,
             "==": target_generation == gen, "!=": target_generation != gen,
         }[op]
-    # Configuration flags not described by the Gen 8 data policy default to
-    # false; any such branch affecting a compact field remains detectable.
-    return False
+    pieces = re.split(r"\s*(\|\||&&)\s*", condition)
+    if len(pieces) == 1:
+        match = compare_re.fullmatch(pieces[0].strip())
+        return compare(match) if match else False
+    value = None
+    operator = None
+    for piece in pieces:
+        if piece in ("||", "&&"):
+            operator = piece
+            continue
+        match = compare_re.fullmatch(piece.strip())
+        current = compare(match) if match else False
+        if value is None:
+            value = current
+        elif operator == "||":
+            value = value or current
+        elif operator == "&&":
+            value = value and current
+    return bool(value)
 
 
 def resolve_source_conditionals(text: str, target_generation: int) -> str:
-    """Select active #if branches for the declared Gen 8 compatibility target."""
+    """Select active #if/#elif branches for the declared Gen 8 compatibility target."""
     output = []
     stack = []
     active = True
@@ -326,9 +341,9 @@ def resolve_source_conditionals(text: str, target_generation: int) -> str:
             if kind == "if":
                 condition = evaluate_source_condition(expression, target_generation)
             else:
-                # Family feature guards describe source availability, not the
-                # target Generation. Keep the family source blocks for audit;
-                # their contents are filtered later by explicit species IDs.
+                # Preserve family feature guards; the source inventory is used
+                # for canonical IDs, while only P_UPDATED_* policy guards are
+                # evaluated here.
                 condition = True
             frame = {"parent": active, "taken": condition, "active": active and condition}
             stack.append(frame)
