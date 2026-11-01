@@ -212,12 +212,13 @@ def check_gen8_stats_conditionals_use_target_generation():
     for raw, expected in cases:
         compact = " ".join(raw.split())
         m = module.re.fullmatch(
-            r"(?P<flag>P_UPDATED_[A-Z0-9_]+)\\s*>=\\s*GEN_(?P<gen>\\d+)\\s*\\?\\s*(?P<yes>-?\\d+)\\s*:\\s*(?P<no>-?\\d+)",
+            r"(?P<flag>P_UPDATED_[A-Z0-9_]+)\s*>=\s*GEN_(?P<gen>\d+)\s*\?\s*(?P<yes>-?\d+)\s*:\s*(?P<no>-?\d+)",
             compact,
         )
         assert m, (raw, compact)
         actual = int(m.group("yes") if module.TARGET_GAME_GENERATION >= int(m.group("gen")) else m.group("no"))
         assert actual == expected, (raw, actual, expected)
+
 
 def check_actual_speciesinfo_generation8_target_resolution():
     # Exact conditional syntax observed in Expansion Gen 1-8 family headers.
