@@ -505,6 +505,29 @@ def generate(check: bool = False) -> dict:
             raise RuntimeError("Duplicate SpeciesInfo designator: " + record["species_symbol"])
         info_by_symbol[record["species_symbol"]] = record
 
+    # Parse vanilla Emerald records as the authoritative source for the 386
+    # existing National Dex species. These remain the existing runtime rows;
+    # this does not allocate or renumber any internal species IDs.
+    target_info_records = balanced_species_records(target_info_text)
+    target_info_by_symbol = {row["symbol"]: row for row in target_info_records}
+    target_species_by_dex = {}
+    natdex_target_values = {
+        row["symbol"]: row["id"]
+        for row in symbols(read(DST_POKEDEX), "NATIONAL_DEX_", enum=True)
+    }
+    for row in target_info_records:
+        fields = extract_designated_fields(row["body"])
+        nat_match = re.fullmatch(r"NATIONAL_DEX_([A-Z0-9_]+)", fields.get("natDexNum", ""))
+        dex_id = natdex_target_values.get(nat_match.group(1)) if nat_match else None
+        if dex_id is not None and 1 <= dex_id <= 898:
+            target_species_by_dex[dex_id] = {
+                "species_symbol": row["symbol"],
+                "generation": 3,
+                "source_raw": fields,
+                "status": "existing_emerald_species_info",
+                "unresolved": [],
+            }
+
     by_dex = {}
     for item in source_species:
         if 1 <= item["id"] <= 898:
@@ -541,8 +564,10 @@ def generate(check: bool = False) -> dict:
         national_symbol = by_dex[dex]
         preferred_symbol = BASE_ALIASES.get(national_symbol, national_symbol)
         candidates = info_candidates_by_dex.get(dex, [])
-        row = next((candidate for candidate in candidates
-                    if candidate["species_symbol"] == preferred_symbol), None)
+        row = target_species_by_dex.get(dex)
+        if row is None:
+            row = next((candidate for candidate in candidates
+                        if candidate["species_symbol"] == preferred_symbol), None)
         if row is None:
             row = info_by_symbol.get(preferred_symbol)
         if row is None:
