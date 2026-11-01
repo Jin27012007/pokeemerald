@@ -293,7 +293,7 @@ def parse_cry_table_labels(text: str) -> set[str]:
     end = text.find("gCryTable_Reverse::", start + 1)
     if start < 0 or end < 0:
         raise RuntimeError("Could not locate gCryTable boundaries")
-    labels = re.findall(r"^\\s*cry\\s+(Cry_[A-Za-z0-9_]+)", text[start:end], re.M)
+    labels = re.findall(r"^\s*cry\s+(Cry_[A-Za-z0-9_]+)", text[start:end], re.M)
     return {normalize_cry(label) for label in labels}
 
 
