@@ -563,9 +563,14 @@ def parse_species_info(source_text: str, target_info_text: str,
 
     for record in records:
         raw_body = record["body"]
-        raw_fields = extract_designated_fields(raw_body)
         macros = source_symbol_macros.get(record["symbol"], {})
-        fields = dict(raw_fields)
+        # Some canonical species and regional/form families are declared via
+        # reusable initializer macros rather than literal designated fields.
+        # Expand the complete RHS before extracting fields; expanding only
+        # already-extracted values silently loses every field in macro-only rows.
+        expanded_body = expand_c_macro_text(raw_body, macros)
+        raw_fields = extract_designated_fields(raw_body)
+        fields = extract_designated_fields(expanded_body)
         for field in compact_macro_fields:
             if field in fields:
                 fields[field] = expand_c_macro_text(fields[field], macros)
@@ -690,6 +695,9 @@ def parse_species_info(source_text: str, target_info_text: str,
             "generation": record["generation"],
             "national_dex_symbol": dex_value,
             "source_raw": raw_fields,
+            "source_expanded_fields": fields,
+            "source_initializer_raw": raw_body,
+            "source_initializer_expanded": expanded_body,
             "resolved_source_fields": fields,
             "statistics": values,
             "gender_ratio": gender_ratio,
@@ -852,7 +860,9 @@ def generate(check: bool = False) -> dict:
                 "national_symbol": national_symbol,
                 "source_record_symbol": row["species_symbol"],
                 "source_generation": row["generation"],
-                "source_fields_present": sorted(row.get("source_raw", {}).keys()),
+                "source_fields_present": sorted(
+                    row.get("source_expanded_fields", row.get("source_raw", {})).keys()
+                ),
                 "compact_status": row["status"],
                 "source_complete": row.get("source_complete", False),
                 "source_missing_fields": row.get("source_missing_fields", []),
