@@ -22,6 +22,7 @@ SRC_MOVES = VENDOR / "include/constants/moves.h"
 SRC_LEARNSET_DIR = VENDOR / "src/data/pokemon/level_up_learnsets"
 SRC_SPECIES_INFO_DIR = VENDOR / "src/data/pokemon/species_info"
 SOURCE_GENERATIONS = (1, 2, 3, 4, 5, 6, 7, 8)
+LEARNSET_GENERATIONS = (4, 5, 6, 7, 8)
 
 DST_SPECIES = ROOT / "include/constants/species.h"
 DST_MOVES = ROOT / "include/constants/moves.h"
@@ -473,7 +474,7 @@ def generate(check: bool = False) -> dict:
     source_moves = symbols(read(SRC_MOVES), "MOVE_", enum=True)
     target_moves = symbols(read(DST_MOVES), "MOVE_")
     source_info_files = [SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h" for generation in SOURCE_GENERATIONS]
-    source_learnset_files = [SRC_LEARNSET_DIR / f"gen_{generation}.h" for generation in SOURCE_GENERATIONS]
+    source_learnset_files = [SRC_LEARNSET_DIR / f"gen_{generation}.h" for generation in LEARNSET_GENERATIONS]
     source_info_texts = {path.name: read(path) for path in source_info_files}
     source_learnset_texts = {path.name: read(path) for path in source_learnset_files}
     source_info_text = "\n".join(source_info_texts.values())
@@ -488,7 +489,7 @@ def generate(check: bool = False) -> dict:
             source_symbol_generation[symbol] = generation
     target_info_text = read(DST_INFO)
     learnsets = []
-    for generation, path in zip(SOURCE_GENERATIONS, source_learnset_files):
+    for generation, path in zip(LEARNSET_GENERATIONS, source_learnset_files):
         learnsets.extend(extract_learnsets(source_learnset_texts[path.name], generation))
     type_text, ability_text, item_text = read(DST_POKEMON_CONSTANTS), read(DST_ABILITIES), read(DST_ITEMS)
     source_ability_text = read(VENDOR / "include/constants/abilities.h")
@@ -631,8 +632,8 @@ def generate(check: bool = False) -> dict:
         "canonical_dex_entries": len(species_map), "existing_species": existing_count,
         "new_species": len(new_species), "source_moves_gen1_8": len({x["id"] for x in source_moves if x["id"] <= 847}),
         "learnset_blocks": len(learnsets), "learnset_move_entries": sum(len(x["moves"]) for x in learnsets),
-        "learnset_generation_counts": {str(g): sum(1 for row in learnsets if row["generation"] == g) for g in SOURCE_GENERATIONS},
-        "learnset_generations": list(SOURCE_GENERATIONS),
+        "learnset_generation_counts": {str(g): sum(1 for row in learnsets if row["generation"] == g) for g in LEARNSET_GENERATIONS},
+        "learnset_generations": list(LEARNSET_GENERATIONS),
         "distinct_learnset_moves": len(used_moves), "missing_learnset_moves": len(missing_moves),
         "species_info_blocks": info_result["source_record_count"],
         "species_info_source_files": len(source_info_files),
