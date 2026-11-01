@@ -220,7 +220,14 @@ def parse_species_info(source_text: str, target_info_text: str,
     ability_values = {x["symbol"]: x["id"] for x in symbols(source_ability_text, "ABILITY_", enum=True)}
     item_values = {x["symbol"]: x["id"] for x in symbols(source_item_text, "ITEM_", enum=True)}
     if not all((type_values, egg_values, growth_values, ability_values, item_values)):
-        raise RuntimeError("Expansion source enum catalog is incomplete")
+        missing_catalogs = [
+            name for name, values in (
+                ("types", type_values), ("egg_groups", egg_values),
+                ("growth_rates", growth_values), ("abilities", ability_values),
+                ("items", item_values),
+            ) if not values
+        ]
+        raise RuntimeError("Expansion source enum catalog(s) incomplete: " + ", ".join(missing_catalogs))
 
     out, unresolved = [], []
     scalar_fields = (
