@@ -531,6 +531,9 @@ def parse_species_info(source_text: str, target_info_text: str,
         return None
 
     def resolve_macro_pair(raw, macro_name, prefix, domain):
+        # MON_TYPES / MON_EGG_GROUPS use DEFAULT(first, second-or-first)
+        # inside the macro definition. The initializer itself contains only
+        # the macro arguments, not a literal expanded pair.
         match = re.fullmatch(
             rf"{macro_name}\(\s*{prefix}([A-Z0-9_]+)(?:\s*,\s*{prefix}([A-Z0-9_]+))?\s*\)",
             raw or "",
