@@ -790,6 +790,10 @@ def generate(check: bool = False) -> dict:
                 "source_raw": fields,
                 "status": "compact_fields_resolved",
                 "compatibility": "native_emerald",
+                "source_complete": True,
+                "source_missing_fields": [],
+                "compact_compatible": True,
+                "runtime_gaps": [],
                 "unresolved": [],
             }
 
@@ -850,6 +854,10 @@ def generate(check: bool = False) -> dict:
                 "source_generation": row["generation"],
                 "source_fields_present": sorted(row.get("source_raw", {}).keys()),
                 "compact_status": row["status"],
+                "source_complete": row.get("source_complete", False),
+                "source_missing_fields": row.get("source_missing_fields", []),
+                "compact_compatible": row.get("compact_compatible", row["status"] == "compact_fields_resolved"),
+                "runtime_gaps": row.get("runtime_gaps", []),
                 "unresolved_fields": row["unresolved"],
                 "same_dex_variant_symbols": sorted(
                     candidate["species_symbol"] for candidate in candidates
@@ -909,14 +917,23 @@ def generate(check: bool = False) -> dict:
         "canonical_species_info_covered": len(canonical_species_info),
         "canonical_species_info_missing": len(missing_species_info),
         "canonical_species_info_raw_field_coverage": field_coverage,
+        "canonical_species_info_source_complete": sum(1 for row in canonical_species_info if row.get("source_complete", False)),
+        "canonical_species_info_compact_compatible": sum(1 for row in canonical_species_info if row.get("compact_compatible", False)),
+        "canonical_species_info_runtime_gap_records": sum(1 for row in canonical_species_info if row.get("runtime_gaps")),
+        "canonical_species_info_source_missing_fields": sum(1 for row in canonical_species_info if row.get("source_missing_fields")),
         "missing_species_info_for_new_dex_species": len(missing_species_info),
     }
-    species_info_ready = (
+    species_info_source_complete = (
         len(canonical_species_info) == 898
         and not missing_species_info
-        and all(row["compact_status"] == "compact_fields_resolved" for row in canonical_species_info)
+        and all(row.get("source_complete", False) for row in canonical_species_info)
+        and all(not row.get("source_missing_fields") for row in canonical_species_info)
         and all("baseHP" in row["source_fields_present"] for row in canonical_species_info)
         and all("natDexNum" in row["source_fields_present"] for row in canonical_species_info)
+    )
+    species_info_compact_compatible = (
+        species_info_source_complete
+        and all(row.get("compact_compatible", False) for row in canonical_species_info)
     )
     report = {
         "source": "pinned pokeemerald-expansion source snapshot (Gen 4-9 family data)",
@@ -929,15 +946,19 @@ def generate(check: bool = False) -> dict:
             "species_info_compact_stage_generated": len(info_result["compact_records"]) > 0,
             "species_info_898_canonical_entries": len(canonical_species_info) == 898,
             "species_info_zero_missing_canonical_entries": not missing_species_info,
-            "species_info_zero_unresolved_canonical_records": all(row["compact_status"] == "compact_fields_resolved" for row in canonical_species_info),
-            "species_info_complete": species_info_ready, "save_extension_validated": False,
+            "species_info_zero_unresolved_source_records": all(row.get("source_complete", False) for row in canonical_species_info),
+            "species_info_zero_unresolved_runtime_gaps": all(not row.get("runtime_gaps") for row in canonical_species_info),
+            "species_info_complete": species_info_source_complete,
+            "species_info_source_complete": species_info_source_complete,
+            "species_info_compact_compatible": species_info_compact_compatible,
+            "save_extension_validated": False,
             "evolutions_ready": False, "pokedex_text_ready": False, "cries_ready": False,
             "graphics_ready": False, "battle_and_contest_moves_ready": False,
             "runtime_ready": False, "num_species_change_allowed": False,
         },
         "species_mapping": species_map,
         "species_info_by_national_dex": canonical_species_info,
-        "species_info_complete": species_info_ready,
+        "species_info_complete": species_info_source_complete,
         "missing_species_info_by_national_dex": missing_species_info,
         "species_info_field_coverage": field_coverage,
         "emerald_compatibility": emerald_compatibility,
