@@ -54,6 +54,8 @@ jobs:
           assert save["required_seen_owned_flag_bytes"] == 226
           assert save["additional_flag_bytes_needed"] == 122
           assert save["saveblock1_bytes"] == 0x3D88
+          assert save["saveblock2_bytes"] == 0xF2C
+          assert save["saveblock2_headroom_bytes"] == 84
           assert save["sector_data_bytes"] == 3968
           assert report["readiness"]["num_species_change_allowed"] is False
           print("PASS: save sector sizing and National Dex flag calculations verified.")
