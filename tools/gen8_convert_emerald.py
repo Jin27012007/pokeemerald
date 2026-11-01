@@ -21,7 +21,7 @@ SRC_SPECIES = VENDOR / "include/constants/species.h"
 SRC_MOVES = VENDOR / "include/constants/moves.h"
 SRC_LEARNSET_DIR = VENDOR / "src/data/pokemon/level_up_learnsets"
 SRC_SPECIES_INFO_DIR = VENDOR / "src/data/pokemon/species_info"
-SOURCE_GENERATIONS = (4, 5, 6, 7, 8, 9)
+SOURCE_GENERATIONS = (1, 2, 3, 4, 5, 6, 7, 8)
 
 DST_SPECIES = ROOT / "include/constants/species.h"
 DST_MOVES = ROOT / "include/constants/moves.h"
