@@ -1,200 +1,279 @@
 #!/usr/bin/env python3
-"""Generate a conservative Gen 8 -> vanilla Emerald conversion package.
+"""Build the Gen 8 -> Emerald staging package.
 
-This stage extracts canonical Dex identities, species stat fields that overlap
-Emerald, learnsets, and dependency inventories. It does NOT edit production C
-tables, assign new species/move IDs, or increase NUM_SPECIES.
+This tool emits an isolated, compilable National Dex map and review data. It
+never changes SPECIES_* IDs, MOVE_* IDs, NUM_SPECIES, save layouts or production
+Pokemon tables.
 """
 from __future__ import annotations
-import argparse, csv, json, re, sys
+
+import argparse
+import csv
+import json
+import re
+import sys
 from pathlib import Path
 
-ROOT=Path(__file__).resolve().parents[1]
-V=ROOT/"tools/vendor/pokeemerald-expansion"
-OUT=ROOT/"reports/gen8-conversion"
-SRC_SPECIES=V/"include/constants/species.h"
-SRC_MOVES=V/"include/constants/moves.h"
-SRC_INFO=V/"src/data/pokemon/species_info/gen_8_families.h"
-SRC_LEARN=V/"src/data/pokemon/level_up_learnsets/gen_8.h"
-DST_SPECIES=ROOT/"include/constants/species.h"
-DST_MOVES=ROOT/"include/constants/moves.h"
-DST_INFO=ROOT/"src/data/pokemon/species_info.h"
-DST_LEARN=ROOT/"src/data/pokemon/level_up_learnsets.h"
-DST_EVO=ROOT/"src/data/pokemon/evolution.h"
-DST_DEX=ROOT/"src/data/pokemon/pokedex_entries.h"
-DST_ORDERS=ROOT/"src/data/pokemon/pokedex_orders.h"
-DST_CRY=ROOT/"sound/cry_tables.inc"
+ROOT = Path(__file__).resolve().parents[1]
+VENDOR = ROOT / "tools/vendor/pokeemerald-expansion"
+OUT = ROOT / "reports/gen8-conversion"
+SRC_SPECIES = VENDOR / "include/constants/species.h"
+SRC_MOVES = VENDOR / "include/constants/moves.h"
+SRC_LEARNSETS = VENDOR / "src/data/pokemon/level_up_learnsets/gen_8.h"
+SRC_SPECIES_INFO = VENDOR / "src/data/pokemon/species_info/gen_8_families.h"
+DST_SPECIES = ROOT / "include/constants/species.h"
+DST_MOVES = ROOT / "include/constants/moves.h"
+DST_INFO = ROOT / "src/data/pokemon/species_info.h"
 
-# Canonical species that are represented in the source header by a base-form
-# alias. These map to the base species identity, not another Dex entry.
-BASE_ALIASES={
- "CASTFORM_NORMAL":"CASTFORM", "DEOXYS_NORMAL":"DEOXYS",
- "BURMY_PLANT":"BURMY", "WORMADAM_PLANT":"WORMADAM",
- "MOTHIM_PLANT":"MOTHIM", "CHERRIM_OVERCAST":"CHERRIM",
- "SHELLOS_WEST":"SHELLOS", "GASTRODON_WEST":"GASTRODON",
- "GIRATINA_ALTERED":"GIRATINA", "SHAYMIN_LAND":"SHAYMIN",
- "ARCEUS_NORMAL":"ARCEUS", "BASCULIN_RED_STRIPED":"BASCULIN",
- "DARMANITAN_STANDARD":"DARMANITAN", "TORNADUS_INCARNATE":"TORNADUS",
- "THUNDURUS_INCARNATE":"THUNDURUS", "LANDORUS_INCARNATE":"LANDORUS",
- "KYUREM_NORMAL":"KYUREM", "KELDEO_ORDINARY":"KELDEO",
- "MELOETTA_ARIA":"MELOETTA", "LYCANROC_MIDDAY":"LYCANROC",
- "WISHIWASHI_SOLO":"WISHIWASHI", "ZYGARDE_50":"ZYGARDE",
- "MINIOR_METEOR_RED":"MINIOR", "TOXTRICITY_AMPED":"TOXTRICITY",
- "EISCUE_ICE":"EISCUE", "INDEEDEE_MALE":"INDEEDEE",
- "MORPEKO_FULL_BELLY":"MORPEKO", "ZACIAN_HERO":"ZACIAN",
- "ZAMAZENTA_HERO":"ZAMAZENTA", "ETERNATUS":"ETERNATUS",
- "URSHIFU_SINGLE_STRIKE":"URSHIFU"
+# Source names are the base-form aliases used by the pinned Expansion snapshot.
+BASE_ALIASES = {
+    "CASTFORM_NORMAL": "CASTFORM", "DEOXYS_NORMAL": "DEOXYS",
+    "BURMY_PLANT": "BURMY", "WORMADAM_PLANT": "WORMADAM",
+    "MOTHIM_PLANT": "MOTHIM", "CHERRIM_OVERCAST": "CHERRIM",
+    "SHELLOS_WEST": "SHELLOS", "GASTRODON_WEST": "GASTRODON",
+    "GIRATINA_ALTERED": "GIRATINA", "SHAYMIN_LAND": "SHAYMIN",
+    "ARCEUS_NORMAL": "ARCEUS", "BASCULIN_RED_STRIPED": "BASCULIN",
+    "DARMANITAN_STANDARD": "DARMANITAN", "TORNADUS_INCARNATE": "TORNADUS",
+    "THUNDURUS_INCARNATE": "THUNDURUS", "LANDORUS_INCARNATE": "LANDORUS",
+    "KYUREM_NORMAL": "KYUREM", "KELDEO_ORDINARY": "KELDEO",
+    "MELOETTA_ARIA": "MELOETTA", "LYCANROC_MIDDAY": "LYCANROC",
+    "WISHIWASHI_SOLO": "WISHIWASHI", "ZYGARDE_50": "ZYGARDE",
+    "MINIOR_METEOR_RED": "MINIOR", "TOXTRICITY_AMPED": "TOXTRICITY",
+    "EISCUE_ICE": "EISCUE", "INDEEDEE_M": "INDEEDEE",
+    "INDEEDEE_MALE": "INDEEDEE", "MORPEKO_FULL_BELLY": "MORPEKO",
+    "ZACIAN_HERO": "ZACIAN", "ZAMAZENTA_HERO": "ZAMAZENTA",
+    "URSHIFU_SINGLE_STRIKE": "URSHIFU",
 }
-# Only fields present in vanilla Emerald's SpeciesInfo are copied.
-COMPATIBLE_FIELDS={
- "baseHP","baseAttack","baseDefense","baseSpeed","baseSpAttack","baseSpDefense",
- "types","catchRate","expYield","evYield_HP","evYield_Attack","evYield_Defense",
- "evYield_Speed","evYield_SpAttack","evYield_SpDefense","itemCommon","itemRare",
- "genderRatio","eggCycles","friendship","growthRate","eggGroups","abilities",
- "safariZoneFleeRate","bodyColor","noFlip"
-}
-FIELD_ALIASES={"types":"types"}
-def read(p):
- if not p.is_file(): raise RuntimeError(f"Missing input: {p.relative_to(ROOT)}")
- return p.read_text(encoding="utf-8")
-def enum_rows(text,prefix):
- out=[]
- rx=re.compile(rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*=\s*(0x[0-9a-fA-F]+|\d+)\s*,?\s*(?://.*)?$",re.M)
- for m in rx.finditer(text): out.append({"symbol":m.group(1),"id":int(m.group(2),0)})
- return out
-def define_rows(text,prefix):
- out=[]
- rx=re.compile(rf"^#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+(0x[0-9a-fA-F]+|\d+)\s*$",re.M)
- for m in rx.finditer(text): out.append({"symbol":m.group(1),"id":int(m.group(2),0)})
- return out
-def balanced_records(text):
- rx=re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*\{",re.M)
- rows=[]
- for m in rx.finditer(text):
-  i=rx.lastindex if False else m.end()
-  depth=1; quoted=False; escaped=False
-  while i<len(text) and depth:
-   c=text[i]
-   if quoted:
-    if escaped: escaped=False
-    elif c=="\\": escaped=True
-    elif c=='"': quoted=False
-   else:
-    if c=='"': quoted=True
-    elif c=="{": depth+=1
-    elif c=="}": depth-=1
-   i+=1
-  if depth==0:
-   rows.append((m.group(1),text[m.end():i-1].strip()))
- return rows
-def extract_moves(text):
- rx=re.compile(r"static const struct LevelUpMove s([A-Za-z0-9]+)LevelUpLearnset\[\]\s*=\s*\{([\s\S]*?)\n\};")
- rows=[]
- for m in rx.finditer(text):
-  moves=[{"level":int(a),"move":b} for a,b in re.findall(r"LEVEL_UP_MOVE\(\s*(\d+)\s*,\s*MOVE_([A-Z0-9_]+)\s*\)",m.group(2))]
-  rows.append({"source_species":m.group(1),"moves":moves})
- return rows
-def normalize_species(slug):
- return slug.upper().replace("-","_").replace(".","")
-def write_json(p,obj):
- p.parent.mkdir(parents=True,exist_ok=True)
- p.write_text(json.dumps(obj,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
-def main():
- ap=argparse.ArgumentParser()
- ap.add_argument("--check",action="store_true")
- args=ap.parse_args()
- try:
-  ss=read(SRC_SPECIES); sm=read(SRC_MOVES); si=read(SRC_INFO); sl=read(SRC_LEARN)
-  ts=read(DST_SPECIES); tm=read(DST_MOVES); ti=read(DST_INFO)
-  read(DST_LEARN); read(DST_EVO); read(DST_DEX); read(DST_ORDERS); read(DST_CRY)
-  source_species=enum_rows(ss,"SPECIES_")
-  target_species=define_rows(ts,"SPECIES_")
-  source_moves=enum_rows(sm,"MOVE_")
-  target_moves=define_rows(tm,"MOVE_")
-  # The base-form values are explicit aliases in the source enum. Ignore
-  # duplicate alias lines and use the single concrete identifier for each Dex.
-  by_id={}
-  for r in source_species:
-   if 1<=r["id"]<=898 and r["symbol"] not in BASE_ALIASES:
-    by_id.setdefault(r["id"],r["symbol"])
-  # The Expansion header assigns national dex IDs to the base-form symbols
-  # (Castform_Normal, Deoxys_Normal, etc.). Include those as canonical identities
-  # and then normalize their symbol aliases below. Each Dex number must appear once.
-  by_id={}
-  seen_ids=set()
-  for r in source_species:
-   if 1<=r["id"]<=898 and r["id"] not in seen_ids:
-    by_id[r["id"]]=r["symbol"]
-    seen_ids.add(r["id"])
-  if sorted(by_id)!=list(range(1,899)):
-   missing=sorted(set(range(1,899))-set(by_id))
-   raise RuntimeError(f"Canonical Dex mapping incomplete; missing Dex IDs: {missing[:20]}")
-  target_names={x["symbol"] for x in target_species}
-  species_map=[]
-  for dex,symbol in sorted(by_id.items()):
-   target_symbol=BASE_ALIASES.get(symbol,symbol)
-   existing=target_symbol in target_names
-   species_map.append({"national_dex":dex,"source_symbol":symbol,"normalized_symbol":target_symbol,
-      "emerald_symbol":target_symbol if existing else None,
-      "emerald_internal_id":None if not existing else next(x["id"] for x in target_species if x["symbol"]==target_symbol),
-      "status":"existing_emerald_species" if existing else "new_species_id_required"})
-  new_species=[x for x in species_map if x["status"]=="new_species_id_required"]
-  learnsets=extract_moves(sl)
-  used_moves=sorted({m["move"] for l in learnsets for m in l["moves"]})
-  target_move_names={x["symbol"] for x in target_moves}
-  source_move_by_name={x["symbol"]:x for x in source_moves}
-  move_rows=[]
-  for name,r in source_move_by_name.items():
-   if r["id"]<=354: continue
-   move_rows.append({"source_symbol":name,"source_id":r["id"],"emerald_id":None,
-    "used_by_gen8_learnset":name in used_moves,
-    "status":"requires_battle_and_contest_definition"})
-  missing_learn_moves=sorted(set(used_moves)-target_move_names)
-  # Extract full SpeciesInfo blocks, retaining raw source text and identifying
-  # the overlapping Emerald fields. No raw macro expression is executed.
-  info_rows=[]
-  for symbol,body in balanced_records(si):
-   fields={}
-   for m in re.finditer(r"^\s*\.([A-Za-z0-9_]+)\s*=\s*([^,\n]+)",body,re.M):
-    key,value=m.group(1),m.group(2).strip()
-    if key in COMPATIBLE_FIELDS: fields[key]=value
-   info_rows.append({"species_symbol":symbol,"compatible_field_candidates":fields,"raw_fields":body})
-  target_fields=set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=",ti,re.M))
-  source_fields=set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=",si,re.M))
-  extra_fields=sorted(source_fields-target_fields)
-  report={
-   "scope":"National Dex 1-898, canonical base forms only",
-   "production_tables_modified":False,"species_ids_or_NUM_SPECIES_modified":False,
-   "counts":{"canonical_dex_entries":len(species_map),"new_species":len(new_species),
-    "source_move_constants":len(source_moves),"new_move_constants_after_gen3":len(move_rows),
-    "learnset_blocks":len(learnsets),"distinct_learnset_move_names":len(used_moves),
-    "missing_learnset_move_names":len(missing_learn_moves),"species_info_blocks":len(info_rows)},
-   "species_mapping":species_map,"move_mapping":move_rows,
-   "missing_learnset_move_names":missing_learn_moves,
-   "species_info_field_names_not_in_emerald":extra_fields,
-   "readiness":{"dex_identity_map_complete":True,"species_ids_assigned":False,
-    "all_learnset_moves_available":not bool(missing_learn_moves),
-    "species_info_fields_semantically_converted":False,"evolution_table_generated":False,
-    "pokedex_text_generated":False,"cry_mapping_generated":False,"runtime_ready":False}
-  }
-  if args.check:
-   print(json.dumps(report["counts"],indent=2))
-   print("Runtime conversion remains blocked; production C tables untouched.")
-   return 0
-  OUT.mkdir(parents=True,exist_ok=True)
-  write_json(OUT/"conversion_report.json",report)
-  write_json(OUT/"species_id_mapping.json",species_map)
-  write_json(OUT/"new_species_mapping.json",new_species)
-  write_json(OUT/"species_info_compatible_candidates.json",info_rows)
-  write_json(OUT/"learnsets_raw.json",learnsets)
-  write_json(OUT/"move_mapping_template.json",move_rows)
-  write_json(OUT/"missing_learnset_moves.json",missing_learn_moves)
-  with (OUT/"move_dependencies.csv").open("w",newline="",encoding="utf-8") as f:
-   w=csv.DictWriter(f,fieldnames=["source_symbol","source_id","emerald_id","used_by_gen8_learnset","status"])
-   w.writeheader();w.writerows(move_rows)
-  print("Generated conversion package in reports/gen8-conversion")
-  print(json.dumps(report["counts"],indent=2))
-  return 0
- except (OSError,RuntimeError,ValueError,KeyError,StopIteration) as e:
-  print(f"GEN8 CONVERSION FAILED: {e}",file=sys.stderr);return 2
-if __name__=="__main__": raise SystemExit(main())
+
+def read(path: Path) -> str:
+    if not path.is_file():
+        raise RuntimeError(f"Missing input: {path.relative_to(ROOT)}")
+    return path.read_text(encoding="utf-8")
+
+def parse_numeric_symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
+    if enum:
+        pattern = re.compile(
+            rf"^\\s*{re.escape(prefix)}([A-Z0-9_]+)\\s*=\\s*(\\d+)\\s*,?\\s*(?://.*)?$",
+            re.M,
+        )
+    else:
+        pattern = re.compile(
+            rf"^#define\\s+{re.escape(prefix)}([A-Z0-9_]+)\\s+(\\d+)\\s*$",
+            re.M,
+        )
+    return [{"symbol": m.group(1), "id": int(m.group(2))} for m in pattern.finditer(text)]
+
+def extract_learnsets(text: str) -> list[dict]:
+    """Parse Expansion's designated-initializer LEVEL_UP_MOVE macro syntax."""
+    block_re = re.compile(
+        r"static const struct LevelUpMove s([A-Za-z0-9]+)LevelUpLearnset\\[\\]\\s*=\\s*\\{([\\s\\S]*?)\\n\\};"
+    )
+    move_re = re.compile(
+        r"LEVEL_UP_MOVE\\(\\s*(\\d+)\\s*,\\s*MOVE_([A-Z0-9_]+)\\s*\\)"
+    )
+    rows = []
+    for block in block_re.finditer(text):
+        moves = [{"level": int(m.group(1)), "move": m.group(2)} for m in move_re.finditer(block.group(2))]
+        if moves:
+            rows.append({"source_species": block.group(1), "moves": moves})
+    return rows
+
+def emit_species_header() -> str:
+    return """// Generated by tools/gen8_convert_emerald.py. DO NOT EDIT BY HAND.
+#ifndef GUARD_GEN8_SPECIES_MAP_H
+#define GUARD_GEN8_SPECIES_MAP_H
+
+#include "global.h"
+
+#define GEN8_NATIONAL_DEX_COUNT 898
+#define GEN8_EXISTING_BASE_SPECIES_COUNT 386
+#define GEN8_UNALLOCATED_BASE_SPECIES_COUNT 512
+
+struct Gen8SpeciesMapEntry
+{
+    u16 nationalDex;
+    u16 emeraldSpecies; // SPECIES_NONE means no Emerald internal ID assigned.
+};
+
+extern const struct Gen8SpeciesMapEntry gGen8SpeciesMap[GEN8_NATIONAL_DEX_COUNT + 1];
+
+#endif // GUARD_GEN8_SPECIES_MAP_H
+"""
+
+def emit_species_c(rows: list[dict]) -> str:
+    lines = [
+        "// Generated by tools/gen8_convert_emerald.py. DO NOT EDIT BY HAND.",
+        '#include "global.h"',
+        '#include "constants/species.h"',
+        '#include "gen8_species_map.h"',
+        "",
+        "const struct Gen8SpeciesMapEntry gGen8SpeciesMap[GEN8_NATIONAL_DEX_COUNT + 1] =",
+        "{",
+        "    [0] = { .nationalDex = 0, .emeraldSpecies = SPECIES_NONE },",
+    ]
+    for row in rows:
+        sid = str(row["emerald_id"]) if row["emerald_id"] is not None else "SPECIES_NONE"
+        lines.append(
+            f'    [{row["national_dex"]}] = {{ .nationalDex = {row["national_dex"]}, '
+            f'.emeraldSpecies = {sid} }}, // {row["source_symbol"]}'
+        )
+    lines.extend(["};", ""])
+    return "\\n".join(lines)
+
+def emit_readiness_header(counts: dict) -> str:
+    return f"""// Generated by tools/gen8_convert_emerald.py. DO NOT EDIT BY HAND.
+#ifndef GUARD_GEN8_CONVERSION_STATUS_H
+#define GUARD_GEN8_CONVERSION_STATUS_H
+#define GEN8_CANONICAL_NATIONAL_DEX_COUNT 898
+#define GEN8_EXISTING_BASE_SPECIES_COUNT {counts["existing_species"]}
+#define GEN8_UNALLOCATED_BASE_SPECIES_COUNT {counts["new_species"]}
+#define GEN8_SOURCE_MOVE_CONSTANTS_THROUGH_MOVE_847 {counts["source_moves_gen1_8"]}
+#define GEN8_LEVEL_UP_LEARNSET_BLOCKS {counts["learnset_blocks"]}
+#define GEN8_LEVEL_UP_MOVE_ENTRIES {counts["learnset_move_entries"]}
+#define GEN8_DISTINCT_LEARNSET_MOVE_SYMBOLS {counts["distinct_learnset_moves"]}
+#define GEN8_MISSING_EMERALD_MOVE_SYMBOLS {counts["missing_learnset_moves"]}
+#define GEN8_SPECIES_INFO_BLOCKS_FOUND {counts["species_info_blocks"]}
+#define GEN8_SPECIES_ID_ASSIGNMENT_COMPLETE 0
+#define GEN8_RUNTIME_TABLES_READY 0
+#define GEN8_NUM_SPECIES_EXPANSION_ALLOWED 0
+#endif // GUARD_GEN8_CONVERSION_STATUS_H
+"""
+
+def write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+def write_json(path: Path, value) -> None:
+    write(path, json.dumps(value, indent=2, ensure_ascii=False) + "\\n")
+
+def generate(check: bool = False) -> dict:
+    source_species = parse_numeric_symbols(read(SRC_SPECIES), "SPECIES_", enum=True)
+    target_species = parse_numeric_symbols(read(DST_SPECIES), "SPECIES_")
+    source_moves = parse_numeric_symbols(read(SRC_MOVES), "MOVE_", enum=True)
+    target_moves = parse_numeric_symbols(read(DST_MOVES), "MOVE_")
+    learnsets = extract_learnsets(read(SRC_LEARNSETS))
+    species_info_text = read(SRC_SPECIES_INFO)
+    target_info_text = read(DST_INFO)
+
+    # Source species enum IDs 1..898 are the canonical National Dex ordering.
+    by_dex = {}
+    for item in source_species:
+        if 1 <= item["id"] <= 898 and item["id"] not in by_dex:
+            by_dex[item["id"]] = item["symbol"]
+    if sorted(by_dex) != list(range(1, 899)):
+        missing = sorted(set(range(1, 899)) - set(by_dex))
+        raise RuntimeError(f"National Dex map incomplete; missing: {missing}")
+
+    target_by_name = {item["symbol"]: item["id"] for item in target_species}
+    species_map = []
+    for dex in range(1, 899):
+        source_name = by_dex[dex]
+        normalized = BASE_ALIASES.get(source_name, source_name)
+        emerald_id = target_by_name.get(normalized)
+        species_map.append({
+            "national_dex": dex,
+            "source_symbol": source_name,
+            "normalized_symbol": normalized,
+            "emerald_internal_id": emerald_id,
+            "status": "existing_emerald_species" if emerald_id is not None else "new_species_id_required",
+        })
+    existing_count = sum(row["emerald_internal_id"] is not None for row in species_map)
+    new_species = [row for row in species_map if row["emerald_internal_id"] is None]
+    if existing_count != 386 or len(new_species) != 512:
+        raise RuntimeError(f"Unexpected species split: existing={existing_count}, new={len(new_species)}")
+
+    used_moves = sorted({move["move"] for learnset in learnsets for move in learnset["moves"]})
+    target_move_names = {item["symbol"] for item in target_moves}
+    missing_moves = sorted(set(used_moves) - target_move_names)
+    source_move_by_name = {}
+    for item in source_moves:
+        if item["id"] <= 847:
+            source_move_by_name.setdefault(item["symbol"], item["id"])
+    move_dependencies = [
+        {
+            "source_symbol": name,
+            "source_id": source_move_by_name.get(name),
+            "emerald_id": next((m["id"] for m in target_moves if m["symbol"] == name), None),
+            "used_by_gen8_learnset": name in used_moves,
+            "requires_battle_definition": name not in target_move_names,
+            "requires_contest_definition": name not in target_move_names,
+        }
+        for name in sorted(source_move_by_name)
+        if source_move_by_name[name] > 354
+    ]
+    species_info_blocks = len(re.findall(r"^\\s*\\[SPECIES_[A-Z0-9_]+\\]\\s*=", species_info_text, re.M))
+    target_fields = set(re.findall(r"^\\s*\\.([A-Za-z0-9_]+)\\s*=", target_info_text, re.M))
+    source_fields = set(re.findall(r"^\\s*\\.([A-Za-z0-9_]+)\\s*=", species_info_text, re.M))
+    counts = {
+        "canonical_dex_entries": len(species_map),
+        "existing_species": existing_count,
+        "new_species": len(new_species),
+        "source_moves_gen1_8": len(move_dependencies),
+        "learnset_blocks": len(learnsets),
+        "learnset_move_entries": sum(len(x["moves"]) for x in learnsets),
+        "distinct_learnset_moves": len(used_moves),
+        "missing_learnset_moves": len(missing_moves),
+        "species_info_blocks": species_info_blocks,
+    }
+    readiness = {
+        "canonical_dex_map_complete": True,
+        "existing_species_ids_preserved": True,
+        "new_species_ids_allocated": False,
+        "learnsets_parsed_from_expansion_syntax": True,
+        "all_learnset_move_symbols_have_emerald_ids": not missing_moves,
+        "species_info_semantically_converted": False,
+        "evolutions_ready": False,
+        "pokedex_text_ready": False,
+        "cries_ready": False,
+        "graphics_ready": False,
+        "battle_and_contest_moves_ready": False,
+        "runtime_ready": False,
+        "num_species_change_allowed": False,
+    }
+    report = {
+        "source": "pinned pokeemerald-expansion source snapshot",
+        "scope": "National Dex 1-898 canonical species only",
+        "counts": counts,
+        "readiness": readiness,
+        "species_mapping": species_map,
+        "missing_learnset_move_symbols": missing_moves,
+        "species_info_fields_missing_from_emerald": sorted(source_fields - target_fields),
+    }
+    if not check:
+        OUT.mkdir(parents=True, exist_ok=True)
+        write_json(OUT / "conversion_report.json", report)
+        write_json(OUT / "species_id_mapping.json", species_map)
+        write_json(OUT / "new_species_mapping.json", new_species)
+        write_json(OUT / "move_dependencies.json", move_dependencies)
+        write_json(OUT / "level_up_learnsets.json", learnsets)
+        write_json(OUT / "missing_learnset_moves.json", missing_moves)
+        with (OUT / "move_dependencies.csv").open("w", newline="", encoding="utf-8") as fp:
+            writer = csv.DictWriter(fp, fieldnames=list(move_dependencies[0].keys()))
+            writer.writeheader()
+            writer.writerows(move_dependencies)
+        write(ROOT / "include/gen8_species_map.h", emit_species_header())
+        write(ROOT / "src/data/gen8_species_map.c", emit_species_c(species_map))
+        write(ROOT / "include/gen8_conversion_status.h", emit_readiness_header(counts))
+        write_json(ROOT / "data/pokemon/gen8_species_map.json", species_map)
+        write_json(ROOT / "data/pokemon/gen8_move_dependencies.json", move_dependencies)
+        write_json(ROOT / "data/pokemon/gen8_level_up_learnsets.json", learnsets)
+    return report
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--check", action="store_true")
+    args = parser.parse_args()
+    try:
+        report = generate(check=args.check)
+        print(json.dumps(report["counts"], indent=2))
+        if args.check:
+            print("PASS: canonical mapping and source extraction checks completed.")
+        else:
+            print("Wrote report package and isolated Emerald staging structures.")
+        return 0
+    except (OSError, RuntimeError, ValueError, KeyError) as exc:
+        print(f"GEN8 CONVERSION FAILED: {exc}", file=sys.stderr)
+        return 2
+
+if __name__ == "__main__":
+    raise SystemExit(main())
