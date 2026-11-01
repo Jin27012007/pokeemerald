@@ -529,20 +529,22 @@ def generate(check: bool = False) -> dict:
     # Coverage uses the canonical National Dex identity. A record is accepted
     # only when its source symbol or its explicit .natDexNum identifies the Dex.
     natdex_values = {x["symbol"]: x["id"] for x in symbols(read(DST_POKEDEX), "NATIONAL_DEX_", enum=True)}
-    info_by_dex = {}
+    info_candidates_by_dex = {}
     for row in info_result["compact_records"] + info_result["unresolved_records"]:
         dex_symbol = row.get("national_dex_symbol")
         dex_id = natdex_values.get(dex_symbol) if dex_symbol else None
         if dex_id is not None and 1 <= dex_id <= 898:
-            if dex_id in info_by_dex and info_by_dex[dex_id]["species_symbol"] != row["species_symbol"]:
-                raise RuntimeError(f"Conflicting source SpeciesInfo for National Dex {dex_id}")
-            info_by_dex[dex_id] = row
+            info_candidates_by_dex.setdefault(dex_id, []).append(row)
     canonical_species_info = []
     missing_species_info = []
     for dex in range(1, 899):
         national_symbol = by_dex[dex]
         preferred_symbol = BASE_ALIASES.get(national_symbol, national_symbol)
-        row = info_by_dex.get(dex) or info_by_symbol.get(preferred_symbol)
+        candidates = info_candidates_by_dex.get(dex, [])
+        row = next((candidate for candidate in candidates
+                    if candidate["species_symbol"] == preferred_symbol), None)
+        if row is None:
+            row = info_by_symbol.get(preferred_symbol)
         if row is None:
             missing_species_info.append({
                 "national_dex": dex,
@@ -559,6 +561,10 @@ def generate(check: bool = False) -> dict:
                 "source_fields_present": sorted(row.get("source_raw", {}).keys()),
                 "compact_status": row["status"],
                 "unresolved_fields": row["unresolved"],
+                "same_dex_variant_symbols": sorted(
+                    candidate["species_symbol"] for candidate in candidates
+                    if candidate["species_symbol"] != row["species_symbol"]
+                ),
             })
     used_moves = sorted({m["move"] for row in learnsets for m in row["moves"]})
     target_move_names = {x["symbol"] for x in target_moves}
