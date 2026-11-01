@@ -40,6 +40,22 @@ jobs:
       - name: Audit Gen 8 save and runtime storage architecture
         run: python3 tools/audit_gen8_runtime.py
 
+      - name: Verify Gen 8 storage calculations
+        run: |
+          python3 - <<'PY'
+          import json
+          report = json.load(open("reports/gen8-conversion/storage_architecture_audit.json", encoding="utf-8"))
+          save = report["save_layout"]
+          assert save["national_dex_count"] == 898
+          assert save["required_pokedex_flag_bytes_per_set"] == 113
+          assert save["required_seen_owned_flag_bytes"] == 226
+          assert save["additional_flag_bytes_needed"] == 122
+          assert save["saveblock1_bytes"] == 0x3D88
+          assert save["sector_data_bytes"] == 3968
+          assert report["readiness"]["num_species_change_allowed"] is False
+          print("PASS: save sector sizing and National Dex flag calculations verified.")
+          PY
+
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
