@@ -74,6 +74,24 @@ def check_balanced_species_record_strings():
     assert "A {brace}, and a comma," in rows[0]["body"]
 
 
+def check_expansion_brace_on_next_line():
+    source = """
+    [SPECIES_TURTWIG] =
+    {
+        .baseHP = 55,
+        .natDexNum = NATIONAL_DEX_TURTWIG,
+        .eggGroups = MON_EGG_GROUPS(EGG_GROUP_MONSTER, EGG_GROUP_GRASS),
+    },
+    """
+    rows = module.balanced_species_records(source)
+    assert len(rows) == 1, rows
+    assert rows[0]["symbol"] == "TURTWIG"
+    fields = module.extract_designated_fields(rows[0]["body"])
+    assert fields["baseHP"] == "55", fields
+    assert fields["natDexNum"] == "NATIONAL_DEX_TURTWIG", fields
+    assert fields["eggGroups"] == "MON_EGG_GROUPS(EGG_GROUP_MONSTER, EGG_GROUP_GRASS)", fields
+
+
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
@@ -99,6 +117,7 @@ def main():
     check_enum_implicit_and_explicit_values()
     check_nested_designated_initializers()
     check_balanced_species_record_strings()
+    check_expansion_brace_on_next_line()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
