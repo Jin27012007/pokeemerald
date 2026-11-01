@@ -30,6 +30,7 @@ DST_POKEMON_H = ROOT / "include/pokemon.h"
 DST_POKEMON_CONSTANTS = ROOT / "include/constants/pokemon.h"
 DST_ABILITIES = ROOT / "include/constants/abilities.h"
 DST_ITEMS = ROOT / "include/constants/items.h"
+DST_POKEDEX = ROOT / "include/constants/pokedex.h"
 
 BASE_ALIASES = {
     "CASTFORM_NORMAL": "CASTFORM", "DEOXYS_NORMAL": "DEOXYS",
@@ -522,7 +523,7 @@ def generate(check: bool = False) -> dict:
 
     # Coverage uses the canonical National Dex identity. A record is accepted
     # only when its source symbol or its explicit .natDexNum identifies the Dex.
-    natdex_values = {x["symbol"]: x["id"] for x in symbols(source_pokemon_text, "NATIONAL_DEX_", enum=True)}
+    natdex_values = {x["symbol"]: x["id"] for x in symbols(read(DST_POKEDEX), "NATIONAL_DEX_", enum=True)}
     info_by_dex = {}
     for row in info_result["compact_records"] + info_result["unresolved_records"]:
         dex_symbol = row.get("national_dex_symbol")
