@@ -36,7 +36,11 @@ def main() -> int:
     global_h = read(ROOT / "include/global.h")
     save_h = read(ROOT / "include/save.h")
     pokemon_constants = read(ROOT / "include/constants/pokemon.h")
-    source_info = read(ROOT / "tools/vendor/pokeemerald-expansion/src/data/pokemon/species_info/gen_8_families.h")
+    vendor_info_dir = ROOT / "tools/vendor/pokeemerald-expansion/src/data/pokemon/species_info"
+    vendor_info_files = sorted(vendor_info_dir.glob("*.h"))
+    source_info = "\\n".join(read(path) for path in vendor_info_files)
+    if not vendor_info_files:
+        raise RuntimeError("No vendored Expansion SpeciesInfo headers found")
     target_info = read(ROOT / "src/data/pokemon/species_info.h")
     source_species = read(ROOT / "tools/vendor/pokeemerald-expansion/include/constants/species.h")
     source_moves = read(ROOT / "tools/vendor/pokeemerald-expansion/include/constants/moves.h")
@@ -129,7 +133,12 @@ def main() -> int:
                 "allocation is changed by this audit."
             ),
         },
+        "source_inventory": {
+            "vendored_species_info_files": [path.name for path in vendor_info_files],
+            "vendored_species_info_file_count": len(vendor_info_files),
+        },
         "data": {
+            "vendored_species_info_files": [path.name for path in vendor_info_files],
             "gen8_species_info_records": source_info_blocks,
             "species_info_fields_not_in_vanilla": missing_fields,
             "new_moves_after_gen3_through_gen8": new_moves_after_gen3,
@@ -145,6 +154,7 @@ def main() -> int:
             "save_extension_sector_plan_validated": False,
             "save_extension_read_write_tests": False,
             "species_info_complete": False,
+            "species_info_source_coverage_proven": False,
             "abilities_complete": not missing_identifiers["abilities"],
             "held_items_complete": not missing_identifiers["items"],
             "types_complete": not missing_identifiers["types"],
