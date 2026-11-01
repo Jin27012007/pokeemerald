@@ -272,8 +272,9 @@ def check_wrapped_standard_friendship_ternary():
         compact,
     )
     assert match, compact
-    assert int(match.group(2)) == 8
-    assert int(match.group(3)) == 50
+    assert int(match.group(1)) == 8
+    assert int(match.group(2)) == 50
+    assert int(match.group(3)) == 70
 
 
 
