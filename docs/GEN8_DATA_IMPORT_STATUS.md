@@ -86,3 +86,13 @@ Emerald's current IDs and move constants. It writes
 `reports/gen8_import_compatibility.json` in CI. The audit does not rewrite C
 tables and does not renumber moves. This prevents invalid partial imports while
 the full movement/contest compatibility layer is unresolved.
+
+
+## Pinned source snapshot
+
+The four text source files used by the compatibility audit are now vendored
+under `tools/vendor/cfru/`, pinned to upstream CFRU commit
+`b637a27898b14e25dd24d0f69a3e302f0069deb8`. This makes the data audit
+reproducible and independent of a moving upstream branch at build time. The
+snapshot is limited to species constants, National Dex constants, move
+constants, and level-up learnsets; no engine hooks or binary assets are copied.
