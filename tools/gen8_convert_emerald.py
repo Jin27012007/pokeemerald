@@ -96,10 +96,15 @@ def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
     return result
 
 def balanced_species_records(text: str) -> list[dict]:
-    start_re = re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*\{", re.M)
+    start_re = re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*", re.M)
     records = []
     for m in start_re.finditer(text):
-        i, depth, in_string, escaped = m.end(), 1, False, False
+        body_start = m.end()
+        while body_start < len(text) and text[body_start].isspace():
+            body_start += 1
+        if body_start >= len(text) or text[body_start] != "{":
+            continue
+        i, depth, in_string, escaped = body_start + 1, 1, False, False
         while i < len(text) and depth:
             c = text[i]
             if in_string:
@@ -118,7 +123,7 @@ def balanced_species_records(text: str) -> list[dict]:
                     depth -= 1
             i += 1
         if depth == 0:
-            records.append({"symbol": m.group(1), "body": text[m.end():i-1].strip()})
+            records.append({"symbol": m.group(1), "body": text[body_start+1:i-1].strip()})
     return records
 
 def extract_learnsets(text: str, generation: int) -> list[dict]:
