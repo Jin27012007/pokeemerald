@@ -610,8 +610,15 @@ def generate(check: bool = False) -> dict:
         "canonical_species_info_raw_field_coverage": field_coverage,
         "missing_species_info_for_new_dex_species": len(missing_species_info),
     }
+    species_info_ready = (
+        len(canonical_species_info) == 898
+        and not missing_species_info
+        and all(row["compact_status"] == "compact_fields_resolved" for row in canonical_species_info)
+        and all("baseHP" in row["source_fields_present"] for row in canonical_species_info)
+        and all("natDexNum" in row["source_fields_present"] for row in canonical_species_info)
+    )
     report = {
-        "source": "pinned pokeemerald-expansion source snapshot (Gen 4-8 family data)",
+        "source": "pinned pokeemerald-expansion source snapshot (Gen 4-9 family data)",
         "scope": "National Dex 1-898 canonical species only",
         "counts": counts,
         "readiness": {
@@ -619,13 +626,17 @@ def generate(check: bool = False) -> dict:
             "new_species_ids_allocated": False, "learnsets_parsed_from_expansion_syntax": True,
             "all_learnset_move_symbols_have_emerald_ids": not missing_moves,
             "species_info_compact_stage_generated": len(info_result["compact_records"]) > 0,
-            "species_info_complete": False, "save_extension_validated": False,
+            "species_info_898_canonical_entries": len(canonical_species_info) == 898,
+            "species_info_zero_missing_canonical_entries": not missing_species_info,
+            "species_info_zero_unresolved_canonical_records": all(row["compact_status"] == "compact_fields_resolved" for row in canonical_species_info),
+            "species_info_complete": species_info_ready, "save_extension_validated": False,
             "evolutions_ready": False, "pokedex_text_ready": False, "cries_ready": False,
             "graphics_ready": False, "battle_and_contest_moves_ready": False,
             "runtime_ready": False, "num_species_change_allowed": False,
         },
         "species_mapping": species_map,
         "species_info_by_national_dex": canonical_species_info,
+        "species_info_complete": species_info_ready,
         "missing_species_info_by_national_dex": missing_species_info,
         "species_info_field_coverage": field_coverage,
         "emerald_compatibility": emerald_compatibility,
@@ -669,6 +680,11 @@ def main() -> int:
     try:
         report = generate(check=args.check)
         print(json.dumps(report["counts"], indent=2))
+        if args.check:
+            assert report["counts"]["canonical_dex_entries"] == 898
+            assert report["counts"]["canonical_species_info_covered"] == 898
+            assert report["counts"]["canonical_species_info_missing"] == 0
+            assert report["readiness"]["species_info_complete"] is True
         print("PASS: staging extraction completed; production IDs and save layouts untouched.")
         return 0
     except (OSError, RuntimeError, ValueError, KeyError) as e:
