@@ -178,7 +178,7 @@ def write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 def write_json(path: Path, value) -> None:
-    write(path, json.dumps(value, indent=2, ensure_ascii=False) + "\\n")
+    write(path, json.dumps(value, indent=2, ensure_ascii=False) + "\n")
 
 def parse_species_info(source_text: str, target_info_text: str,
                        type_text: str, ability_text: str, item_text: str) -> dict:
