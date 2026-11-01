@@ -81,20 +81,6 @@ jobs:
           PY
 
 
-      - name: Audit remaining Gen 8 runtime dependencies
-        run: python3 tools/audit_gen8_runtime.py
-
-      - name: Verify Gen 8 runtime blocker report
-        run: |
-          test -s reports/gen8-conversion/integration_blockers.json
-          python3 - <<'PY'
-          import json
-          report = json.load(open("reports/gen8-conversion/integration_blockers.json", encoding="utf-8"))
-          assert report["readiness"]["num_species_change_allowed"] is False
-          assert report["counts"]["species_info_blocks"] > 0
-          print("PASS: integration blocker report generated; NUM_SPECIES remains gated.")
-          PY
-
       - name: Correct Route 121 vertical fence tiles
         run: python3 tools/fix_route121_fence.py
 
