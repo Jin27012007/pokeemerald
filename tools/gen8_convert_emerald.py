@@ -361,6 +361,11 @@ def generate(check: bool = False) -> dict:
         learnsets.extend(extract_learnsets(source_learnset_texts[path.name], generation))
     type_text, ability_text, item_text = read(DST_POKEMON_CONSTANTS), read(DST_ABILITIES), read(DST_ITEMS)
     info_result = parse_species_info(source_info_text, target_info_text, type_text, ability_text, item_text)
+    info_by_symbol = {}
+    for record in info_result["compact_records"] + info_result["unresolved_records"]:
+        if record["species_symbol"] in info_by_symbol:
+            raise RuntimeError(f"Duplicate SpeciesInfo designator: {record[chr(115)+chr(112)+chr(101)+chr(99)+chr(105)+chr(101)+chr(115)+chr(95)+chr(115)+chr(121)+chr(109)+chr(98)+chr(111)+chr(108)]}")
+        info_by_symbol[record["species_symbol"]] = record
 
     by_dex = {}
     for item in source_species:
@@ -383,6 +388,11 @@ def generate(check: bool = False) -> dict:
     if existing_count != 386 or len(new_species) != 512:
         raise RuntimeError(f"Unexpected species split: existing={existing_count}, new={len(new_species)}")
 
+    missing_species_info = [
+        {"national_dex": dex, "source_symbol": by_dex[dex]}
+        for dex in range(387, 899)
+        if by_dex[dex] not in info_by_symbol
+    ]
     used_moves = sorted({m["move"] for row in learnsets for m in row["moves"]})
     target_move_names = {x["symbol"] for x in target_moves}
     missing_moves = sorted(set(used_moves) - target_move_names)
@@ -410,6 +420,7 @@ def generate(check: bool = False) -> dict:
         "learnset_source_files": len(source_learnset_files),
         "species_info_compact_records": len(info_result["compact_records"]),
         "species_info_unresolved_records": len(info_result["unresolved_records"]),
+        "missing_species_info_for_new_dex_species": len(missing_species_info),
     }
     report = {
         "source": "pinned pokeemerald-expansion source snapshot (Gen 4-8 family data)",
@@ -428,6 +439,7 @@ def generate(check: bool = False) -> dict:
         "species_mapping": species_map,
         "missing_learnset_move_symbols": missing_moves,
         "species_info_compact_summary": counts,
+        "missing_species_info_for_new_dex_species": missing_species_info,
     }
     if not check:
         OUT.mkdir(parents=True, exist_ok=True)
@@ -438,6 +450,7 @@ def generate(check: bool = False) -> dict:
         write_json(OUT / "level_up_learnsets.json", learnsets)
         write_json(OUT / "missing_learnset_moves.json", missing_moves)
         write_json(OUT / "species_info_compact.json", info_result)
+        write_json(OUT / "missing_species_info_for_new_dex_species.json", missing_species_info)
         with (OUT / "move_dependencies.csv").open("w", newline="", encoding="utf-8") as fp:
             writer = csv.DictWriter(fp, fieldnames=list(move_dependencies[0].keys()))
             writer.writeheader()
