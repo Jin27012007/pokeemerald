@@ -40,6 +40,9 @@ jobs:
       - name: Audit Gen 8 save and runtime storage architecture
         run: python3 tools/audit_gen8_runtime.py
 
+      - name: Test Gen 8 Pokédex flag redundancy model
+        run: python3 tools/test_gen8_pokedex_flag_model.py
+
       - name: Verify Gen 8 storage calculations
         run: |
           python3 - <<'PY'
