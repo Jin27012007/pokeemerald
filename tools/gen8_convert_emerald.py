@@ -67,30 +67,32 @@ def read(path: Path) -> str:
 
 def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
     if not enum:
-        pattern = rf"^#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+(\d+)\s*$"
+        pattern = rf"^#define\\s+{re.escape(prefix)}([A-Z0-9_]+)\\s+(\\d+)\\s*$"
         return [{"symbol": m.group(1), "id": int(m.group(2))}
                 for m in re.finditer(pattern, text, re.M)]
 
-    # C enums commonly omit explicit values. Resolve implicit increments while
-    # retaining explicit assignments and aliases that are plain numeric values.
-    pattern = re.compile(
-        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*(?:=\s*([^,]+))?\s*,?\s*(?://.*)?$",
+    # Resolve enums independently: implicit enum values restart at zero for
+    # each enum declaration. Only inspect members inside one enum body.
+    enum_blocks = re.finditer(r"enum(?:\\s+__attribute__\\s*\\(\\([^)]*\\)\\))?[^\\{]*\\{([^}]*)\\}", text, re.S)
+    result = []
+    member_re = re.compile(
+        rf"^\\s*{re.escape(prefix)}([A-Z0-9_]+)\\s*(?:=\\s*([^,]+))?\\s*,?\\s*(?://.*)?$",
         re.M,
     )
-    values = []
-    next_value = 0
-    for match in pattern.finditer(text):
-        symbol, raw = match.group(1), match.group(2)
-        if raw is not None:
-            raw = raw.strip()
-            if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
-                next_value = int(raw, 0)
-            else:
-                # Macro expressions or aliases are not safe to numerically guess.
-                continue
-        values.append({"symbol": symbol, "id": next_value})
-        next_value += 1
-    return values
+    for block in enum_blocks:
+        next_value = 0
+        for match in member_re.finditer(block.group(1)):
+            symbol, raw = match.group(1), match.group(2)
+            if raw is not None:
+                raw = raw.strip()
+                if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\\d+)", raw):
+                    next_value = int(raw, 0)
+                else:
+                    # Do not invent values for expressions or symbolic aliases.
+                    continue
+            result.append({"symbol": symbol, "id": next_value})
+            next_value += 1
+    return result
 
 def balanced_species_records(text: str) -> list[dict]:
     start_re = re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*\{", re.M)
