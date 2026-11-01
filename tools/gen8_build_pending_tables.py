@@ -288,6 +288,15 @@ def normalize_cry(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "", value).lower()
 
 
+def parse_cry_table_labels(text: str) -> set[str]:
+    start = text.find("gCryTable::")
+    end = text.find("gCryTable_Reverse::", start + 1)
+    if start < 0 or end < 0:
+        raise RuntimeError("Could not locate gCryTable boundaries")
+    labels = re.findall(r"^\\s*cry\\s+(Cry_[A-Za-z0-9_]+)", text[start:end], re.M)
+    return {normalize_cry(label) for label in labels}
+
+
 def source_table_inventory() -> dict:
     """Generate independent, reviewable tables without touching production C."""
     compact = json.loads(read(INFO_COMPACT))
@@ -427,15 +436,8 @@ def source_table_inventory() -> dict:
     # every species has a compatible cry ID mapping or payload assignment.
     cry_text = read(SOURCE_CRY)
     target_cry_text = read(ROOT / "sound/cry_tables.inc")
-    def cry_table_labels(text: str) -> set[str]:
-        start = text.find("gCryTable::")
-        end = text.find("gCryTable_Reverse::", start + 1)
-        if start < 0 or end < 0:
-            raise RuntimeError("Could not locate gCryTable boundaries")
-        labels = re.findall(r"^\s*cry\s+(Cry_[A-Za-z0-9_]+)", text[start:end], re.M)
-        return {normalize_cry(label) for label in labels}
-    source_cry_set = cry_table_labels(cry_text)
-    target_cry_set = cry_table_labels(target_cry_text)
+    source_cry_set = parse_cry_table_labels(cry_text)
+    target_cry_set = parse_cry_table_labels(target_cry_text)
     cry_rows = []
     missing_cries = []
     missing_target_cries = []
