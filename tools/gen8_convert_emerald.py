@@ -67,16 +67,16 @@ def read(path: Path) -> str:
 
 def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
     if not enum:
-        pattern = rf"^#define\\s+{re.escape(prefix)}([A-Z0-9_]+)\\s+(\\d+)\\s*$"
+        pattern = rf"^#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+(\d+)\s*$"
         return [{"symbol": m.group(1), "id": int(m.group(2))}
                 for m in re.finditer(pattern, text, re.M)]
 
     # Resolve enums independently: implicit enum values restart at zero for
     # each enum declaration. Only inspect members inside one enum body.
-    enum_blocks = re.finditer(r"enum(?:\\s+__attribute__\\s*\\(\\([^)]*\\)\\))?[^\\{]*\\{([^}]*)\\}", text, re.S)
+    enum_blocks = re.finditer(r"enum(?:\s+__attribute__\s*\(\([^)]*\)\))?[^{]*\{([^}]*)\}", text, re.S)
     result = []
     member_re = re.compile(
-        rf"^\\s*{re.escape(prefix)}([A-Z0-9_]+)\\s*(?:=\\s*([^,]+))?\\s*,?\\s*(?://.*)?$",
+        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*(?:=\s*([^,]+))?\s*,?\s*(?://.*)?$",
         re.M,
     )
     for block in enum_blocks:
@@ -85,7 +85,7 @@ def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
             symbol, raw = match.group(1), match.group(2)
             if raw is not None:
                 raw = raw.strip()
-                if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\\d+)", raw):
+                if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
                     next_value = int(raw, 0)
                 else:
                     # Do not invent values for expressions or symbolic aliases.
