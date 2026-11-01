@@ -63,6 +63,8 @@ def main() -> int:
     storage_bytes = struct_size(storage, 0x83C3)
     dex_count = 898
     dex_bytes_per_set = (dex_count + 7) // 8
+    current_dex_bytes_per_set = 52
+    current_pokedex_bytes = 0x10 + 2 * current_dex_bytes_per_set
     # The current redundant model has three seen copies and one owned copy:
     # SaveBlock2 seen + SaveBlock2 owned + SaveBlock1 seen1 + seen2.
     required_seen_owned_bytes = 2 * dex_bytes_per_set
@@ -124,14 +126,16 @@ def main() -> int:
             "required_pokedex_flag_bytes_per_set": dex_bytes_per_set,
             "required_seen_owned_flag_bytes": required_seen_owned_bytes,
             "required_total_redundant_flag_bytes": required_total_flag_bytes,
+            "current_dex_bytes_per_set": current_dex_bytes_per_set,
+            "current_pokedex_struct_bytes": current_pokedex_bytes,
             "current_species_flag_bytes": current_species_bytes,
             "additional_flag_bytes_needed": required_total_flag_bytes - current_species_bytes,
             "single_sector_extension_payload_bytes": sector_bytes - 16,
             "double_buffer_extension_bytes": 2 * (required_total_flag_bytes + 16),
             "saveblock1_candidate_extension_capacity_bytes": reserved_save1_bytes,
-            "pokedex_struct_bytes": 0x78,
+            "pokedex_struct_bytes": current_pokedex_bytes,
             "note": (
-                "SaveBlock1 and SaveBlock2 are sector-bounded. Sectors 30 and 31 are "
+                "The Pokedex member is 0x78 bytes with the current 52-byte dex flag arrays and grows when NUM_DEX_FLAG_BYTES changes. SaveBlock1 and SaveBlock2 are sector-bounded. Sectors 30 and 31 are "
                 "currently reserved for Trainer Hill and Recorded Battle. No sector "
                 "allocation is changed by this audit."
             ),
