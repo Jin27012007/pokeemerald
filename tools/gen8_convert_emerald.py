@@ -625,7 +625,7 @@ def parse_species_info(source_text: str, target_info_text: str,
         if egg_pair is None:
             problems.append(f"unresolved_egg_groups:{egg_raw}")
 
-        ability_raw_match = re.search(r"\.abilities\s*=\s*\{([^}]*)\}", body, re.S)
+        ability_raw_match = re.search(r"\.abilities\s*=\s*\{([^}]*)\}", fields.get("abilities", ""))
         ability_pair = None
         hidden_ability = None
         ability_names = re.findall(r"ABILITY_([A-Z0-9_]+)", ability_raw_match.group(1)) if ability_raw_match else []
@@ -653,7 +653,7 @@ def parse_species_info(source_text: str, target_info_text: str,
             problems.append(f"unknown_item:{common_name}")
             item_compatibility["common"] = "source_only"
 
-        color_match = re.search(r"\.bodyColor\s*=\s*BODY_COLOR_([A-Z0-9_]+)", body)
+        color_match = re.fullmatch(r"BODY_COLOR_([A-Z0-9_]+)", fields.get("bodyColor", ""))
         color_values = {
             "RED": 0, "BLUE": 1, "YELLOW": 2, "GREEN": 3, "BLACK": 4,
             "BROWN": 5, "PURPLE": 6, "GRAY": 7, "WHITE": 8, "PINK": 9,
@@ -662,7 +662,7 @@ def parse_species_info(source_text: str, target_info_text: str,
         if body_color is None:
             problems.append("unresolved_body_color")
 
-        nat_match = re.search(r"\.natDexNum\s*=\s*NATIONAL_DEX_([A-Z0-9_]+)", body)
+        nat_match = re.fullmatch(r"NATIONAL_DEX_([A-Z0-9_]+)", fields.get("natDexNum", ""))
         dex_value = nat_match.group(1) if nat_match else None
         raw_common_item = common_raw
         raw_rare_item = rare_raw
