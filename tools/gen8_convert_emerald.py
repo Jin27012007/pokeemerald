@@ -654,6 +654,7 @@ def generate(check: bool = False) -> dict:
         write_json(OUT / "missing_learnset_moves.json", missing_moves)
         write_json(OUT / "species_info_compact.json", info_result)
         write_json(OUT / "species_info_by_national_dex.json", canonical_species_info)
+        write_json(ROOT / "data/pokemon/gen8_species_info_by_national_dex.json", canonical_species_info)
         write_json(OUT / "species_info_field_coverage.json", field_coverage)
         write_json(OUT / "emerald_species_info_compatibility.json", emerald_compatibility)
         write_json(OUT / "missing_species_info_for_new_dex_species.json", missing_species_info)
