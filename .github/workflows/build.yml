@@ -1,4 +1,4 @@
-# Build Pokémon Emerald and validate Lilycove Adoption Gen 8 Pokédex data.
+# Build Pokémon Emerald and validate Gen 8 staging structures.
 name: Build Pokémon Emerald
 
 on:
@@ -37,8 +37,26 @@ jobs:
       - name: Audit CFRU-to-Emerald compatibility
         run: python3 tools/audit_gen8_import.py
 
-      - name: Generate safe Gen 8 conversion package
+      - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
+
+      - name: Verify generated staging sources are tracked and complete
+        run: |
+          test -s include/gen8_species_map.h
+          test -s src/data/gen8_species_map.c
+          test -s include/gen8_conversion_status.h
+          test -s data/pokemon/gen8_species_map.json
+          test -s data/pokemon/gen8_move_dependencies.json
+          test -s data/pokemon/gen8_level_up_learnsets.json
+          python3 - <<'PY'
+          import json
+          report = json.load(open("reports/gen8-conversion/conversion_report.json", encoding="utf-8"))
+          assert report["counts"]["canonical_dex_entries"] == 898
+          assert report["counts"]["existing_species"] == 386
+          assert report["counts"]["new_species"] == 512
+          assert report["readiness"]["num_species_change_allowed"] is False
+          print("PASS: 898 Dex identities, 386 preserved IDs, 512 unallocated IDs; NUM_SPECIES unchanged.")
+          PY
 
       - name: Correct Route 121 vertical fence tiles
         run: python3 tools/fix_route121_fence.py
@@ -54,5 +72,13 @@ jobs:
         with:
           name: pokeemerald-modern-rom
           path: pokeemerald_modern.gba
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload Gen 8 conversion reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: gen8-conversion-report
+          path: reports/gen8-conversion/
           if-no-files-found: error
           retention-days: 90
