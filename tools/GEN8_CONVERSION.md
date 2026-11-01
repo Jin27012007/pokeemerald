@@ -1,27 +1,28 @@
-# Gen 8 conversion — stage 2
+# Gen 8 conversion — staging layer
 
-The conversion extractor is a data-normalization stage, not a runtime species expansion.
+Run `python3 tools/gen8_convert_emerald.py` from the repository root.
 
-## Outputs
+## Generated source files
 
-Run `python3 tools/gen8_convert_emerald.py`. The generated `reports/gen8-conversion/` directory contains:
+- `include/gen8_species_map.h` and `src/data/gen8_species_map.c`: a compilable auxiliary lookup from National Dex 1–898 to Emerald internal species IDs. Existing Emerald identities keep their current numeric IDs; the 512 not-yet-imported base species map to `SPECIES_NONE`.
+- `include/gen8_conversion_status.h`: generated count/readiness constants. `GEN8_NUM_SPECIES_EXPANSION_ALLOWED` remains 0.
+- `data/pokemon/gen8_species_map.json`: full machine-readable identity table.
+- `data/pokemon/gen8_move_dependencies.json`: moves beyond Emerald's MOVE_PSYCHO_BOOST / 354, with explicit outstanding BattleMove and ContestMove requirements.
+- `data/pokemon/gen8_level_up_learnsets.json`: learnsets parsed from the Expansion's actual `struct LevelUpMove` / `LEVEL_UP_MOVE` syntax.
+- `reports/gen8-conversion/`: counts, mapping, move dependencies, unresolved move symbols, and readiness report.
 
-- `conversion_report.json`: scope, counts, dependency gates, and readiness.
-- `species_id_mapping.json`: complete canonical National Dex mapping, with existing Emerald internal IDs retained and new IDs left unset.
-- `new_species_mapping.json`: new species only; no aliases or alternate forms counted as additional National Dex species.
-- `species_info_compatible_candidates.json`: raw Gen 8 record blocks plus candidate values for fields whose names also exist in Emerald.
-- `learnsets_raw.json`: level/move pairs extracted from source.
-- `move_mapping_template.json` and `move_dependencies.csv`: the new source moves and unresolved Emerald definitions.
-- `missing_learnset_moves.json`: every distinct learnset move symbol absent from Emerald.
+The GitHub Actions build uploads the report directory as `gen8-conversion-report`.
 
-## Safety
+## Current scope
 
-The script never writes C runtime source. It never edits species IDs, move IDs, `NUM_SPECIES`, save structures, evolution, Pokédex, or cry tables.
+The pinned source has a complete base National Dex range through 898. The Emerald target currently has 386 matching base species and 512 species without assigned internal IDs. The map file does not assign IDs to those new species and does not change `NUM_SPECIES`.
 
-A field-name overlap is not automatically a semantic conversion. Ability IDs, type definitions, item IDs, growth curves, gender percentages, and egg group enums must be translated and validated separately. The Gen 8 source uses family feature flags and Expansion-only fields.
+Learnset extraction preserves source species symbols and move symbols. It does not pretend that missing moves are playable. Every new move still needs a semantically correct battle definition, a Contest effect/category/combo entry, and a stable Emerald move ID. Alternate forms are not made into extra base Dex records.
 
-## Remaining gates
+## Why NUM_SPECIES is still blocked
 
-The vendored source does not include a Gen 8-to-Emerald evolution table, nor Gen 8 cry files/audio mapping in the Emerald sound format. Its Pokédex entry descriptions are embedded in Expansion SpeciesInfo, but the target uses a separate national-indexed table and localized string assets. All 487 new move constants need full battle records, and every new move used by the imported learnsets needs a Contest category, effect, and combo policy.
+The current successful vanilla build reports EWRAM at 95.26%, IWRAM at 92.82%, SaveBlock1 at 99.24%, SaveBlock2 at 97.88%, and Pokémon Storage at 94.49%. Increasing the species bound without first planning save-layout and RAM usage is unsafe.
 
-No new species should be activated in the runtime build until these dependencies and memory/save budgets are validated.
+Before changing `NUM_SPECIES`, the next implementation milestones are: define a save-compatible species storage strategy; complete and test every Gen 8 SpeciesInfo record and field enum conversion; prepare graphics/palettes/icons/front/back assets and cry data; generate evolutions and Pokédex entries/text; allocate and implement battle and Contest move definitions; then audit all arrays, loops, tables, save serialization, links/trades, and species-indexed assets for the new bound.
+
+No live production data table is replaced by this staging layer. A successful CI build proves that the existing Emerald ROM plus the auxiliary map compiles; it is not proof that Gen 8 species can already appear in-game.
