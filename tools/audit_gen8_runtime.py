@@ -1,66 +1,111 @@
 #!/usr/bin/env python3
-"""Audit Gen 8 runtime integration blockers without changing production C."""
+"""Quantify Gen 8 RAM/save and data compatibility gates without modifying runtime C."""
 from __future__ import annotations
 import json, re
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]
-VENDOR = ROOT / "tools/vendor/pokeemerald-expansion"
-OUT = ROOT / "reports/gen8-conversion"
-SOURCES = {
- "species_info": VENDOR / "src/data/pokemon/species_info/gen_8_families.h",
- "learnsets": VENDOR / "src/data/pokemon/level_up_learnsets/gen_8.h",
- "moves": VENDOR / "include/constants/moves.h",
-}
-TARGETS = {
- "species_info": ROOT / "src/data/pokemon/species_info.h",
- "species": ROOT / "include/constants/species.h",
- "moves": ROOT / "include/constants/moves.h",
- "abilities": ROOT / "include/constants/abilities.h",
- "items": ROOT / "include/constants/items.h",
- "pokemon_constants": ROOT / "include/constants/pokemon.h",
- "pokemon_header": ROOT / "include/pokemon.h",
- "battle_moves": ROOT / "src/data/battle_moves.h",
- "contest_moves": ROOT / "src/data/contest_moves.h",
- "pokedex_entries": ROOT / "src/data/pokemon/pokedex_entries.h",
- "pokedex_text": ROOT / "src/data/pokemon/pokedex_text.h",
- "cries": ROOT / "sound/cry_tables.inc",
- "pokemon_c": ROOT / "src/pokemon.c",
-}
-MEMORY = {"EWRAM":(249708,262144),"IWRAM":(30416,32768),"SaveBlock1":(15752,15872),"SaveBlock2":(3884,3968),"PokemonStorage":(33744,35712)}
-def read(path):
- if not path.is_file(): raise RuntimeError(f"Missing input: {path}")
- return path.read_text(encoding="utf-8")
-def cap(text, pattern): return re.findall(pattern,text,re.M)
+
+ROOT=Path(__file__).resolve().parents[1]
+OUT=ROOT/"reports/gen8-conversion"
+def read(p): 
+    if not p.is_file(): raise RuntimeError(f"Missing audit input: {p}")
+    return p.read_text(encoding="utf-8")
+def block(text, name):
+    at=text.find(name)
+    if at<0: return ""
+    start=text.find("{",at); depth=1; i=start+1
+    while i<len(text) and depth:
+        if text[i]=="{": depth+=1
+        elif text[i]=="}": depth-=1
+        i+=1
+    return text[at:i]
 def main():
- src={k:read(v) for k,v in SOURCES.items()}
- dst={k:read(v) for k,v in TARGETS.items()}
- abilities=set(re.findall(r"\bABILITY_([A-Z0-9_]+)\b",src["species_info"]))
- items=set(re.findall(r"\bITEM_([A-Z0-9_]+)\b",src["species_info"]))
- eggs=set(re.findall(r"\bEGG_GROUP_([A-Z0-9_]+)\b",src["species_info"]))
- types=set(re.findall(r"\bTYPE_([A-Z0-9_]+)\b",src["species_info"]))
- dst_abilities=set(cap(dst["abilities"],r"^#define ABILITY_([A-Z0-9_]+)\s+"))
- dst_items=set(cap(dst["items"],r"^\s*ITEM_([A-Z0-9_]+)\s*,"))
- dst_eggs=set(cap(dst["pokemon_constants"],r"^#define EGG_GROUP_([A-Z0-9_]+)\s+"))
- dst_types=set(cap(dst["pokemon_constants"],r"^#define TYPE_([A-Z0-9_]+)\s+"))
- src_fields=set(cap(src["species_info"],r"^\s*\.([A-Za-z0-9_]+)\s*="))
- dst_fields=set(cap(dst["species_info"],r"^\s*\.([A-Za-z0-9_]+)\s*="))
- info=cap(src["species_info"],r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*\{")
- learns=cap(src["learnsets"],r"static const struct LevelUpMove s([A-Za-z0-9]+)LevelUpLearnset\[\]\s*=\s*\{")
- source_moves=[(n,int(i)) for n,i in re.findall(r"^\s*MOVE_([A-Z0-9_]+)\s*=\s*(\d+)\s*,?",src["moves"],re.M) if int(i)<=847]
- battle=set(cap(dst["battle_moves"],r"^\s*\[MOVE_([A-Z0-9_]+)\]\s*="))
- contest=set(cap(dst["contest_moves"],r"^\s*\[MOVE_([A-Z0-9_]+)\]\s*="))
- miss_battle=sorted({n for n,i in source_moves if i>354 and n not in battle})
- miss_contest=sorted({n for n,i in source_moves if i>354 and n not in contest})
- evo=re.findall(r"\.evolutions\s*=\s*EVOLUTION\(([\s\S]*?)\)",src["species_info"])
- evo_methods=sorted(set(re.findall(r"\b(EVO_[A-Z0-9_]+)\b",src["species_info"])))
- cries=set(re.findall(r"\bCRY_([A-Z0-9_]+)\b",src["species_info"]))
- cry_names={x.upper() for x in cap(dst["cries"],r"^\s*cry(?:_reverse)?\s+Cry_([A-Za-z0-9_]+)")}
- fields_extra=sorted(src_fields-dst_fields)
- counts={"species_info_blocks":len(info),"learnset_blocks":len(learns),"unique_source_moves_through_847":len({i for n,i in source_moves}),"new_moves_after_354":len({i for n,i in source_moves if i>354}),"new_moves_missing_battle_data":len(miss_battle),"new_moves_missing_contest_data":len(miss_contest),"species_evolution_initializers":len(evo),"extra_species_info_fields":len(fields_extra),"missing_abilities":len(abilities-dst_abilities),"missing_items":len(items-dst_items),"missing_types":len(types-dst_types),"missing_egg_groups":len(eggs-dst_eggs),"source_cry_ids":len(cries),"matching_cry_names":len(cries&cry_names)}
- mem={k:{"used":u,"capacity":c,"percent":round(u/c*100,2),"remaining":c-u} for k,(u,c) in MEMORY.items()}
- report={"counts":counts,"missing_identifiers":{"abilities":sorted(abilities-dst_abilities),"items":sorted(items-dst_items),"types":sorted(types-dst_types),"egg_groups":sorted(eggs-dst_eggs)},"missing_move_data":{"battle":miss_battle,"contest":miss_contest},"extra_species_info_fields":fields_extra,"evolution_methods":evo_methods,"cry_ids_without_matching_names":sorted(cries-cry_names),"memory":mem,"readiness":{"species_info_complete":False,"battle_and_contest_complete":False,"evolutions_complete":False,"pokedex_text_complete":False,"cries_complete":False,"graphics_complete":False,"save_and_ram_validated":False,"num_species_change_allowed":False}}
- OUT.mkdir(parents=True,exist_ok=True)
- (OUT/"integration_blockers.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
- (OUT/"integration_blockers.md").write_text("# Gen 8 integration blockers\n\n" + "\n".join(f"- **{k}**: {v}" for k,v in counts.items()) + "\n\n`NUM_SPECIES` remains unchanged until all gates are met.\n",encoding="utf-8")
- print(json.dumps(counts,indent=2))
-if __name__=="__main__": main()
+    global_h=read(ROOT/"include/global.h")
+    save_h=read(ROOT/"include/save.h")
+    save_c=read(ROOT/"src/save.c")
+    pokemon_h=read(ROOT/"include/pokemon.h")
+    pokemon_constants=read(ROOT/"include/constants/pokemon.h")
+    species_h=read(ROOT/"include/constants/species.h")
+    source_info=read(ROOT/"tools/vendor/pokeemerald-expansion/src/data/pokemon/species_info/gen_8_families.h")
+    target_info=read(ROOT/"src/data/pokemon/species_info.h")
+    source_species=read(ROOT/"tools/vendor/pokeemerald-expansion/include/constants/species.h")
+    source_moves=read(ROOT/"tools/vendor/pokeemerald-expansion/include/constants/moves.h")
+    source_learn=read(ROOT/"tools/vendor/pokeemerald-expansion/src/data/pokemon/level_up_learnsets/gen_8.h")
+    # Reconstruct the fixed save layout; the struct comments and flash sector table are authoritative.
+    sb1=block(global_h,"struct SaveBlock1")
+    sb2=block(global_h,"struct SaveBlock2")
+    pdb=block(global_h,"struct Pokedex")
+    storage_text=read(ROOT/"include/pokemon_storage_system.h")
+    storage=block(storage_text,"struct PokemonStorage")
+    def parse_size(label,txt,pattern,default):
+        m=re.search(pattern,txt)
+        return int(m.group(1),0) if m else default
+    save1_size=parse_size("SaveBlock1",sb1,r"sizeof:s*(0x[0-9A-Fa-f]+)",0x3D88)
+    save2_size=parse_size("SaveBlock2",sb2,r"sizeof:s*(0x[0-9A-Fa-f]+)",0x6A0)
+    storage_size=parse_size("PokemonStorage",storage,r"sizeof:s*(0x[0-9A-Fa-f]+)",0x83C3)
+    sector=int(re.search(r"#define SECTOR_DATA_SIZEs+(d+)",save_h).group(1))
+    sb1_capacity=4*sector
+    sb2_capacity=1*sector
+    storage_capacity=9*sector
+    num_dex=898
+    dex_flag_bytes=(num_dex+7)//8
+    two_flag_arrays=2*dex_flag_bytes
+    old_flag_bytes=(412+7)//8
+    current_pokedex_flags=2*old_flag_bytes
+    unused_match=re.search(r"unused_3598[(0x[0-9A-Fa-f]+)]",sb1)
+    reserved_in_sb1=int(unused_match.group(1),0) if unused_match else 0
+    source_record_count=len(re.findall(r"^s*[SPECIES_[A-Z0-9_]+]s*=",source_info,re.M))
+    target_fields=set(re.findall(r"^s*.([A-Za-z0-9_]+)s*=",target_info,re.M))
+    source_fields=set(re.findall(r"^s*.([A-Za-z0-9_]+)s*=",source_info,re.M))
+    extra_fields=sorted(source_fields-target_fields)
+    src_species_ids=[int(x) for x in re.findall(r"^s*SPECIES_[A-Z0-9_]+s*=s*(d+)",source_species,re.M)]
+    src_move_ids=[int(x) for x in re.findall(r"^s*MOVE_[A-Z0-9_]+s*=s*(d+)",source_moves,re.M)]
+    learn_blocks=len(re.findall(r"static const struct LevelUpMove s[A-Za-z0-9]+LevelUpLearnset[]s*=",source_learn))
+    src_beyond_gen3=len({i for i in src_move_ids if 354<i<=847})
+    source_abilities=set(re.findall(r"ABILITY_([A-Z0-9_]+)",source_info))
+    target_abilities=set(re.findall(r"^#define ABILITY_([A-Z0-9_]+)s+",read(ROOT/"include/constants/abilities.h"),re.M))
+    source_items=set(re.findall(r"ITEM_([A-Z0-9_]+)",source_info))
+    target_items=set(re.findall(r"^s*ITEM_([A-Z0-9_]+)s*,",read(ROOT/"include/constants/items.h"),re.M))
+    source_types=set(re.findall(r"TYPE_([A-Z0-9_]+)",source_info))
+    target_types=set(re.findall(r"^#define TYPE_([A-Z0-9_]+)s+",pokemon_constants,re.M))
+    cry_ids=set(re.findall(r"CRY_([A-Z0-9_]+)",source_info))
+    cry_table=read(ROOT/"sound/cry_tables.inc")
+    cry_names={x.upper() for x in re.findall(r"^s*cry(?:_reverse)?s+Cry_([A-Za-z0-9_]+)",cry_table,re.M)}
+    count_missing={
+      "abilities":sorted(source_abilities-target_abilities),
+      "items":sorted(source_items-target_items),
+      "types":sorted(source_types-target_types)
+    }
+    report={
+      "save_layout":{
+        "sector_data_bytes":sector,"saveblock1_bytes":save1_size,"saveblock1_capacity_bytes":sb1_capacity,
+        "saveblock1_headroom_bytes":sb1_capacity-save1_size,"saveblock1_unused_internal_bytes":reserved_in_sb1,
+        "saveblock2_bytes":save2_size,"saveblock2_capacity_bytes":sb2_capacity,"saveblock2_headroom_bytes":sb2_capacity-save2_size,
+        "pokemon_storage_bytes":storage_size,"pokemon_storage_capacity_bytes":storage_capacity,
+        "national_dex_count":num_dex,"required_pokedex_flag_bytes_per_set":dex_flag_bytes,
+        "required_seen_owned_flag_bytes":two_flag_arrays,"current_species_flag_bytes":2*old_flag_bytes,
+        "additional_flag_bytes_needed":two_flag_arrays-2*old_flag_bytes,
+        "estimated_one_sector_extension_capacity_bytes":sector-16,
+        "two_copy_journaled_extension_bytes":2*(two_flag_arrays+16),
+        "note":"SaveBlock1/2 have hard sector capacities; do not grow them in-place. Special sectors 30/31 are currently assigned to Trainer Hill/Recorded Battle."
+      },
+      "data":{
+        "gen8_species_info_records":source_record_count,"species_info_fields_not_in_vanilla":extra_fields,
+        "new_moves_after_gen3_through_gen8":src_beyond_gen3,"learnset_blocks":learn_blocks,
+        "missing_abilities":count_missing["abilities"],"missing_items":count_missing["items"],
+        "missing_types":count_missing["types"],"source_cry_ids":len(cry_ids),
+        "matching_cry_names":len(cry_ids&cry_names),"unmatched_cry_ids":sorted(cry_ids-cry_names)
+      },
+      "readiness":{
+        "save_extension_sector_plan_validated":False,"save_extension_read_write_tests":False,
+        "species_info_complete":False,"abilities_complete":not count_missing["abilities"],
+        "held_items_complete":not count_missing["items"],"types_complete":not count_missing["types"],
+        "battle_and_contest_moves_complete":False,"evolutions_complete":False,
+        "pokedex_text_complete":False,"cries_complete":False,"graphics_complete":False,
+        "runtime_ready":False,"num_species_change_allowed":False
+      }
+    }
+    OUT.mkdir(parents=True,exist_ok=True)
+    (OUT/"storage_architecture_audit.json").write_text(json.dumps(report,indent=2,ensure_ascii=False)+"
+",encoding="utf-8")
+    print(json.dumps({"save_layout":report["save_layout"],"data":{k:v for k,v in report["data"].items() if not isinstance(v,list)},"readiness":report["readiness"]},indent=2))
+if __name__=="__main__":main()
