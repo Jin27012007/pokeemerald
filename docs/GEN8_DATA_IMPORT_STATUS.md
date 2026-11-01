@@ -24,3 +24,7 @@ The existing Emerald graphics folder contains the original species assets, not c
 
 ## Build
 The workflow is configured to run on this branch. The expected first action is a failing preflight if required assets are not yet imported. This is not a completed 898-species ROM.
+
+
+## CI behavior correction
+The asset checker now supports `--report-only` for the normal ROM build. This reports missing imported resources without marking the base Emerald build as a failed compile. Running it without that flag remains a strict readiness gate and returns a failing exit code until all graphics are present. This separates two different states: a valid base ROM build and a completed Gen 8 data migration.
