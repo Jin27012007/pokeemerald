@@ -397,9 +397,11 @@ def generate(check: bool = False) -> dict:
         write(ROOT / "include/gen8_conversion_status.h", emit_readiness_header(counts))
         write_json(ROOT / "data/pokemon/gen8_species_map.json", species_map)
         write_json(ROOT / "data/pokemon/gen8_level_up_learnsets.json", learnsets)
-        # Compact, canonical data table only. It is deliberately not linked into
-        # gSpeciesInfo until internal IDs and runtime storage have been assigned.
-        write(ROOT / "src/data/gen8/species_info_compact.json.h", json.dumps(info_result["compact_records"], indent=2) + "\n")
+        # Compact, review-only JSON. It is deliberately not linked into
+        # gSpeciesInfo until IDs, complete field coverage and runtime storage are assigned.
+        write_json(ROOT / "data/pokemon/gen8_species_info_compact.json", info_result["compact_records"])
+        write_json(ROOT / "data/pokemon/gen8_species_info_unresolved.json", info_result["unresolved_records"])
+
     return report
 
 def main() -> int:
