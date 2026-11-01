@@ -65,6 +65,19 @@ def test_text_fragments():
     assert fragments == ["Line one\n", "Line two, with comma"], fragments
 
 
+
+def test_conditional_shared_pokedex_text_pointer():
+    shared = {
+        "gSilvallyNormalPokedexText": ["Normal form description."],
+        "gSilvallyMemoryPokedexText": ["Memory form description."],
+    }
+    expression = (
+        "(TYPE_NORMAL == TYPE_NORMAL ? "
+        "gSilvallyNormalPokedexText : gSilvallyMemoryPokedexText)"
+    )
+    assert module.resolve_shared_text_pointer(expression, shared) == "gSilvallyNormalPokedexText"
+
+
 def test_named_array_inventory():
     source = '''
     static const u16 sExampleFormSpeciesIdTable[] = {
@@ -87,6 +100,7 @@ def main():
     test_nested_initializer_scan()
     test_evolution_expressions()
     test_text_fragments()
+    test_conditional_shared_pokedex_text_pointer()
     test_named_array_inventory()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
 
