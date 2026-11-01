@@ -124,6 +124,60 @@ def check_macro_expansion_and_target_conditionals():
     assert conditional_fields["expYield"] == "280", conditional_fields
 
 
+def check_real_form_initializer_macros():
+    # Macro-based family records are common for form-heavy canonical species.
+    mothim = r"""
+#define MOTHIM_SPECIES_INFO \
+    { \
+        .baseHP = 70, \
+        .types = MON_TYPES(TYPE_BUG, TYPE_FLYING), \
+        .expYield = (P_UPDATED_EXP_YIELDS >= GEN_5) ? 148 : 159, \
+        .abilities = { ABILITY_SWARM, ABILITY_NONE, ABILITY_TINTED_LENS }, \
+    }
+    [SPECIES_MOTHIM_PLANT] = MOTHIM_SPECIES_INFO,
+    """
+    arceus = r"""
+#define ARCEUS_SPECIES_INFO(type, typeName, iconPal) \
+    { \
+        .baseHP = 120, \
+        .types = MON_TYPES(type), \
+        .abilities = { ABILITY_MULTITYPE, ABILITY_NONE, ABILITY_NONE }, \
+        .natDexNum = NATIONAL_DEX_ARCEUS, \
+    }
+    [SPECIES_ARCEUS_NORMAL] = ARCEUS_SPECIES_INFO(TYPE_NORMAL, Normal, 1),
+    """
+    silvally = r"""
+#define SILVALLY_SPECIES_INFO(type, _palette) \
+    { \
+        .baseHP = 95, \
+        .types = MON_TYPES(type), \
+        .abilities = { ABILITY_RKS_SYSTEM, ABILITY_NONE, ABILITY_NONE }, \
+    }
+    [SPECIES_SILVALLY_NORMAL] = SILVALLY_SPECIES_INFO(TYPE_NORMAL, Normal),
+    """
+    for source, symbol in ((mothim, "MOTHIM_PLANT"),
+                           (arceus, "ARCEUS_NORMAL"),
+                           (silvally, "SILVALLY_NORMAL")):
+        macros = module.extract_c_macros(source)
+        rows = module.balanced_species_records(source)
+        row = next(x for x in rows if x["symbol"] == symbol)
+        expanded = module.expand_c_macro_text(row["body"], macros)
+        fields = module.extract_designated_fields(expanded)
+        assert fields["baseHP"] in ("70", "120", "95"), fields
+        assert "MON_TYPES(" in fields["types"], fields
+        assert "ABILITY_" in fields["abilities"], fields
+    mothim_macros = module.extract_c_macros(mothim)
+    mothim_row = module.balanced_species_records(mothim)[0]
+    mothim_fields = module.extract_designated_fields(
+        module.expand_c_macro_text(mothim_row["body"], mothim_macros)
+    )
+    assert mothim_fields["expYield"] == "(P_UPDATED_EXP_YIELDS >= GEN_5) ? 148 : 159", mothim_fields
+    assert module.resolve_source_conditionals(
+        "#if P_UPDATED_EXP_YIELDS >= GEN_8\n.expYield = 148,\n#else\n.expYield = 159,\n#endif",
+        8,
+    ).strip() == ".expYield = 148,"
+
+
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
@@ -152,6 +206,7 @@ def main():
     check_balanced_species_record_strings()
     check_expansion_brace_on_next_line()
     check_macro_expansion_and_target_conditionals()
+    check_real_form_initializer_macros()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
