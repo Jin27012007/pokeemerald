@@ -310,18 +310,23 @@ def evaluate_source_condition(condition: str, target_generation: int) -> bool:
             "<=": target_generation <= gen, "<": target_generation < gen,
             "==": target_generation == gen, "!=": target_generation != gen,
         }[op]
+    def evaluate_atom(atom):
+        atom = atom.strip()
+        if re.fullmatch(r"P_FAMILY_[A-Z0-9_]+", atom):
+            return True
+        match = compare_re.fullmatch(atom)
+        return compare(match) if match else False
+
     pieces = re.split(r"\s*(\|\||&&)\s*", condition)
     if len(pieces) == 1:
-        match = compare_re.fullmatch(pieces[0].strip())
-        return compare(match) if match else False
+        return evaluate_atom(pieces[0])
     value = None
     operator = None
     for piece in pieces:
         if piece in ("||", "&&"):
             operator = piece
             continue
-        match = compare_re.fullmatch(piece.strip())
-        current = compare(match) if match else False
+        current = evaluate_atom(piece)
         if value is None:
             value = current
         elif operator == "||":
