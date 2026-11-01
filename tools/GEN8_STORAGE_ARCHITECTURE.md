@@ -37,7 +37,7 @@ The next SpeciesInfo phase must:
 - Save extension placement, versioning, flash write ordering, migration and recovery are not validated.
 - The storage capacity calculation does not audit all species-indexed consumers (graphics tables, cries, evolutions, learnsets, battle/contest tables, scripts, dex ordering and UI indices).
 - The current SpeciesInfo input is incomplete; the latest extractor reported 123 parsed records and zero complete compact records.
-- The latest CI run for head `3f227d8e981622b61d4f6d9597cd08060b0ed4ac` failed in the staging-source verification step after conversion generation. The failure must be diagnosed and fixed before treating the pipeline as green.
+- The staging workflow's SaveBlock2 assertion was corrected to expect 4006 bytes and -38 bytes of headroom after in-place Pokédex expansion. The full CI result for the multi-generation extractor is still pending; individual commits triggered overlapping workflow runs.
 
 ## Release gate
 
@@ -56,3 +56,8 @@ The 898-entry dex bitsets require 113 bytes each. Three seen copies plus one own
 ## Capacity conclusion after modeling SaveBlock2 growth
 
 Growing the two Pokédex arrays in SaveBlock2 from 52 to 113 bytes adds 122 bytes to its existing 0xF2C-byte structure. The resulting size is 0xFA6 bytes (4006), exceeding the 3968-byte sector payload by 38 bytes. An earlier zero-headroom assertion was incorrect and must not be relied on. SaveBlock2 cannot hold the expanded flags in-place under the current 14-sector slot layout. The flags need to live in a separate extension payload. The reserved SaveBlock1 region is a candidate for that incremental extension, but it is not yet approved: migration and save recovery remain untested. The implementation remains staged and unconnected to GetSetPokedexFlag.
+
+
+## Multi-generation source import (staging)
+
+The conversion snapshot now includes `species_info/gen_4_families.h` through `gen_8_families.h` and `level_up_learnsets/gen_4.h` through `gen_8.h`. These are source inputs only. The converter tags learnset blocks with their generation, combines the five SpeciesInfo sources using real newlines, and emits a list of missing SpeciesInfo designators among new National Dex entries. It still does not link any generated SpeciesInfo into the runtime table. Duplicate designators are rejected. The canonical-data coverage audit is a separate gate from compact-field resolution: a source record can exist and still be unresolved because Emerald lacks the identifier or metadata support needed to represent it safely.
