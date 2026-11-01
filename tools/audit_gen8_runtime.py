@@ -59,8 +59,11 @@ def main() -> int:
     storage_bytes = struct_size(storage, 0x83C3)
     dex_count = 898
     dex_bytes_per_set = (dex_count + 7) // 8
+    # The current redundant model has three seen copies and one owned copy:
+    # SaveBlock2 seen + SaveBlock2 owned + SaveBlock1 seen1 + seen2.
     required_seen_owned_bytes = 2 * dex_bytes_per_set
-    current_species_bytes = 2 * ((412 + 7) // 8)
+    required_total_flag_bytes = 4 * dex_bytes_per_set
+    current_species_bytes = 4 * ((412 + 7) // 8)
     reserved = re.search(r"unused_3598\[(0x[0-9A-Fa-f]+)\]", save1)
     reserved_save1_bytes = int(reserved.group(1), 16) if reserved else 0
 
@@ -111,11 +114,12 @@ def main() -> int:
             "national_dex_count": dex_count,
             "required_pokedex_flag_bytes_per_set": dex_bytes_per_set,
             "required_seen_owned_flag_bytes": required_seen_owned_bytes,
+            "required_total_redundant_flag_bytes": required_total_flag_bytes,
             "current_species_flag_bytes": current_species_bytes,
-            "additional_flag_bytes_needed": required_seen_owned_bytes - current_species_bytes,
+            "additional_flag_bytes_needed": required_total_flag_bytes - current_species_bytes,
             "single_sector_extension_payload_bytes": sector_bytes - 16,
             "double_buffer_extension_bytes": 2 * (required_seen_owned_bytes + 16),
-            "pokedex_struct_bytes": 0x80,
+            "pokedex_struct_bytes": 0x78,
             "note": (
                 "SaveBlock1 and SaveBlock2 are sector-bounded. Sectors 30 and 31 are "
                 "currently reserved for Trainer Hill and Recorded Battle. No sector "
