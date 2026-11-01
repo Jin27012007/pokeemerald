@@ -420,8 +420,15 @@ def parse_species_info(source_text: str, target_info_text: str,
         if body_color is None:
             problems.append("unresolved_body_color")
 
+        nat_match = re.search(r"\.natDexNum\\s*=\\s*NATIONAL_DEX_([A-Z0-9_]+)", body)
+        dex_value = nat_match.group(1) if nat_match else None
+        raw_common_item = common_raw
+        raw_rare_item = rare_raw
         record_data = {
             "species_symbol": record["symbol"],
+            "generation": record["generation"],
+            "national_dex_symbol": dex_value,
+            "source_raw": fields,
             "statistics": values,
             "gender_ratio": gender_ratio,
             "friendship": friendship,
