@@ -107,6 +107,7 @@ jobs:
           test -s data/pokemon/gen8_egg_group_source_dependencies.json
           test -s data/pokemon/gen8_growth_rate_source_dependencies.json
           test -s data/pokemon/gen8_evolution_method_dependencies.json
+          test -s data/pokemon/gen8_evolution_condition_dependencies.json
           test -s data/pokemon/gen8_pokedex_orders.json
           test -s reports/gen8-conversion/pending_species_tables_audit.json
           python3 - <<'PY'
@@ -138,6 +139,7 @@ jobs:
               "data/pokemon/gen8_egg_group_source_dependencies.json",
               "data/pokemon/gen8_growth_rate_source_dependencies.json",
               "data/pokemon/gen8_evolution_method_dependencies.json",
+              "data/pokemon/gen8_evolution_condition_dependencies.json",
               "data/pokemon/gen8_pokedex_orders.json",
               "reports/gen8-conversion/pending_species_tables_audit.json",
           ]
@@ -148,6 +150,11 @@ jobs:
           assert pending["readiness"]["898_canonical_species_rows"] is True
           assert pending["readiness"]["898_gen8_level_up_learnsets"] is True
           assert pending["readiness"]["all_present_evolution_expressions_parsed"] is True
+          assert pending["counts"]["canonical_conditional_evolution_edges"] > 0
+          assert pending["counts"]["distinct_evolution_condition_symbols"] > 0
+          assert pending["counts"]["evolution_conditions_with_candidate_target_methods"] > 0
+          assert pending["counts"]["canonical_evolution_methods_requiring_new_handlers"] >= 1
+          assert pending["counts"]["unknown_evolution_target_symbols"] == 0
           assert pending["readiness"]["898_pokedex_text_rows"] is True
           assert pending["counts"]["pokedex_text_rows_with_decoded_description"] == 898
           assert pending["counts"]["unresolved_pokedex_text_rows"] == 0
@@ -214,6 +221,11 @@ jobs:
             data/pokemon/gen8_contest_effect_source_catalog.json
             data/pokemon/gen8_ability_source_dependencies.json
             data/pokemon/gen8_item_source_dependencies.json
+            data/pokemon/gen8_type_source_dependencies.json
+            data/pokemon/gen8_egg_group_source_dependencies.json
+            data/pokemon/gen8_growth_rate_source_dependencies.json
+            data/pokemon/gen8_evolution_method_dependencies.json
+            data/pokemon/gen8_evolution_condition_dependencies.json
             data/pokemon/gen8_pokedex_orders.json
           if-no-files-found: error
           retention-days: 90
