@@ -1,7 +1,5 @@
-# Rebuild after fixing Lilycove upstairs script inclusion
-# Rebuild trigger for final Lilycove arrival-scene ROM.
+# Build Pokémon Emerald and validate Lilycove Adoption Gen 8 Pokédex data.
 name: Build Pokémon Emerald
-# Triggered builds compile the exact branch commit for ROM testing.
 
 on:
   push:
@@ -16,21 +14,23 @@ permissions:
 
 jobs:
   build:
-    name: Compile modern ROM
+    name: Validate data and compile modern ROM
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Check out source
         uses: actions/checkout@v4
 
       - name: Install build dependencies
         run: |
-          if command -v arm-none-eabi-gcc >/dev/null 2>&1 && command -v arm-none-eabi-as >/dev/null 2>&1 && command -v make >/dev/null 2>&1 && pkg-config --exists libpng; then
-            echo "Required build tools are already installed on the runner."
-          else
-            sudo timeout 90s apt-get update -qq -o Acquire::Retries=1 -o Acquire::http::Timeout=15 -o Acquire::https::Timeout=15 || true
-            sudo timeout 240s apt-get install -y build-essential binutils-arm-none-eabi gcc-arm-none-eabi git libpng-dev
-          fi
+          sudo apt-get update -qq
+          sudo apt-get install -y build-essential binutils-arm-none-eabi gcc-arm-none-eabi git libpng-dev python3
+
+      - name: Generate Gen 8 National Dex manifest
+        run: python3 tools/gen8_pokedex_manifest.py
+
+      - name: Validate species assets and source coverage
+        run: python3 tools/validate_gen8_pokedex.py
 
       - name: Correct Route 121 vertical fence tiles
         run: python3 tools/fix_route121_fence.py
@@ -48,5 +48,3 @@ jobs:
           path: pokeemerald_modern.gba
           if-no-files-found: error
           retention-days: 90
-
-# Rebuild exact commit after Route 121 landscape changes.
