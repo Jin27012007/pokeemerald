@@ -364,7 +364,7 @@ def generate(check: bool = False) -> dict:
     info_by_symbol = {}
     for record in info_result["compact_records"] + info_result["unresolved_records"]:
         if record["species_symbol"] in info_by_symbol:
-            raise RuntimeError(f"Duplicate SpeciesInfo designator: {record["species_symbol"]}")
+            raise RuntimeError("Duplicate SpeciesInfo designator: " + record["species_symbol"])
         info_by_symbol[record["species_symbol"]] = record
 
     by_dex = {}
