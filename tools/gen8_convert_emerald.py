@@ -97,35 +97,245 @@ def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
     return result
 
 def balanced_species_records(text: str) -> list[dict]:
+    """Read C designated initializers whose RHS is either a brace block or macro."""
     start_re = re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*", re.M)
     records = []
-    for m in start_re.finditer(text):
-        body_start = m.end()
-        while body_start < len(text) and text[body_start].isspace():
-            body_start += 1
-        if body_start >= len(text) or text[body_start] != "{":
+    for match in start_re.finditer(text):
+        start = match.end()
+        while start < len(text) and text[start].isspace():
+            start += 1
+        if start >= len(text):
             continue
-        i, depth, in_string, escaped = body_start + 1, 1, False, False
-        while i < len(text) and depth:
-            c = text[i]
+        i = start
+        paren = brace = bracket = 0
+        in_string = escaped = False
+        is_brace_block = text[start] == "{"
+        while i < len(text):
+            ch = text[i]
             if in_string:
                 if escaped:
                     escaped = False
-                elif c == "\\\\":
+                elif ch == "\\":
                     escaped = True
-                elif c == '"':
+                elif ch == '"':
                     in_string = False
             else:
-                if c == '"':
+                if ch == '"':
                     in_string = True
-                elif c == "{":
-                    depth += 1
-                elif c == "}":
-                    depth -= 1
+                elif ch == "(":
+                    paren += 1
+                elif ch == ")":
+                    paren -= 1
+                elif ch == "{":
+                    brace += 1
+                elif ch == "}":
+                    brace -= 1
+                    if is_brace_block and brace == 0 and paren == 0 and bracket == 0:
+                        i += 1
+                        break
+                elif ch == "[":
+                    bracket += 1
+                elif ch == "]":
+                    bracket -= 1
+                elif ch == "," and paren == brace == bracket == 0:
+                    break
             i += 1
-        if depth == 0:
-            records.append({"symbol": m.group(1), "body": text[body_start+1:i-1].strip()})
+        raw = text[start:i].strip().rstrip(",")
+        if not raw:
+            continue
+        if is_brace_block and raw.startswith("{") and raw.endswith("}"):
+            body = raw[1:-1].strip()
+        else:
+            body = raw
+        records.append({"symbol": match.group(1), "body": body})
     return records
+
+
+def split_c_arguments(raw: str) -> list[str]:
+    """Split macro arguments at commas that are not nested or quoted."""
+    args, start = [], 0
+    paren = brace = bracket = 0
+    in_string = escaped = False
+    for i, ch in enumerate(raw):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch == "(":
+            paren += 1
+        elif ch == ")":
+            paren -= 1
+        elif ch == "{":
+            brace += 1
+        elif ch == "}":
+            brace -= 1
+        elif ch == "[":
+            bracket += 1
+        elif ch == "]":
+            bracket -= 1
+        elif ch == "," and paren == brace == bracket == 0:
+            args.append(raw[start:i].strip())
+            start = i + 1
+    tail = raw[start:].strip()
+    if tail or args:
+        args.append(tail)
+    return args
+
+
+def extract_c_macros(text: str) -> dict:
+    """Capture object/function macros, joining C continuation lines."""
+    macros = {}
+    lines = text.splitlines()
+    i = 0
+    define_re = re.compile(r"^\s*#define\s+([A-Za-z_][A-Za-z0-9_]*)(?:\(([^)]*)\))?\s*(.*)$")
+    while i < len(lines):
+        match = define_re.match(lines[i])
+        if not match:
+            i += 1
+            continue
+        name, params_raw, body = match.group(1), match.group(2), match.group(3)
+        parts = [body]
+        while parts[-1].rstrip().endswith("\\") and i + 1 < len(lines):
+            parts[-1] = parts[-1].rstrip()[:-1]
+            i += 1
+            parts.append(lines[i])
+        params = None if params_raw is None else [
+            x.strip() for x in params_raw.split(",") if x.strip()
+        ]
+        macros[name] = {"params": params, "body": " ".join(parts).strip()}
+        i += 1
+    return macros
+
+
+def expand_c_macro_text(text: str, macros: dict, depth: int = 0) -> str:
+    """Expand local family macros needed for SpeciesInfo compact fields."""
+    if depth > 12 or not macros:
+        return text
+    result = text
+    for _ in range(8):
+        changed = False
+        # Expand function-like macros by scanning balanced invocation parens.
+        pos = 0
+        while pos < len(result):
+            match = re.search(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*\(", result[pos:])
+            if not match:
+                break
+            name = match.group(1)
+            definition = macros.get(name)
+            absolute = pos + match.start()
+            open_pos = pos + match.end() - 1
+            if definition is None or definition["params"] is None:
+                pos = open_pos + 1
+                continue
+            level, end, in_string, escaped = 1, open_pos + 1, False, False
+            while end < len(result) and level:
+                ch = result[end]
+                if in_string:
+                    if escaped:
+                        escaped = False
+                    elif ch == "\\":
+                        escaped = True
+                    elif ch == '"':
+                        in_string = False
+                else:
+                    if ch == '"':
+                        in_string = True
+                    elif ch == "(":
+                        level += 1
+                    elif ch == ")":
+                        level -= 1
+                end += 1
+            if level:
+                pos = open_pos + 1
+                continue
+            args = split_c_arguments(result[open_pos + 1:end - 1])
+            params = definition["params"]
+            if len(args) != len(params):
+                pos = end
+                continue
+            body = definition["body"]
+            replacements = dict(zip(params, args))
+            param_re = re.compile(
+                r"\b(" + "|".join(re.escape(x) for x in sorted(params, key=len, reverse=True)) + r")\b"
+            ) if params else None
+            if param_re:
+                body = param_re.sub(lambda m: replacements[m.group(1)], body)
+            body = re.sub(r"\s*##\s*", "", body)
+            body = expand_c_macro_text(body, macros, depth + 1)
+            result = result[:absolute] + body + result[end:]
+            changed = True
+            pos = absolute + len(body)
+        # Expand standalone object-like macro identifiers used as field values.
+        for name, definition in macros.items():
+            if definition["params"] is not None:
+                continue
+            token = re.compile(r"\b" + re.escape(name) + r"\b")
+            new_result, n = token.subn(definition["body"], result)
+            if n and new_result != result:
+                result = new_result
+                changed = True
+        result = re.sub(r"\s*##\s*", "", result)
+        if not changed:
+            break
+    return result
+
+
+def evaluate_source_condition(condition: str, target_generation: int) -> bool:
+    condition = condition.strip().strip("() ").strip()
+    match = re.fullmatch(
+        r"(?:P_UPDATED_[A-Z0-9_]+)\s*(>=|>|<=|<|==|!=)\s*GEN_(\d+)",
+        condition,
+    )
+    if match:
+        op, gen = match.group(1), int(match.group(2))
+        return {
+            ">=": target_generation >= gen, ">": target_generation > gen,
+            "<=": target_generation <= gen, "<": target_generation < gen,
+            "==": target_generation == gen, "!=": target_generation != gen,
+        }[op]
+    # Configuration flags not described by the Gen 8 data policy default to
+    # false; any such branch affecting a compact field remains detectable.
+    return False
+
+
+def resolve_source_conditionals(text: str, target_generation: int) -> str:
+    """Select active #if branches for the declared Gen 8 compatibility target."""
+    output = []
+    stack = []
+    active = True
+    for line in text.splitlines():
+        directive = re.match(r"^\s*#\s*(if|ifdef|ifndef|elif|else|endif)\b(.*)$", line)
+        if not directive:
+            if active:
+                output.append(line)
+            continue
+        kind, expression = directive.group(1), directive.group(2).strip()
+        if kind in ("if", "ifdef", "ifndef"):
+            condition = evaluate_source_condition(expression, target_generation) if kind == "if" else False
+            frame = {"parent": active, "taken": condition, "active": active and condition}
+            stack.append(frame)
+            active = frame["active"]
+        elif kind == "elif" and stack:
+            frame = stack[-1]
+            condition = evaluate_source_condition(expression, target_generation)
+            frame["active"] = frame["parent"] and not frame["taken"] and condition
+            frame["taken"] = frame["taken"] or condition
+            active = frame["active"]
+        elif kind == "else" and stack:
+            frame = stack[-1]
+            frame["active"] = frame["parent"] and not frame["taken"]
+            frame["taken"] = True
+            active = frame["active"]
+        elif kind == "endif" and stack:
+            frame = stack.pop()
+            active = frame["parent"]
+    return "\n".join(output)
 
 def extract_learnsets(text: str, generation: int) -> list[dict]:
     block_re = re.compile(
