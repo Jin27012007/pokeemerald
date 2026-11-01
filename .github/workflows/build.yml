@@ -37,6 +37,9 @@ jobs:
       - name: Audit CFRU-to-Emerald compatibility
         run: python3 tools/audit_gen8_import.py
 
+      - name: Generate safe Gen 8 conversion package
+        run: python3 tools/gen8_convert_emerald.py
+
       - name: Correct Route 121 vertical fence tiles
         run: python3 tools/fix_route121_fence.py
 
