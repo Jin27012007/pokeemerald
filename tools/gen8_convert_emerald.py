@@ -331,6 +331,79 @@ def evaluate_source_condition(condition: str, target_generation: int) -> bool:
     return bool(value)
 
 
+def strip_fully_wrapping_c_parens(raw: str) -> str:
+    raw = raw.strip()
+    while raw.startswith("(") and raw.endswith(")"):
+        depth = 0
+        enclosed = True
+        in_string = escaped = False
+        for index, char in enumerate(raw):
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif char == "\\":
+                    escaped = True
+                elif char == '"':
+                    in_string = False
+                continue
+            if char == '"':
+                in_string = True
+            elif char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+                if depth == 0 and index != len(raw) - 1:
+                    enclosed = False
+                    break
+        if not enclosed or depth != 0:
+            break
+        raw = raw[1:-1].strip()
+    return raw
+
+
+def resolve_c_ternary_expression(raw: str, target_generation: int) -> str | None:
+    """Resolve simple C ternaries whose condition is a P_UPDATED_* expression."""
+    raw = strip_fully_wrapping_c_parens(" ".join(raw.split()))
+    depth = 0
+    question = colon = None
+    in_string = escaped = False
+    nested_questions = 0
+    for index, char in enumerate(raw):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+        elif depth == 0 and char == "?":
+            if question is None:
+                question = index
+            else:
+                nested_questions += 1
+        elif depth == 0 and char == ":" and question is not None:
+            if nested_questions:
+                nested_questions -= 1
+            else:
+                colon = index
+                break
+    if question is None:
+        return None
+    condition = raw[:question].strip()
+    when_true = raw[question + 1:colon].strip() if colon is not None else raw[question + 1:].strip()
+    when_false = raw[colon + 1:].strip() if colon is not None else "0"
+    if not condition or not when_true or not when_false:
+        return None
+    return when_true if evaluate_source_condition(condition, target_generation) else when_false
+
+
 def resolve_source_conditionals(text: str, target_generation: int) -> str:
     """Select active #if/#elif branches for the declared Gen 8 compatibility target."""
     output = []
@@ -533,95 +606,49 @@ def parse_species_info(source_text: str, target_info_text: str,
     def resolve_generation_expression(raw, generation):
         if raw is None:
             return None
-        raw = " ".join(raw.split())
-        # Remove only fully enclosing parentheses (not the parentheses
-        # around the condition itself in a C ternary expression).
-        while raw.startswith("(") and raw.endswith(")"):
-            level = 0
-            enclosed = True
-            in_string = escaped = False
-            for index, char in enumerate(raw):
-                if in_string:
-                    if escaped:
-                        escaped = False
-                    elif char == "\\":
-                        escaped = True
-                    elif char == '"':
-                        in_string = False
-                    continue
-                if char == '"':
-                    in_string = True
-                elif char == "(":
-                    level += 1
-                elif char == ")":
-                    level -= 1
-                    if level == 0 and index != len(raw) - 1:
-                        enclosed = False
-                        break
-            if not enclosed or level != 0:
-                break
-            raw = raw[1:-1].strip()
+        raw = strip_fully_wrapping_c_parens(" ".join(raw.split()))
         # Resolve preprocessor-selected and simple object-like macros before
         # parsing primitive values. This handles fields such as PIKACHU_DEFENSE,
         # GENGAR_SP_DEF, MEOWTH_ABILITIES, and conditional type aliases.
         raw = expand_c_macro_text(raw, source_symbol_macros.get("__catalog__", {}))
-        # Resolve chained preprocessor arithmetic/boolean conditions from
-        # selected Gen 8 branch. This includes e.g. "P_UPDATED_STATS >= GEN_6
-        # || P_UPDATED_STATS == GEN_1 ? 50 : 40" after macro expansion.
-        flag_expr = re.fullmatch(
-            r"(P_UPDATED_[A-Z0-9_]+)\s*(>=|>|<=|<|==|!=)\s*GEN_(\d+)"
-            r"(?:\s*\|\|\s*P_UPDATED_[A-Z0-9_]+\s*(>=|>|<=|<|==|!=)\s*GEN_(\d+))?",
-            raw,
-        )
-        if flag_expr:
-            def compare(lhs, op, rhs):
-                return {
-                    ">=": lhs >= rhs, ">": lhs > rhs, "<=": lhs <= rhs,
-                    "<": lhs < rhs, "==": lhs == rhs, "!=": lhs != rhs,
-                }[op]
-            first = compare(TARGET_GAME_GENERATION, flag_expr.group(2), int(flag_expr.group(3)))
-            second = (
-                compare(TARGET_GAME_GENERATION, flag_expr.group(4), int(flag_expr.group(5)))
-                if flag_expr.group(4) else False
-            )
-            return int(first or second)
-        # Resolve well-understood Expansion generation switches against the
-        # target game's configured policy, never against the species' origin gen.
-        conditionals = [
-            (r"\(?P_UPDATED_EXP_YIELDS\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
-             lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
-            (r"\(?P_UPDATED_STATS\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
-             lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
-            (r"\(?P_UPDATED_STATS\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)",
-             lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else 0)),
-            (r"\(?P_UPDATED_FRIENDSHIP\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
-             lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
-            (r"PERCENT_FEMALE\(\s*(\d+(?:\.\d+)?)\s*\)",
-             lambda m: min(254, int(float(m.group(1)) * 255 / 100))),
-        ]
-        for pattern, resolver in conditionals:
-            match = re.fullmatch(pattern, raw)
-            if match:
-                return resolver(match)
+        # Evaluate source-version ternaries against the configured Gen 8 target.
+        # This supports integer EV/stat/XP/friendship branches and symbolic
+        # type branches such as TYPE_FAIRY vs TYPE_NORMAL.
+        ternary_value = resolve_c_ternary_expression(raw, TARGET_GAME_GENERATION)
+        if ternary_value is not None:
+            if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", ternary_value):
+                return int(ternary_value, 0)
+            return None
+        female_match = re.fullmatch(r"PERCENT_FEMALE\(\s*(\d+(?:\.\d+)?)\s*\)", raw)
+        if female_match:
+            return min(254, int(float(female_match.group(1)) * 255 / 100))
         if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
             return int(raw, 0)
         return None
 
     def resolve_macro_pair(raw, macro_name, prefix, domain):
-        # MON_TYPES / MON_EGG_GROUPS use DEFAULT(first, second-or-first)
-        # inside the macro definition. The initializer itself contains only
-        # the macro arguments, not a literal expanded pair.
-        match = re.fullmatch(
-            rf"{macro_name}\(\s*{prefix}([A-Z0-9_]+)(?:\s*,\s*{prefix}([A-Z0-9_]+))?\s*\)",
-            raw or "",
-        )
+        # MON_TYPES / MON_EGG_GROUPS use DEFAULT(first, second-or-first).
+        # Split arguments at top level and evaluate conditional enum arguments
+        # using the same Gen 8 source policy used for scalar SpeciesInfo fields.
+        match = re.fullmatch(rf"{macro_name}\((.*)\)", raw or "")
         if not match:
             return None
-        first = match.group(1)
-        second = match.group(2) or first
-        if first not in domain or second not in domain:
+        args = split_c_arguments(match.group(1))
+        if not 1 <= len(args) <= 2:
             return None
-        return [domain[first], domain[second]]
+        resolved = []
+        for arg in args:
+            value = expand_c_macro_text(arg.strip(), source_symbol_macros.get("__catalog__", {}))
+            conditional_value = resolve_c_ternary_expression(value, TARGET_GAME_GENERATION)
+            if conditional_value is not None:
+                value = conditional_value
+            member = re.fullmatch(rf"{prefix}([A-Z0-9_]+)", value.strip())
+            if not member or member.group(1) not in domain:
+                return None
+            resolved.append(domain[member.group(1)])
+        if len(resolved) == 1:
+            resolved.append(resolved[0])
+        return resolved
 
     def resolve_gender(raw):
         if raw == "MON_GENDERLESS":
