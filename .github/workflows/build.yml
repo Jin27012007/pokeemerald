@@ -43,7 +43,7 @@ jobs:
       - name: Verify generated staging sources are tracked and complete
         run: |
           test -s include/gen8_species_map.h
-          test -s src/data/gen8_species_map.c
+          test -s src/data/gen8/species_map.c
           test -s include/gen8_conversion_status.h
           test -s data/pokemon/gen8_species_map.json
           test -s data/pokemon/gen8_move_dependencies.json
