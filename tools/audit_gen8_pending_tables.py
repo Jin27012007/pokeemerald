@@ -256,6 +256,29 @@ def main() -> int:
         learnset_by_species = {}
         for row in gen8_learnsets:
             learnset_by_species.setdefault(row["source_species"], []).append(row)
+        # Some canonical National Dex forms deliberately share the base
+        # species learnset in the source table; use explicit, reviewed aliases.
+        learnset_base_fallbacks = {
+            "DEERLING_SPRING": "DEERLING",
+            "SAWSBUCK_SPRING": "SAWSBUCK",
+            "SCATTERBUG_ICY_SNOW": "SCATTERBUG",
+            "SPEWPA_ICY_SNOW": "SPEWPA",
+            "VIVILLON_ICY_SNOW": "VIVILLON",
+            "FLABEBE_RED": "FLABEBE",
+            "FLOETTE_RED": "FLOETTE",
+            "FLORGES_RED": "FLORGES",
+            "FURFROU_NATURAL": "FURFROU",
+            "AEGISLASH_SHIELD": "AEGISLASH",
+            "PUMPKABOO_AVERAGE": "PUMPKABOO",
+            "GOURGEIST_AVERAGE": "GOURGEIST",
+            "XERNEAS_NEUTRAL": "XERNEAS",
+            "ORICORIO_BAILE": "ORICORIO",
+            "SILVALLY_NORMAL": "SILVALLY",
+            "MIMIKYU_DISGUISED": "MIMIKYU",
+            "SINISTEA_PHONY": "SINISTEA",
+            "POLTEAGEIST_PHONY": "POLTEAGEIST",
+            "ALCREMIE_STRAWBERRY_VANILLA_CREAM": "ALCREMIE",
+        }
         used_moves = set()
         species_tables = []
         missing_source_symbols = []
@@ -379,12 +402,30 @@ def main() -> int:
             if growth_name:
                 growth_use_counts[growth_name] = growth_use_counts.get(growth_name, 0) + 1
 
-            base_symbol = converter.BASE_ALIASES.get(national_symbol, national_symbol)
-            learnset_key = camel_name(base_symbol)
+            # Prefer the exact source-form learnset when one exists (e.g.
+            # Deoxys Normal, Lycanroc Midday, Toxtricity Amped). Fall back only
+            # through explicit source-family aliases for forms that share a
+            # single learnset block.
+            candidate_symbols = [
+                national_symbol,
+                converter.BASE_ALIASES.get(national_symbol, national_symbol),
+                learnset_base_fallbacks.get(national_symbol, national_symbol),
+            ]
+            learnset_key = next(
+                (camel_name(symbol) for symbol in candidate_symbols
+                 if camel_name(symbol) in learnset_by_species),
+                camel_name(national_symbol),
+            )
             candidates = learnset_by_species.get(learnset_key, [])
             chosen_learnset = candidates[0] if candidates else None
             if chosen_learnset is None:
-                missing_learnsets.append({"national_dex": dex, "learnset_symbol": learnset_key})
+                missing_learnsets.append({
+                    "national_dex": dex,
+                    "canonical_symbol": national_symbol,
+                    "attempted_learnset_symbols": list(dict.fromkeys(
+                        camel_name(symbol) for symbol in candidate_symbols
+                    )),
+                })
                 moves = []
             else:
                 moves = chosen_learnset["moves"]
