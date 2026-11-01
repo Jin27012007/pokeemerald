@@ -38,6 +38,7 @@ SPECIAL_SLUGS = {
 
 
 def main() -> int:
+    report_only = "--report-only" in sys.argv[1:]
     path = ROOT / "data/pokemon/gen8_species_manifest.json"
     if not path.is_file():
         print("FAIL: National Dex manifest is missing")
@@ -71,7 +72,7 @@ def main() -> int:
             print("  " + line)
         if len(missing) > 120:
             print(f"  ... and {len(missing) - 120} more species")
-        return 1
+        return 0 if report_only else 1
 
     print("PASS: all 512 Gen 2-8 species graphics are present")
     return 0
