@@ -217,7 +217,7 @@ def check_gen8_stats_conditionals_use_target_generation():
     for raw, expected in cases:
         compact = " ".join(raw.split())
         m = re.fullmatch(
-            r"\\(?P<flag>P_UPDATED_[A-Z0-9_]+)\\s*>=\\s*GEN_(?P<gen>\\d+)\\)?\\s*\\?\\s*(?P<yes>-?\\d+)\\s*:\\s*(?P<no>-?\\d+)",
+            r"\\(?(?P<flag>P_UPDATED_[A-Z0-9_]+)\\s*>=\\s*GEN_(?P<gen>\\d+)\\)?\\s*\\?\\s*(?P<yes>-?\\d+)\\s*:\\s*(?P<no>-?\\d+)",
             compact,
         )
         assert m and int(m.group("yes") if module.TARGET_GAME_GENERATION >= int(m.group("gen")) else m.group("no")) == expected, (raw, m)
