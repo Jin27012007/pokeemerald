@@ -569,6 +569,27 @@ def generate(check: bool = False) -> dict:
          "requires_contest_definition": name not in target_move_names}
         for name in sorted(source_move_by_name) if source_move_by_name[name] > 354
     ]
+    source_field_universe = sorted(set().union(*(
+        set(row.get("source_fields_present", [])) for row in canonical_species_info
+    ))) if canonical_species_info else []
+    field_coverage = {
+        field: sum(1 for row in canonical_species_info if field in row.get("source_fields_present", []))
+        for field in source_field_universe
+    }
+    emerald_compatibility = {
+        "struct_species_info_bytes": 0x1A,
+        "source_species_info_uses_three_ability_slots": True,
+        "emerald_species_info_has_two_ability_slots": True,
+        "ability_slot_3_runtime_compatible": False,
+        "source_ability_enum_width_bits": 16,
+        "emerald_ability_slot_width_bits": 8,
+        "all_source_ability_ids_fit_emerald_slot": max((x["id"] for x in info_result["source_enum_domains"]["abilities"].values()), default=0) <= 255,
+        "source_item_enum_width_bits": 16,
+        "emerald_item_slot_width_bits": 16,
+        "all_source_item_ids_fit_emerald_slot": max((x["id"] for x in info_result["source_enum_domains"]["items"].values()), default=0) <= 65535,
+        "fairy_type_supported_in_emerald": "FAIRY" in {x["symbol"] for x in symbols(type_text, "TYPE_")},
+        "source_only_fields_require_runtime_work": ["third_ability_slot", "new_abilities", "new_items", "fairy_type"],
+    }
     counts = {
         "canonical_dex_entries": len(species_map), "existing_species": existing_count,
         "new_species": len(new_species), "source_moves_gen1_8": len({x["id"] for x in source_moves if x["id"] <= 847}),
@@ -583,6 +604,9 @@ def generate(check: bool = False) -> dict:
         "species_info_compact_records": len(info_result["compact_records"]),
         "species_info_unresolved_records": len(info_result["unresolved_records"]),
         "species_info_hidden_abilities_resolved": sum(1 for row in info_result["compact_records"] + info_result["unresolved_records"] if row["hidden_ability"] is not None),
+        "canonical_species_info_covered": len(canonical_species_info),
+        "canonical_species_info_missing": len(missing_species_info),
+        "canonical_species_info_raw_field_coverage": field_coverage,
         "missing_species_info_for_new_dex_species": len(missing_species_info),
     }
     report = {
@@ -600,6 +624,10 @@ def generate(check: bool = False) -> dict:
             "runtime_ready": False, "num_species_change_allowed": False,
         },
         "species_mapping": species_map,
+        "species_info_by_national_dex": canonical_species_info,
+        "missing_species_info_by_national_dex": missing_species_info,
+        "species_info_field_coverage": field_coverage,
+        "emerald_compatibility": emerald_compatibility,
         "missing_learnset_move_symbols": missing_moves,
         "species_info_compact_summary": counts,
         "missing_species_info_for_new_dex_species": missing_species_info,
@@ -613,6 +641,9 @@ def generate(check: bool = False) -> dict:
         write_json(OUT / "level_up_learnsets.json", learnsets)
         write_json(OUT / "missing_learnset_moves.json", missing_moves)
         write_json(OUT / "species_info_compact.json", info_result)
+        write_json(OUT / "species_info_by_national_dex.json", canonical_species_info)
+        write_json(OUT / "species_info_field_coverage.json", field_coverage)
+        write_json(OUT / "emerald_species_info_compatibility.json", emerald_compatibility)
         write_json(OUT / "missing_species_info_for_new_dex_species.json", missing_species_info)
         with (OUT / "move_dependencies.csv").open("w", newline="", encoding="utf-8") as fp:
             writer = csv.DictWriter(fp, fieldnames=list(move_dependencies[0].keys()))
