@@ -222,6 +222,24 @@ def check_gen8_stats_conditionals_use_target_generation():
         )
         assert m and int(m.group("yes") if module.TARGET_GAME_GENERATION >= int(m.group("gen")) else m.group("no")) == expected, (raw, m)
 
+def check_actual_speciesinfo_generation8_target_resolution():
+    # Exact conditional syntax observed in Expansion Gen 1-8 family headers.
+    patterns = [
+        ("P_UPDATED_STATS >= GEN_2 ? 109 : 85", 109),
+        ("(P_UPDATED_EXP_YIELDS >= GEN_8) ? 300 : 270", 300),
+        ("(P_UPDATED_FRIENDSHIP >= GEN_8) ? 50 : 70", 50),
+        ("P_UPDATED_STATS >= GEN_9 ? 120 : 130", 130),
+    ]
+    for raw, expected in patterns:
+        compact = raw.strip().strip("() ")
+        m = module.re.fullmatch(
+            r"(?P<flag>P_UPDATED_[A-Z0-9_]+)\\s*>=\\s*GEN_(?P<gen>\\d+)\\s*\\?\\s*(?P<yes>-?\\d+)\\s*:\\s*(?P<no>-?\\d+)",
+            compact,
+        )
+        assert m, (raw, compact)
+        actual = int(m.group("yes") if module.TARGET_GAME_GENERATION >= int(m.group("gen")) else m.group("no"))
+        assert actual == expected, (raw, actual, expected)
+
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
@@ -253,6 +271,7 @@ def main():
     check_real_form_initializer_macros()
     check_ability_initializer_contents_are_parsed()
     check_gen8_stats_conditionals_use_target_generation()
+    check_actual_speciesinfo_generation8_target_resolution()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
