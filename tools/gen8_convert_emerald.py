@@ -520,25 +520,40 @@ def generate(check: bool = False) -> dict:
     if existing_count != 386 or len(new_species) != 512:
         raise RuntimeError(f"Unexpected species split: existing={existing_count}, new={len(new_species)}")
 
-    source_symbol_by_dex = {}
-    info_symbols_by_dex = {}
-    for dex, symbol in by_dex.items():
-        source_symbol_by_dex[dex] = symbol
+    # Coverage uses the canonical National Dex identity. A record is accepted
+    # only when its source symbol or its explicit .natDexNum identifies the Dex.
+    natdex_values = {x["symbol"]: x["id"] for x in symbols(source_pokemon_text, "NATIONAL_DEX_", enum=True)}
+    info_by_dex = {}
     for row in info_result["compact_records"] + info_result["unresolved_records"]:
-        nat_match = re.search(r"\.natDexNum\s*=\s*NATIONAL_DEX_([A-Z0-9_]+)", row.get("source_raw", ""))
-        if nat_match:
-            nat_symbol = nat_match.group(1)
-            nat_id = next((x["id"] for x in symbols(read(SRC_SPECIES), "NATIONAL_DEX_", enum=True)
-                           if x["symbol"] == nat_symbol), None)
-            if nat_id is not None and 1 <= nat_id <= 898:
-                info_symbols_by_dex.setdefault(nat_id, row["species_symbol"])
-    # Canonical species coverage is checked by NatDex identity, not raw form symbol.
-    missing_species_info = [
-        {"national_dex": dex, "national_symbol": by_dex[dex],
-         "expected_source_alias": BASE_ALIASES.get(by_dex[dex], by_dex[dex])}
-        for dex in range(1, 899)
-        if dex not in info_symbols_by_dex and BASE_ALIASES.get(by_dex[dex], by_dex[dex]) not in info_by_symbol
-    ]
+        dex_symbol = row.get("national_dex_symbol")
+        dex_id = natdex_values.get(dex_symbol) if dex_symbol else None
+        if dex_id is not None and 1 <= dex_id <= 898:
+            if dex_id in info_by_dex and info_by_dex[dex_id]["species_symbol"] != row["species_symbol"]:
+                raise RuntimeError(f"Conflicting source SpeciesInfo for National Dex {dex_id}")
+            info_by_dex[dex_id] = row
+    canonical_species_info = []
+    missing_species_info = []
+    for dex in range(1, 899):
+        national_symbol = by_dex[dex]
+        preferred_symbol = BASE_ALIASES.get(national_symbol, national_symbol)
+        row = info_by_dex.get(dex) or info_by_symbol.get(preferred_symbol)
+        if row is None:
+            missing_species_info.append({
+                "national_dex": dex,
+                "national_symbol": national_symbol,
+                "expected_source_alias": preferred_symbol,
+                "status": "source_record_missing",
+            })
+        else:
+            canonical_species_info.append({
+                "national_dex": dex,
+                "national_symbol": national_symbol,
+                "source_record_symbol": row["species_symbol"],
+                "source_generation": row["generation"],
+                "source_fields_present": sorted(row.get("source_raw", {}).keys()),
+                "compact_status": row["status"],
+                "unresolved_fields": row["unresolved"],
+            })
     used_moves = sorted({m["move"] for row in learnsets for m in row["moves"]})
     target_move_names = {x["symbol"] for x in target_moves}
     missing_moves = sorted(set(used_moves) - target_move_names)
