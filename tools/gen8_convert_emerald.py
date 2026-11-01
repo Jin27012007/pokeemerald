@@ -581,6 +581,11 @@ def parse_species_info(source_text: str, target_info_text: str,
                 fields[field] = resolve_source_conditionals(
                     fields[field], TARGET_GAME_GENERATION
                 )
+                resolved_scalar = resolve_generation_expression(
+                    fields[field], TARGET_GAME_GENERATION
+                )
+                if resolved_scalar is not None:
+                    fields[field] = str(resolved_scalar)
         problems = []
         values = {}
         for field in scalar_fields:
