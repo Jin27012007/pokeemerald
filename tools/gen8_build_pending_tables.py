@@ -489,6 +489,8 @@ def source_table_inventory() -> dict:
     source_move_enum = conv.symbols(read(SOURCE_MOVES), "MOVE_", enum=True)
     target_move_enum = conv.symbols(read(ROOT / "include/constants/moves.h"), "MOVE_")
     target_move_ids = {row["symbol"]: row["id"] for row in target_move_enum}
+    target_battle_move_records = indexed_records(read(ROOT / "src/data/battle_moves.h"), "MOVE_")
+    target_contest_move_records = indexed_records(read(ROOT / "src/data/contest_moves.h"), "MOVE_")
     source_move_ids = {}
     for row in source_move_enum:
         if 0 < row["id"] <= 847:
@@ -517,6 +519,10 @@ def source_table_inventory() -> dict:
             },
             "source_fields_present": sorted(fields.keys()),
             "battle_definition_available_in_emerald": symbol in target_move_ids,
+            "target_battle_record_present": "MOVE_" + symbol in target_battle_move_records,
+            "target_contest_record_present": "MOVE_" + symbol in target_contest_move_records,
+            "target_battle_fields": conv.extract_designated_fields(target_battle_move_records.get("MOVE_" + symbol, "")),
+            "target_contest_fields": conv.extract_designated_fields(target_contest_move_records.get("MOVE_" + symbol, "")),
         }
         move_rows.append(row)
         if row["used_by_canonical_gen8_learnsets"]:
@@ -551,6 +557,14 @@ def source_table_inventory() -> dict:
         for value in re.findall(r"\bEFFECT_[A-Z0-9_]+\b", row["battle_fields"].get("effect") or "")
     })
     missing_battle_effects = sorted(set(source_effect_symbols) - target_effect_symbols)
+    missing_target_battle_move_records = sorted(
+        row["source_move_symbol"] for row in used_move_rows
+        if not row["target_battle_record_present"]
+    )
+    missing_target_contest_move_records = sorted(
+        row["source_move_symbol"] for row in used_move_rows
+        if not row["target_contest_record_present"]
+    )
 
     # Ability/item dependency closure for the selected 898 canonical rows.
     # The per-species compact file is a list; enum domains are stored in
@@ -566,6 +580,17 @@ def source_table_inventory() -> dict:
         row["symbol"]: row["id"]
         for row in conv.symbols(read(ROOT / "include/constants/items.h"), "ITEM_")
     }
+    source_ability_records = indexed_records(read(VENDOR / "src/data/abilities.h"), "ABILITY_")
+    source_item_records = indexed_records(read(VENDOR / "src/data/items.h"), "ITEM_")
+    target_item_records = indexed_records(read(ROOT / "src/data/items.h"), "ITEM_")
+    source_pokemon_text = read(SOURCE_POKEMON)
+    target_pokemon_text = read(ROOT / "include/constants/pokemon.h")
+    source_type_ids = {row["symbol"]: row["id"] for row in conv.symbols(source_pokemon_text, "TYPE_", enum=True)}
+    target_type_ids = {row["symbol"]: row["id"] for row in conv.symbols(target_pokemon_text, "TYPE_")}
+    source_egg_ids = {row["symbol"]: row["id"] for row in conv.symbols(source_pokemon_text, "EGG_GROUP_", enum=True)}
+    target_egg_ids = {row["symbol"]: row["id"] for row in conv.symbols(target_pokemon_text, "EGG_GROUP_")}
+    source_growth_ids = {row["symbol"]: row["id"] for row in conv.symbols(source_pokemon_text, "GROWTH_", enum=True)}
+    target_growth_ids = {row["symbol"]: row["id"] for row in conv.symbols(target_pokemon_text, "GROWTH_")}
     ability_use = {}
     item_use = {}
     type_use = set()
@@ -577,24 +602,119 @@ def source_table_inventory() -> dict:
                 if name != "NONE":
                     item_use.setdefault(name, set()).add(dex)
         type_use.update(re.findall(r"\bTYPE_([A-Z0-9_]+)\b", fields.get("types", "")))
-    ability_rows = [{
-        "ability_symbol": name,
-        "source_ability_id": source_ability_values.get(name),
-        "emerald_ability_id": target_ability_ids.get(name),
-        "canonical_species_usage_count": len(dexes),
-        "canonical_species_examples": sorted(dexes)[:20],
-        "target_behavior_available": name in target_ability_ids,
-    } for name, dexes in sorted(ability_use.items())]
-    item_rows = [{
-        "item_symbol": name,
-        "source_item_id": source_item_values.get(name),
-        "emerald_item_id": target_item_ids.get(name),
-        "canonical_species_usage_count": len(dexes),
-        "canonical_species_examples": sorted(dexes)[:20],
-        "target_item_definition_available": name in target_item_ids,
-    } for name, dexes in sorted(item_use.items())]
-    target_type_names = set(re.findall(r"\bTYPE_([A-Z0-9_]+)\b", read(ROOT / "include/constants/pokemon.h")))
-    missing_types = sorted(type_use - target_type_names)
+    ability_rows = []
+    for name, dexes in sorted(ability_use.items()):
+        source_fields = conv.extract_designated_fields(
+            source_ability_records.get("ABILITY_" + name, "")
+        )
+        ability_rows.append({
+            "ability_symbol": name,
+            "source_ability_id": source_ability_values.get(name),
+            "emerald_ability_id": target_ability_ids.get(name),
+            "canonical_species_usage_count": len(dexes),
+            "canonical_species_examples": sorted(dexes)[:20],
+            "source_ability_info_record_present": "ABILITY_" + name in source_ability_records,
+            "source_ability_info_fields": sorted(source_fields),
+            "target_ability_constant_present": name in target_ability_ids,
+            "target_behavior_audited": False,
+        })
+
+    item_rows = []
+    for name, dexes in sorted(item_use.items()):
+        source_fields = conv.extract_designated_fields(
+            source_item_records.get("ITEM_" + name, "")
+        )
+        target_fields = conv.extract_designated_fields(
+            target_item_records.get("ITEM_" + name, "")
+        )
+        item_rows.append({
+            "item_symbol": name,
+            "source_item_id": source_item_values.get(name),
+            "emerald_item_id": target_item_ids.get(name),
+            "canonical_species_usage_count": len(dexes),
+            "canonical_species_examples": sorted(dexes)[:20],
+            "source_item_data_record_present": "ITEM_" + name in source_item_records,
+            "source_item_data_fields": sorted(source_fields),
+            "target_item_constant_present": name in target_item_ids,
+            "target_item_data_record_present": "ITEM_" + name in target_item_records,
+            "target_item_data_fields": sorted(target_fields),
+            "target_hold_effect_expression": target_fields.get("holdEffect"),
+            "target_hold_effect_param_expression": target_fields.get("holdEffectParam"),
+            "target_item_behavior_audited": False,
+        })
+
+    used_types = sorted(type_use)
+    type_rows = [{
+        "type_symbol": name,
+        "source_type_id": source_type_ids.get(name),
+        "emerald_type_id": target_type_ids.get(name),
+        "used_by_canonical_species": name in type_use,
+        "target_type_symbol_present": name in target_type_ids,
+        "type_chart_runtime_audited": False,
+    } for name in sorted(source_type_ids)]
+    missing_types = sorted(name for name in used_types if name not in target_type_ids)
+
+    used_egg_groups = sorted(egg_use)
+    egg_group_rows = [{
+        "egg_group_symbol": name,
+        "source_egg_group_id": source_egg_ids.get(name),
+        "emerald_egg_group_id": target_egg_ids.get(name),
+        "used_by_canonical_species": name in egg_use,
+        "target_egg_group_symbol_present": name in target_egg_ids,
+    } for name in sorted(source_egg_ids)]
+    missing_egg_groups = sorted(name for name in used_egg_groups if name not in target_egg_ids)
+
+    growth_use = {
+        symbol
+        for dex, mapping, _, source, fields in source_rows
+        for symbol in re.findall(r"\\bGROWTH_([A-Z0-9_]+)\\b", fields.get("growthRate", ""))
+    }
+    growth_rate_rows = [{
+        "growth_rate_symbol": name,
+        "source_growth_rate_id": source_growth_ids.get(name),
+        "emerald_growth_rate_id": target_growth_ids.get(name),
+        "used_by_canonical_species": name in growth_use,
+        "target_growth_rate_symbol_present": name in target_growth_ids,
+    } for name in sorted(source_growth_ids)]
+    missing_growth_rates = sorted(name for name in growth_use if name not in target_growth_ids)
+
+    source_evolution_enum = re.search(
+        r"enum\\s+EvolutionMethods\\s*\\{([^}]*)\\}",
+        source_pokemon_text,
+        re.S,
+    )
+    if source_evolution_enum is None:
+        raise RuntimeError("Source EvolutionMethods enum is missing")
+    source_evolution_methods = conv.symbols(
+        "enum EvolutionMethods {" + source_evolution_enum.group(1) + "}",
+        "EVO_", enum=True,
+    )
+    target_evolution_methods = {
+        row["symbol"]: row["id"]
+        for row in conv.symbols(target_pokemon_text, "EVO_")
+    }
+    used_evolution_methods = sorted({
+        entry["method_symbol"]
+        for row in evolution_rows for entry in row["evolutions"]
+        if entry.get("method_symbol")
+    })
+    evolution_method_rows = []
+    for method in source_evolution_methods:
+        name = method["symbol"]
+        if name == "NONE":
+            compatibility = "source_no_evolution_or_form_restriction"
+        elif name in ("LEVEL", "TRADE", "ITEM"):
+            compatibility = "same_method_symbol_parameter_semantics_require_review"
+        else:
+            compatibility = "target_evolution_method_or_handler_missing"
+        evolution_method_rows.append({
+            "method_symbol": "EVO_" + name,
+            "source_method_id": method["id"],
+            "emerald_method_id": target_evolution_methods.get(name),
+            "used_by_canonical_evolutions": "EVO_" + name in used_evolution_methods,
+            "target_method_symbol_present": name in target_evolution_methods,
+            "compatibility": compatibility,
+        })
 
     # A canonical Dex species can reference a non-canonical form as an
     # evolution target or in a form table. Those references remain symbolic.
@@ -637,12 +757,27 @@ def source_table_inventory() -> dict:
         "source_contest_effect_definitions": len(contest_effect_rows),
         "source_contest_effect_callbacks_missing_in_emerald": len(missing_contest_callbacks),
         "source_battle_effect_symbols_missing_in_emerald": len(missing_battle_effects),
+        "canonical_gen8_learnset_moves_missing_target_battle_records": len(missing_target_battle_move_records),
+        "canonical_gen8_learnset_moves_missing_target_contest_records": len(missing_target_contest_move_records),
         "canonical_abilities_used": len(ability_rows),
-        "canonical_abilities_without_emerald_definition": sum(not row["target_behavior_available"] for row in ability_rows),
+        "canonical_abilities_without_emerald_constant": sum(not row["target_ability_constant_present"] for row in ability_rows),
+        "canonical_abilities_without_source_info_record": sum(not row["source_ability_info_record_present"] for row in ability_rows),
         "canonical_held_items_used": len(item_rows),
-        "canonical_held_items_without_emerald_definition": sum(not row["target_item_definition_available"] for row in item_rows),
-        "canonical_types_used": len(type_use),
+        "canonical_held_items_without_emerald_constant": sum(not row["target_item_constant_present"] for row in item_rows),
+        "canonical_held_items_without_target_data_record": sum(not row["target_item_data_record_present"] for row in item_rows),
+        "canonical_held_items_without_source_data_record": sum(not row["source_item_data_record_present"] for row in item_rows),
+        "canonical_types_used": len(used_types),
         "canonical_types_without_emerald_definition": len(missing_types),
+        "canonical_egg_groups_used": len(used_egg_groups),
+        "canonical_egg_groups_without_emerald_definition": len(missing_egg_groups),
+        "canonical_growth_rates_used": len(growth_use),
+        "canonical_growth_rates_without_emerald_definition": len(missing_growth_rates),
+        "source_evolution_methods": len(source_evolution_methods),
+        "canonical_evolution_methods_used": len(used_evolution_methods),
+        "canonical_evolution_methods_without_target_method_symbol": sum(
+            row["used_by_canonical_evolutions"] and not row["target_method_symbol_present"]
+            for row in evolution_method_rows
+        ),
         "unknown_evolution_target_symbols": len(unknown_evolution_targets),
     }
 
@@ -682,9 +817,16 @@ def source_table_inventory() -> dict:
         "missing_source_move_definitions": missing_move_definitions,
         "missing_contest_callbacks": missing_contest_callbacks,
         "missing_battle_effect_symbols": missing_battle_effects,
-        "missing_emerald_abilities": [row["ability_symbol"] for row in ability_rows if not row["target_behavior_available"]],
-        "missing_emerald_items": [row["item_symbol"] for row in item_rows if not row["target_item_definition_available"]],
+        "missing_target_battle_move_records": missing_target_battle_move_records,
+        "missing_target_contest_move_records": missing_target_contest_move_records,
+        "missing_emerald_abilities": [row["ability_symbol"] for row in ability_rows if not row["target_ability_constant_present"]],
+        "abilities_without_source_info_records": [row["ability_symbol"] for row in ability_rows if not row["source_ability_info_record_present"]],
+        "missing_emerald_items": [row["item_symbol"] for row in item_rows if not row["target_item_constant_present"]],
+        "items_without_target_data_records": [row["item_symbol"] for row in item_rows if not row["target_item_data_record_present"]],
+        "items_without_source_data_records": [row["item_symbol"] for row in item_rows if not row["source_item_data_record_present"]],
         "missing_emerald_types": missing_types,
+        "missing_emerald_egg_groups": missing_egg_groups,
+        "missing_emerald_growth_rates": missing_growth_rates,
         "unknown_evolution_targets": unknown_evolution_targets,
     }
 
@@ -699,6 +841,10 @@ def source_table_inventory() -> dict:
         DATA / "gen8_contest_effect_source_catalog.json": contest_effect_rows,
         DATA / "gen8_ability_source_dependencies.json": ability_rows,
         DATA / "gen8_item_source_dependencies.json": item_rows,
+        DATA / "gen8_type_source_dependencies.json": type_rows,
+        DATA / "gen8_egg_group_source_dependencies.json": egg_group_rows,
+        DATA / "gen8_growth_rate_source_dependencies.json": growth_rate_rows,
+        DATA / "gen8_evolution_method_dependencies.json": evolution_method_rows,
         DATA / "gen8_pokedex_orders.json": order_rows,
         REPORTS / "pending_species_tables_audit.json": report,
     }
