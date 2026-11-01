@@ -19,8 +19,10 @@ VENDOR = ROOT / "tools/vendor/pokeemerald-expansion"
 OUT = ROOT / "reports/gen8-conversion"
 SRC_SPECIES = VENDOR / "include/constants/species.h"
 SRC_MOVES = VENDOR / "include/constants/moves.h"
-SRC_LEARNSETS = VENDOR / "src/data/pokemon/level_up_learnsets/gen_8.h"
-SRC_SPECIES_INFO = VENDOR / "src/data/pokemon/species_info/gen_8_families.h"
+SRC_LEARNSET_DIR = VENDOR / "src/data/pokemon/level_up_learnsets"
+SRC_SPECIES_INFO_DIR = VENDOR / "src/data/pokemon/species_info"
+SOURCE_GENERATIONS = (4, 5, 6, 7, 8)
+
 DST_SPECIES = ROOT / "include/constants/species.h"
 DST_MOVES = ROOT / "include/constants/moves.h"
 DST_INFO = ROOT / "src/data/pokemon/species_info.h"
@@ -98,7 +100,7 @@ def balanced_species_records(text: str) -> list[dict]:
             records.append({"symbol": m.group(1), "body": text[m.end():i-1].strip()})
     return records
 
-def extract_learnsets(text: str) -> list[dict]:
+def extract_learnsets(text: str, generation: int) -> list[dict]:
     block_re = re.compile(
         r"static const struct LevelUpMove s([A-Za-z0-9]+)LevelUpLearnset\[\]\s*=\s*\{([\s\S]*?)\n\};"
     )
@@ -108,7 +110,7 @@ def extract_learnsets(text: str) -> list[dict]:
         moves = [{"level": int(m.group(1)), "move": m.group(2)}
                  for m in move_re.finditer(block.group(2))]
         if moves:
-            result.append({"source_species": block.group(1), "moves": moves})
+            result.append({"source_species": block.group(1), "generation": generation, "moves": moves})
     return result
 
 def extract_designated_fields(body: str) -> dict:
@@ -348,9 +350,15 @@ def generate(check: bool = False) -> dict:
     target_species = symbols(read(DST_SPECIES), "SPECIES_")
     source_moves = symbols(read(SRC_MOVES), "MOVE_", enum=True)
     target_moves = symbols(read(DST_MOVES), "MOVE_")
-    source_info_text = read(SRC_SPECIES_INFO)
+    source_info_files = [SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h" for generation in SOURCE_GENERATIONS]
+    source_learnset_files = [SRC_LEARNSET_DIR / f"gen_{generation}.h" for generation in SOURCE_GENERATIONS]
+    source_info_texts = {path.name: read(path) for path in source_info_files}
+    source_learnset_texts = {path.name: read(path) for path in source_learnset_files}
+    source_info_text = "\\n".join(source_info_texts.values())
     target_info_text = read(DST_INFO)
-    learnsets = extract_learnsets(read(SRC_LEARNSETS))
+    learnsets = []
+    for generation, path in zip(SOURCE_GENERATIONS, source_learnset_files):
+        learnsets.extend(extract_learnsets(source_learnset_texts[path.name], generation))
     type_text, ability_text, item_text = read(DST_POKEMON_CONSTANTS), read(DST_ABILITIES), read(DST_ITEMS)
     info_result = parse_species_info(source_info_text, target_info_text, type_text, ability_text, item_text)
 
@@ -396,11 +404,13 @@ def generate(check: bool = False) -> dict:
         "learnset_blocks": len(learnsets), "learnset_move_entries": sum(len(x["moves"]) for x in learnsets),
         "distinct_learnset_moves": len(used_moves), "missing_learnset_moves": len(missing_moves),
         "species_info_blocks": info_result["source_record_count"],
+        "species_info_source_files": len(source_info_files),
+        "learnset_source_files": len(source_learnset_files),
         "species_info_compact_records": len(info_result["compact_records"]),
         "species_info_unresolved_records": len(info_result["unresolved_records"]),
     }
     report = {
-        "source": "pinned pokeemerald-expansion source snapshot",
+        "source": "pinned pokeemerald-expansion source snapshot (Gen 4-8 family data)",
         "scope": "National Dex 1-898 canonical species only",
         "counts": counts,
         "readiness": {
