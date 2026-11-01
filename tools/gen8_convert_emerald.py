@@ -412,6 +412,7 @@ def generate(check: bool = False) -> dict:
         "canonical_dex_entries": len(species_map), "existing_species": existing_count,
         "new_species": len(new_species), "source_moves_gen1_8": len({x["id"] for x in source_moves if x["id"] <= 847}),
         "learnset_blocks": len(learnsets), "learnset_move_entries": sum(len(x["moves"]) for x in learnsets),
+        "learnset_generation_counts": {str(g): sum(1 for row in learnsets if row["generation"] == g) for g in SOURCE_GENERATIONS},
         "learnset_generations": list(SOURCE_GENERATIONS),
         "distinct_learnset_moves": len(used_moves), "missing_learnset_moves": len(missing_moves),
         "species_info_blocks": info_result["source_record_count"],
