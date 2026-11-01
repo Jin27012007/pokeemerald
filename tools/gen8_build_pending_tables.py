@@ -233,6 +233,33 @@ def string_fragments(raw: str) -> list[str]:
     return result
 
 
+def resolve_shared_text_pointer(expression: str | None, shared_text_values: dict[str, list[str]]) -> str | None:
+    """Resolve direct or trivially constant shared Pokedex text references.
+
+    Ambiguous conditional pointer expressions remain unresolved instead of
+    silently selecting the first branch.
+    """
+    value = (expression or "").strip()
+    if value in shared_text_values:
+        return value
+    match = re.fullmatch(
+        r"\(?\s*([A-Z_][A-Z0-9_]*)\s*==\s*([A-Z_][A-Z0-9_]*)\s*\?\s*"
+        r"(g[A-Za-z0-9_]+PokedexText)\s*:\s*(g[A-Za-z0-9_]+PokedexText)\s*\)?",
+        value,
+    )
+    if match:
+        left, right, when_true, when_false = match.groups()
+        # Silvally's canonical Normal initializer uses TYPE_NORMAL ==
+        # TYPE_NORMAL, so the first branch is provably selected.
+        if left == right:
+            return when_true if when_true in shared_text_values else None
+        return when_false if when_false in shared_text_values else None
+    pointers = re.findall(r"\b(g[A-Za-z0-9_]+PokedexText)\b", value)
+    if len(pointers) == 1 and pointers[0] in shared_text_values:
+        return pointers[0]
+    return None
+
+
 def normalize_cry(value: str) -> str:
     value = re.sub(r"^(?:CRY_|Cry_)", "", value or "")
     return re.sub(r"[^A-Za-z0-9]", "", value).lower()
@@ -330,9 +357,8 @@ def source_table_inventory() -> dict:
     unresolved_text = []
     for dex, mapping, _, source, fields in source_rows:
         description_expression = fields.get("description")
-        description_pointer = (
-            description_expression
-            if description_expression in shared_dex_text_values else None
+        description_pointer = resolve_shared_text_pointer(
+            description_expression, shared_dex_text_values
         )
         description_values = string_fragments(description_expression or "")
         if not description_values and description_pointer:
@@ -787,7 +813,7 @@ def source_table_inventory() -> dict:
         "898_canonical_species_rows": counts["canonical_species"] == 898,
         "898_gen8_level_up_learnsets": counts["canonical_gen8_level_up_learnsets"] == 898 and not missing_learnsets,
         "all_present_evolution_expressions_parsed": not unresolved_evolutions,
-        "898_pokedex_text_rows": len(pokedex_rows) == 898,
+        "898_pokedex_text_rows": len(pokedex_rows) == 898 and not unresolved_text,
         "898_cry_identifiers_mapped_to_source_table": len(cry_rows) == 898 and not missing_cries,
         "898_graphics_reference_rows": len(graphics_rows) == 898 and not missing_graphics_refs,
         "all_referenced_form_tables_found": not missing_form_tables,
