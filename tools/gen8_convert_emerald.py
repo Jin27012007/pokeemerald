@@ -184,6 +184,7 @@ def parse_species_info(source_text: str, target_info_text: str,
     type_values = {x["symbol"]: x["id"] for x in symbols(type_text, "TYPE_")}
     ability_values = {x["symbol"]: x["id"] for x in symbols(ability_text, "ABILITY_")}
     egg_values = {x["symbol"]: x["id"] for x in symbols(type_text, "EGG_GROUP_")}
+    growth_values = {x["symbol"]: x["id"] for x in symbols(type_text, "GROWTH_")}
     item_values = {}
     enum_index = -1
     for line in item_text.splitlines():
@@ -197,9 +198,24 @@ def parse_species_info(source_text: str, target_info_text: str,
         "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
         "baseSpDefense", "catchRate", "expYield", "evYield_HP",
         "evYield_Attack", "evYield_Defense", "evYield_Speed",
-        "evYield_SpAttack", "evYield_SpDefense", "genderRatio",
-        "eggCycles", "friendship", "growthRate",
+        "evYield_SpAttack", "evYield_SpDefense", "eggCycles",
     )
+
+    def resolve_gender(raw):
+        if raw == "MON_GENDERLESS":
+            return 0xFF
+        if raw == "MON_MALE":
+            return 0x00
+        if raw == "MON_FEMALE":
+            return 0xFE
+        match = re.fullmatch(r"PERCENT_FEMALE\(\s*(\d+(?:\.\d+)?)\s*\)", raw or "")
+        if match:
+            # Vanilla stores the female threshold as an 8-bit ratio.
+            return min(254, int(float(match.group(1)) * 255 / 100))
+        if raw and re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
+            return int(raw, 0)
+        return None
+
     for record in records:
         body = record["body"]
         fields = extract_designated_fields(body)
@@ -218,7 +234,26 @@ def parse_species_info(source_text: str, target_info_text: str,
             else:
                 problems.append(f"unresolved_scalar:{field}:{raw}")
 
-        # Type mapping supports MON_TYPES(TYPE_X) or MON_TYPES(TYPE_X, TYPE_Y).
+        gender_raw = fields.get("genderRatio")
+        gender_ratio = resolve_gender(gender_raw)
+        if gender_ratio is None:
+            problems.append(f"unresolved_gender_ratio:{gender_raw}")
+        
+        friendship_raw = fields.get("friendship")
+        if friendship_raw and re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", friendship_raw):
+            friendship = int(friendship_raw, 0)
+        else:
+            # Expansion's STANDARD_FRIENDSHIP differs from vanilla Emerald.
+            # Do not borrow the vanilla value; leave it blocked until sourced.
+            friendship = None
+            problems.append(f"unresolved_friendship:{friendship_raw}")
+
+        growth_raw = fields.get("growthRate")
+        growth_match = re.fullmatch(r"GROWTH_([A-Z0-9_]+)", growth_raw or "")
+        growth_rate = growth_values.get(growth_match.group(1)) if growth_match else None
+        if growth_rate is None:
+            problems.append(f"unresolved_growth_rate:{growth_raw}")
+
         type_match = re.search(
             r"\.types\s*=\s*MON_TYPES\(\s*TYPE_([A-Z0-9_]+)(?:\s*,\s*TYPE_([A-Z0-9_]+))?\s*\)",
             body,
@@ -254,6 +289,9 @@ def parse_species_info(source_text: str, target_info_text: str,
         ability_pair = None
         if ability_match:
             names = [ability_match.group(1), ability_match.group(2)]
+            hidden = ability_match.group(3)
+            if hidden and hidden != "NONE":
+                problems.append(f"third_ability_not_supported:{hidden}")
             if any(name not in ability_values for name in names):
                 problems.extend(f"unknown_ability:{name}" for name in names if name not in ability_values)
             else:
@@ -263,7 +301,6 @@ def parse_species_info(source_text: str, target_info_text: str,
 
         rare_item_match = re.search(r"\.itemRare\s*=\s*ITEM_([A-Z0-9_]+)", body)
         common_item_match = re.search(r"\.itemCommon\s*=\s*ITEM_([A-Z0-9_]+)", body)
-        # The source may omit itemCommon or itemRare; missing means ITEM_NONE.
         rare_name = rare_item_match.group(1) if rare_item_match else "NONE"
         common_name = common_item_match.group(1) if common_item_match else "NONE"
         if rare_name not in item_values:
@@ -271,25 +308,26 @@ def parse_species_info(source_text: str, target_info_text: str,
         if common_name not in item_values:
             problems.append(f"unknown_item:{common_name}")
 
-        body_color_match = re.search(r"\.bodyColor\s*=\s*BODY_COLOR_([A-Z0-9_]+)", body)
-        body_color_names = {
+        color_match = re.search(r"\.bodyColor\s*=\s*BODY_COLOR_([A-Z0-9_]+)", body)
+        color_values = {
             "RED": 0, "BLUE": 1, "YELLOW": 2, "GREEN": 3, "BLACK": 4,
-            "BROWN": 5, "PURPLE": 6, "GRAY": 7, "WHITE": 8, "PINK": 9
+            "BROWN": 5, "PURPLE": 6, "GRAY": 7, "WHITE": 8, "PINK": 9,
         }
-        body_color = None
-        if body_color_match and body_color_match.group(1) in body_color_names:
-            body_color = body_color_names[body_color_match.group(1)]
-        else:
+        body_color = color_values.get(color_match.group(1)) if color_match else None
+        if body_color is None:
             problems.append("unresolved_body_color")
 
         record_data = {
             "species_symbol": record["symbol"],
             "statistics": values,
+            "gender_ratio": gender_ratio,
+            "friendship": friendship,
+            "growth_rate": growth_rate,
             "types": type_pair,
             "egg_groups": egg_pair,
             "abilities": ability_pair,
-            "item_common": item_values.get(common_name) if common_name in item_values else None,
-            "item_rare": item_values.get(rare_name) if rare_name in item_values else None,
+            "item_common": item_values.get(common_name),
+            "item_rare": item_values.get(rare_name),
             "body_color": body_color,
             "status": "compact_fields_resolved" if not problems else "manual_mapping_required",
             "unresolved": problems,
