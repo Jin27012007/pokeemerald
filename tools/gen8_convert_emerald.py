@@ -511,13 +511,13 @@ def parse_species_info(source_text: str, target_info_text: str,
         # Resolve well-understood Expansion generation switches, with the
         # source generation interpreted as the compatibility level.
         conditionals = [
-            (r"\(P_UPDATED_EXP_YIELDS\s*>=\s*GEN_(\d+)\)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
+            (r"\(?P_UPDATED_EXP_YIELDS\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
              lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
-            (r"P_UPDATED_STATS\s*>=\s*GEN_(\d+)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
+            (r"\(?P_UPDATED_STATS\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
              lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
-            (r"P_UPDATED_STATS\s*>=\s*GEN_(\d+)\s*\?\s*(-?\d+)",
+            (r"\(?P_UPDATED_STATS\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)",
              lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else 0)),
-            (r"\(P_UPDATED_FRIENDSHIP\s*>=\s*GEN_(\d+)\)\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
+            (r"\(?P_UPDATED_FRIENDSHIP\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
              lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
         ]
         for pattern, resolver in conditionals:
