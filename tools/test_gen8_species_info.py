@@ -206,11 +206,11 @@ def check_gen8_stats_conditionals_use_target_generation():
     assert module.TARGET_GAME_GENERATION == 8
     cases = [
         ("P_UPDATED_STATS >= GEN_2 ? 109 : 85", 109),
-        ("P_UPDATED_EXP_YIELDS >= GEN_8 ? 300 : 270", 300),
-        ("P_UPDATED_FRIENDSHIP >= GEN_8 ? 50 : 70", 50),
+        ("(P_UPDATED_EXP_YIELDS >= GEN_8) ? 300 : 270", 300),
+        ("(P_UPDATED_FRIENDSHIP >= GEN_8) ? 50 : 70", 50),
     ]
     for raw, expected in cases:
-        compact = " ".join(raw.split())
+        compact = " ".join(raw.split()).strip("() ")
         m = module.re.fullmatch(
             r"(?P<flag>P_UPDATED_[A-Z0-9_]+)\s*>=\s*GEN_(?P<gen>\d+)\s*\?\s*(?P<yes>-?\d+)\s*:\s*(?P<no>-?\d+)",
             compact,
