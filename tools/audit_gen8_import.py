@@ -50,9 +50,10 @@ def parse_defines(text: str, prefix: str) -> dict[str, int]:
     )
     for match in pattern.finditer(text):
         name = match.group(1)
-        if name in result:
-            raise RuntimeError(f"Duplicate {prefix}{name} definition")
-        result[name] = int(match.group(3), 16) if match.group(3) else int(match.group(4))
+        value = int(match.group(3), 16) if match.group(3) else int(match.group(4))
+        if name in result and result[name] != value:
+            raise RuntimeError(f"Conflicting {prefix}{name} definitions")
+        result[name] = value
     return result
 
 
