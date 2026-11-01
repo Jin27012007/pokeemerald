@@ -117,11 +117,18 @@ def main():
   for r in source_species:
    if 1<=r["id"]<=898 and r["symbol"] not in BASE_ALIASES:
     by_id.setdefault(r["id"],r["symbol"])
-  # IDs such as Castform/Deoxys are aliases and have only one canonical row.
-  # The list must still cover all National Dex IDs without collisions.
+  # The Expansion header assigns national dex IDs to the base-form symbols
+  # (Castform_Normal, Deoxys_Normal, etc.). Include those as canonical identities
+  # and then normalize their symbol aliases below. Each Dex number must appear once.
+  by_id={}
+  seen_ids=set()
+  for r in source_species:
+   if 1<=r["id"]<=898 and r["id"] not in seen_ids:
+    by_id[r["id"]]=r["symbol"]
+    seen_ids.add(r["id"])
   if sorted(by_id)!=list(range(1,899)):
    missing=sorted(set(range(1,899))-set(by_id))
-   raise RuntimeError(f"Canonical base-form map incomplete; missing Dex IDs: {missing[:20]}")
+   raise RuntimeError(f"Canonical Dex mapping incomplete; missing Dex IDs: {missing[:20]}")
   target_names={x["symbol"] for x in target_species}
   species_map=[]
   for dex,symbol in sorted(by_id.items()):
