@@ -293,8 +293,14 @@ def expand_c_macro_text(text: str, macros: dict, depth: int = 0) -> str:
 
 
 def evaluate_source_condition(condition: str, target_generation: int) -> bool:
-    """Evaluate the finite source macro conditions used by SpeciesInfo."""
+    """Evaluate source policy guards while retaining every available family."""
     condition = condition.strip().strip("() ").strip()
+    # P_FAMILY_* guards select whether a family is compiled in a particular
+    # game configuration. This conversion inventories all canonical families,
+    # so treat every family guard as enabled rather than silently deleting
+    # its macro definitions from the source catalog.
+    if re.fullmatch(r"P_FAMILY_[A-Z0-9_]+", condition):
+        return True
     # P_UPDATED_* flags are configured to the target game's generation.
     compare_re = re.compile(r"P_UPDATED_[A-Z0-9_]+\s*(>=|>|<=|<|==|!=)\s*GEN_(\d+)")
     def compare(match):
@@ -528,6 +534,33 @@ def parse_species_info(source_text: str, target_info_text: str,
         if raw is None:
             return None
         raw = " ".join(raw.split())
+        # Remove only fully enclosing parentheses (not the parentheses
+        # around the condition itself in a C ternary expression).
+        while raw.startswith("(") and raw.endswith(")"):
+            level = 0
+            enclosed = True
+            in_string = escaped = False
+            for index, char in enumerate(raw):
+                if in_string:
+                    if escaped:
+                        escaped = False
+                    elif char == "\\":
+                        escaped = True
+                    elif char == '"':
+                        in_string = False
+                    continue
+                if char == '"':
+                    in_string = True
+                elif char == "(":
+                    level += 1
+                elif char == ")":
+                    level -= 1
+                    if level == 0 and index != len(raw) - 1:
+                        enclosed = False
+                        break
+            if not enclosed or level != 0:
+                break
+            raw = raw[1:-1].strip()
         # Resolve preprocessor-selected and simple object-like macros before
         # parsing primitive values. This handles fields such as PIKACHU_DEFENSE,
         # GENGAR_SP_DEF, MEOWTH_ABILITIES, and conditional type aliases.
