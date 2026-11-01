@@ -1013,12 +1013,20 @@ def main() -> int:
     try:
         report = generate(check=args.check)
         print(json.dumps(report["counts"], indent=2))
+        if report["missing_species_info_by_national_dex"]:
+            print(
+                "MISSING_CANONICAL_SPECIES_INFO="
+                + json.dumps(report["missing_species_info_by_national_dex"], ensure_ascii=False)
+            )
         if args.check:
             assert report["counts"]["canonical_dex_entries"] == 898
             assert report["counts"]["canonical_species_info_covered"] == 898
             assert report["counts"]["canonical_species_info_missing"] == 0
             assert report["readiness"]["species_info_complete"] is True
-        print("PASS: staging extraction completed; production IDs and save layouts untouched.")
+        if report["readiness"]["species_info_complete"]:
+            print("PASS: SpeciesInfo source coverage is complete; production IDs and save layouts untouched.")
+        else:
+            print("INCOMPLETE: SpeciesInfo coverage or source-field audit has unresolved entries.")
         return 0
     except (OSError, RuntimeError, ValueError, KeyError) as e:
         print(f"GEN8 CONVERSION FAILED: {e}", file=sys.stderr)
