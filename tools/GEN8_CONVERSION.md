@@ -1,9 +1,10 @@
 # Gen 8 storage architecture and SpeciesInfo conversion
 
-This phase has two goals: quantify the existing save/RAM limits and extract the
-small subset of Gen 8 SpeciesInfo that maps to Emerald's battle-stat record.
-It intentionally does not allocate species IDs, change NUM_SPECIES, or write
-SaveBlock1/SaveBlock2/PokemonStorage.
+This phase quantifies the existing save/RAM limits and builds an auditable
+National Dex 1-898 SpeciesInfo inventory from the pinned Expansion family
+sources. It deliberately separates source coverage, fields resolved for the
+Emerald compact record, and runtime compatibility. It does not allocate
+species IDs, change NUM_SPECIES, or write SaveBlock1/SaveBlock2/PokemonStorage.
 
 ## Architecture findings
 
@@ -22,10 +23,18 @@ SaveBlock1/SaveBlock2/PokemonStorage.
   extension needs a version, magic, checksum, monotonic save counter and
   double-buffer/recovery policy. Sectors 30/31 are already used by Trainer Hill
   and Recorded Battle and must not be reused without a deliberate redesign.
-- The Gen 8 vendor snapshot includes 186 Gen 8 SpeciesInfo blocks among its
-  family data; it is not a complete 512-record dataset. Fields for front/back
-  sprites, animation, icons, cry, Pokédex text, forms and evolutions do not
-  belong to vanilla's compact struct SpeciesInfo.
+- The vendor snapshot includes Gen 4-9 family headers. Family headers contain
+  multiple forms and may share a National Dex number; the audit selects the
+  canonical symbol for each Dex entry and preserves sibling forms separately.
+- Emerald's SpeciesInfo has two 8-bit ability slots; Expansion uses three
+  16-bit ability slots. Modern ability IDs and the third slot cannot be copied
+  into Emerald's struct without a runtime layout/API change.
+- The source catalog has Fairy and later-generation type/ability/item values
+  that are not necessarily represented by Emerald's enums. The audit records
+  source identifiers symbolically and flags non-compatible target mappings.
+- Source-only fields such as front/back sprites, animation, icons, cry,
+  Pokédex text, form changes, height/weight and evolutions remain outside the
+  compact Emerald battle-stat struct and require separate runtime tables.
 
 ## Generated outputs
 
@@ -39,10 +48,14 @@ python3 tools/gen8_convert_emerald.py
 The report directory contains:
 - `storage_architecture_audit.json`: sector capacities, bitset requirements,
   identifier gaps and explicit readiness gates.
-- `species_info_compact.json`: raw, reviewable compact-stat candidates for
-  source records whose type/ability/egg-group/item identifiers can be mapped.
-- `species_info_unresolved.json`: records that need an explicit identifier
-  mapping or more complete source data.
+- `species_info_by_national_dex.json`: one canonical identity row per Dex
+  number, including source symbol, generation, raw field presence, unresolved
+  compact fields and alternate same-Dex forms.
+- `species_info_field_coverage.json`: per-field source coverage counts.
+- `emerald_species_info_compatibility.json`: explicit width/slot/type limits
+  between Expansion and Emerald.
+- `species_info_compact.json` and `species_info_unresolved.json`: per-source
+  record parse results; unresolved expressions are never silently defaulted.
 - `conversion_report.json`, species mapping, learnsets and move dependency
   inventories.
 
@@ -55,9 +68,14 @@ color. Expansion-only values (sprite pointers, animations, names, descriptions,
 height/weight, cries, form changes, extra abilities, and flags) remain outside
 the compact runtime record.
 
-Numeric enum values are never copied by their numeric source value. They must
-be looked up by symbolic name in vanilla Emerald. Missing identifiers are
-reported, never aliased to unrelated items/abilities/moves.
+Numeric enum values are never copied by their numeric source value. Each
+source catalog is parsed in its own enum domain, then target compatibility is
+resolved by symbol. Missing identifiers and width/slot mismatches are reported,
+never aliased to unrelated items/abilities/moves. The automated parser tests
+cover enum numbering, nested initializer syntax, quoted strings and the
+Expansion brace-on-next-line layout. The strict conversion check additionally
+requires 898 canonical rows and zero unresolved compact records; it is expected
+to fail while any source or runtime compatibility gap remains.
 
 ## NUM_SPECIES gate
 
