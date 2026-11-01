@@ -163,6 +163,16 @@ def named_arrays(text: str, declaration: str) -> dict[str, str]:
     return result
 
 
+def numeric_define_catalog(text: str, prefix: str) -> dict[str, int]:
+    """Read integer #define catalogs while allowing trailing C comments."""
+    pattern = re.compile(
+        rf"^\s*#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+"
+        r"(0x[0-9A-Fa-f]+|\d+)\b",
+        re.M,
+    )
+    return {match.group(1): int(match.group(2), 0) for match in pattern.finditer(text)}
+
+
 def call_arguments(raw: str, name: str) -> list[str] | None:
     match = re.match(rf"\s*{re.escape(name)}\s*\(", raw or "")
     if not match:
@@ -717,10 +727,7 @@ def source_table_inventory() -> dict:
         "enum EvolutionMethods {" + source_evolution_enum.group(1) + "}",
         "EVO_", enum=True,
     )
-    target_evolution_methods = {
-        row["symbol"]: row["id"]
-        for row in conv.symbols(target_pokemon_text, "EVO_")
-    }
+    target_evolution_methods = numeric_define_catalog(target_pokemon_text, "EVO_")
     used_evolution_methods = sorted({
         entry["method_symbol"]
         for row in evolution_rows for entry in row["evolutions"]
@@ -803,7 +810,14 @@ def source_table_inventory() -> dict:
         "source_evolution_methods": len(source_evolution_methods),
         "canonical_evolution_methods_used": len(used_evolution_methods),
         "canonical_evolution_methods_without_target_method_symbol": sum(
-            row["used_by_canonical_evolutions"] and not row["target_method_symbol_present"]
+            row["used_by_canonical_evolutions"]
+            and row["method_symbol"] != "EVO_NONE"
+            and not row["target_method_symbol_present"]
+            for row in evolution_method_rows
+        ),
+        "canonical_evolution_methods_requiring_new_handlers": sum(
+            row["used_by_canonical_evolutions"]
+            and row["compatibility"] == "target_evolution_method_or_handler_missing"
             for row in evolution_method_rows
         ),
         "unknown_evolution_target_symbols": len(unknown_evolution_targets),
@@ -856,6 +870,7 @@ def source_table_inventory() -> dict:
         "missing_emerald_egg_groups": missing_egg_groups,
         "missing_emerald_growth_rates": missing_growth_rates,
         "unknown_evolution_targets": unknown_evolution_targets,
+        "evolution_method_dependencies": evolution_method_rows,
     }
 
     outputs = {
