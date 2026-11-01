@@ -276,7 +276,10 @@ def resolve_shared_text_pointer(expression: str | None, shared_text_values: dict
         # TYPE_NORMAL, so the first branch is provably selected.
         if left == right:
             return when_true if when_true in shared_text_values else None
-        return when_false if when_false in shared_text_values else None
+        # Different enum symbols are not proof of inequality without the
+        # source enum domain. Keep the expression unresolved rather than
+        # selecting a branch based on identifier spelling.
+        return None
     pointers = re.findall(r"\b(g[A-Za-z0-9_]+PokedexText)\b", value)
     if len(pointers) == 1 and pointers[0] in shared_text_values:
         return pointers[0]
