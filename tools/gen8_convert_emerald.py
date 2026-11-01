@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Build an isolated Gen 8 staging package for Pokémon Emerald.
+"""Build a safe Gen 8 staging package for Pokémon Emerald.
 
-No production species/move IDs, NUM_SPECIES, save layouts or live Pokemon
-runtime tables are changed by this tool.
+This tool only emits reviewable reports and isolated C helper data. It never
+edits NUM_SPECIES, species IDs, move IDs, live SpeciesInfo tables, SaveBlock1,
+SaveBlock2, or PokemonStorage.
 """
 from __future__ import annotations
 
@@ -23,6 +24,10 @@ SRC_SPECIES_INFO = VENDOR / "src/data/pokemon/species_info/gen_8_families.h"
 DST_SPECIES = ROOT / "include/constants/species.h"
 DST_MOVES = ROOT / "include/constants/moves.h"
 DST_INFO = ROOT / "src/data/pokemon/species_info.h"
+DST_POKEMON_H = ROOT / "include/pokemon.h"
+DST_POKEMON_CONSTANTS = ROOT / "include/constants/pokemon.h"
+DST_ABILITIES = ROOT / "include/constants/abilities.h"
+DST_ITEMS = ROOT / "include/constants/items.h"
 
 BASE_ALIASES = {
     "CASTFORM_NORMAL": "CASTFORM", "DEOXYS_NORMAL": "DEOXYS",
@@ -38,91 +43,112 @@ BASE_ALIASES = {
     "WISHIWASHI_SOLO": "WISHIWASHI", "ZYGARDE_50": "ZYGARDE",
     "MINIOR_METEOR_RED": "MINIOR", "TOXTRICITY_AMPED": "TOXTRICITY",
     "EISCUE_ICE": "EISCUE", "INDEEDEE_M": "INDEEDEE",
-    "INDEEDEE_M": "INDEEDEE", "INDEEDEE_MALE": "INDEEDEE", "MORPEKO_FULL_BELLY": "MORPEKO",
-    "ZACIAN_HERO": "ZACIAN", "ZAMAZENTA_HERO": "ZAMAZENTA",
-    "URSHIFU_SINGLE_STRIKE": "URSHIFU",
+    "MORPEKO_FULL_BELLY": "MORPEKO", "ZACIAN_HERO": "ZACIAN",
+    "ZAMAZENTA_HERO": "ZAMAZENTA", "URSHIFU_SINGLE_STRIKE": "URSHIFU",
 }
 
+# Only compact fields physically present in vanilla Emerald's struct SpeciesInfo.
+COMPACT_FIELDS = (
+    "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
+    "baseSpDefense", "catchRate", "expYield", "evYield_HP", "evYield_Attack",
+    "evYield_Defense", "evYield_Speed", "evYield_SpAttack", "evYield_SpDefense",
+    "genderRatio", "eggCycles", "friendship", "growthRate", "bodyColor",
+)
+ALL_COMPACT_FIELDS = set(COMPACT_FIELDS) | {
+    "types", "abilities", "eggGroups", "itemCommon", "itemRare"
+}
 
 def read(path: Path) -> str:
     if not path.is_file():
         raise RuntimeError(f"Missing input: {path.relative_to(ROOT)}")
     return path.read_text(encoding="utf-8")
 
+def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
+    pattern = (
+        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*=\s*(\d+)\s*,?\s*(?://.*)?$"
+        if enum else
+        rf"^#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+(\d+)\s*$"
+    )
+    return [{"symbol": m.group(1), "id": int(m.group(2))}
+            for m in re.finditer(pattern, text, re.M)]
 
-def parse_symbols(text: str, prefix: str, *, enum: bool = False) -> list[dict]:
-    if enum:
-        pattern = re.compile(
-            rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*=\s*(\d+)\s*,?\s*(?://.*)?$",
-            re.M,
-        )
-    else:
-        pattern = re.compile(
-            rf"^#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+(\d+)\s*$",
-            re.M,
-        )
-    return [{"symbol": m.group(1), "id": int(m.group(2))} for m in pattern.finditer(text)]
-
+def balanced_species_records(text: str) -> list[dict]:
+    start_re = re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*\{", re.M)
+    records = []
+    for m in start_re.finditer(text):
+        i, depth, in_string, escaped = m.end(), 1, False, False
+        while i < len(text) and depth:
+            c = text[i]
+            if in_string:
+                if escaped:
+                    escaped = False
+                elif c == "\\\\":
+                    escaped = True
+                elif c == '"':
+                    in_string = False
+            else:
+                if c == '"':
+                    in_string = True
+                elif c == "{":
+                    depth += 1
+                elif c == "}":
+                    depth -= 1
+            i += 1
+        if depth == 0:
+            records.append({"symbol": m.group(1), "body": text[m.end():i-1].strip()})
+    return records
 
 def extract_learnsets(text: str) -> list[dict]:
     block_re = re.compile(
         r"static const struct LevelUpMove s([A-Za-z0-9]+)LevelUpLearnset\[\]\s*=\s*\{([\s\S]*?)\n\};"
     )
     move_re = re.compile(r"LEVEL_UP_MOVE\(\s*(\d+)\s*,\s*MOVE_([A-Z0-9_]+)\s*\)")
-    rows = []
+    result = []
     for block in block_re.finditer(text):
-        moves = [
-            {"level": int(m.group(1)), "move": m.group(2)}
-            for m in move_re.finditer(block.group(2))
-        ]
+        moves = [{"level": int(m.group(1)), "move": m.group(2)}
+                 for m in move_re.finditer(block.group(2))]
         if moves:
-            rows.append({"source_species": block.group(1), "moves": moves})
-    return rows
+            result.append({"source_species": block.group(1), "moves": moves})
+    return result
 
+def extract_designated_fields(body: str) -> dict:
+    """Extract simple scalar designators; compound/macro expressions remain unresolved."""
+    fields = {}
+    scalar_re = re.compile(r"^\s*\.([A-Za-z0-9_]+)\s*=\s*([^,\n]+),", re.M)
+    for m in scalar_re.finditer(body):
+        fields[m.group(1)] = m.group(2).strip()
+    return fields
 
 def emit_species_header() -> str:
     return """// Generated by tools/gen8_convert_emerald.py. DO NOT EDIT BY HAND.
 #ifndef GUARD_GEN8_SPECIES_MAP_H
 #define GUARD_GEN8_SPECIES_MAP_H
-
 #include "global.h"
-
 #define GEN8_NATIONAL_DEX_COUNT 898
 #define GEN8_EXISTING_BASE_SPECIES_COUNT 386
 #define GEN8_UNALLOCATED_BASE_SPECIES_COUNT 512
-
 struct Gen8SpeciesMapEntry
 {
     u16 nationalDex;
     u16 emeraldSpecies; // SPECIES_NONE means no Emerald internal ID assigned.
 };
-
 extern const struct Gen8SpeciesMapEntry gGen8SpeciesMap[GEN8_NATIONAL_DEX_COUNT + 1];
-
 #endif // GUARD_GEN8_SPECIES_MAP_H
 """
-
 
 def emit_species_c(rows: list[dict]) -> str:
     lines = [
         "// Generated by tools/gen8_convert_emerald.py. DO NOT EDIT BY HAND.",
-        '#include "global.h"',
-        '#include "constants/species.h"',
-        '#include "gen8_species_map.h"',
-        "",
+        '#include "global.h"', '#include "constants/species.h"',
+        '#include "gen8_species_map.h"', "",
         "const struct Gen8SpeciesMapEntry gGen8SpeciesMap[GEN8_NATIONAL_DEX_COUNT + 1] =",
-        "{",
-        "    [0] = { .nationalDex = 0, .emeraldSpecies = SPECIES_NONE },",
+        "{", "    [0] = { .nationalDex = 0, .emeraldSpecies = SPECIES_NONE },",
     ]
     for row in rows:
-        species_id = str(row["emerald_internal_id"]) if row["emerald_internal_id"] is not None else "SPECIES_NONE"
-        lines.append(
-            f'    [{row["national_dex"]}] = {{ .nationalDex = {row["national_dex"]}, '
-            f'.emeraldSpecies = {species_id} }}, // {row["source_symbol"]}'
-        )
+        value = str(row["emerald_internal_id"]) if row["emerald_internal_id"] is not None else "SPECIES_NONE"
+        lines.append(f'    [{row["national_dex"]}] = {{ .nationalDex = {row["national_dex"]}, .emeraldSpecies = {value} }}, // {row["source_symbol"]}')
     lines.extend(["};", ""])
     return "\n".join(lines)
-
 
 def emit_readiness_header(counts: dict) -> str:
     return f"""// Generated by tools/gen8_convert_emerald.py. DO NOT EDIT BY HAND.
@@ -131,39 +157,125 @@ def emit_readiness_header(counts: dict) -> str:
 #define GEN8_CANONICAL_NATIONAL_DEX_COUNT 898
 #define GEN8_EXISTING_BASE_SPECIES_COUNT {counts["existing_species"]}
 #define GEN8_UNALLOCATED_BASE_SPECIES_COUNT {counts["new_species"]}
-#define GEN8_SOURCE_MOVE_CONSTANTS_THROUGH_847 {counts["source_moves_gen1_8"]}
 #define GEN8_LEVEL_UP_LEARNSET_BLOCKS {counts["learnset_blocks"]}
 #define GEN8_LEVEL_UP_MOVE_ENTRIES {counts["learnset_move_entries"]}
 #define GEN8_DISTINCT_LEARNSET_MOVE_SYMBOLS {counts["distinct_learnset_moves"]}
 #define GEN8_MISSING_EMERALD_MOVE_SYMBOLS {counts["missing_learnset_moves"]}
 #define GEN8_SPECIES_INFO_BLOCKS_FOUND {counts["species_info_blocks"]}
+#define GEN8_SPECIES_INFO_COMPACT_RECORDS {counts["species_info_compact_records"]}
+#define GEN8_SPECIES_INFO_UNRESOLVED_RECORDS {counts["species_info_unresolved_records"]}
 #define GEN8_SPECIES_ID_ASSIGNMENT_COMPLETE 0
+#define GEN8_SAVE_EXTENSION_VALIDATED 0
 #define GEN8_RUNTIME_TABLES_READY 0
 #define GEN8_NUM_SPECIES_EXPANSION_ALLOWED 0
 #endif // GUARD_GEN8_CONVERSION_STATUS_H
 """
 
-
 def write(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
-
 def write_json(path: Path, value) -> None:
-    write(path, json.dumps(value, indent=2, ensure_ascii=False) + "\n")
+    write(path, json.dumps(value, indent=2, ensure_ascii=False) + "\\n")
 
+def parse_species_info(source_text: str, target_text: str,
+                       type_text: str, ability_text: str, item_text: str) -> dict:
+    records = balanced_species_records(source_text)
+    type_names = {x["symbol"] for x in symbols(type_text, "TYPE_")}
+    ability_names = {x["symbol"] for x in symbols(ability_text, "ABILITY_")}
+    item_names = {x["symbol"] for x in re.finditer(r"^\s*ITEM_([A-Z0-9_]+)\s*,", item_text, re.M)}
+    # Correct the set from the enum-like item list; its order determines numeric IDs.
+    item_names = set(re.findall(r"^\s*ITEM_([A-Z0-9_]+)\s*,", item_text, re.M))
+    egg_names = set(re.findall(r"^#define EGG_GROUP_([A-Z0-9_]+)\s+", type_text, re.M))
+    base_ability_values = {
+        x["symbol"]: x["id"] for x in symbols(ability_text, "ABILITY_")
+    }
+    item_values = {}
+    enum_index = -1
+    for line in item_text.splitlines():
+        m = re.match(r"^\s*ITEM_([A-Z0-9_]+)\s*,", line)
+        if m:
+            enum_index += 1
+            item_values[m.group(1)] = enum_index
+    type_values = {x["symbol"]: x["id"] for x in symbols(type_text, "TYPE_")}
+    egg_values = {x["symbol"]: x["id"] for x in symbols(type_text, "EGG_GROUP_")}
+    target_field_set = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", target_text, re.M))
+    output, unresolved = [], []
+    for record in records:
+        f = extract_designated_fields(record["body"])
+        def scalar(field, default=None):
+            raw = f.get(field)
+            if raw is None:
+                return default
+            return int(raw, 0) if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw) else default
+        def enum_one(field, prefix, allowed, value_map):
+            m = re.search(rf"\b{prefix}_([A-Z0-9_]+)\b", record["body"])
+            if not m:
+                return None
+            name = m.group(1)
+            if name not in allowed:
+                return {"unresolved": name}
+            return value_map.get(name)
+        tmatch = re.search(r"\.types\s*=\s*MON_TYPES\(\s*TYPE_([A-Z0-9_]+)(?:\s*,\s*TYPE_([A-Z0-9_]+))?\s*\)", record["body"])
+        ematch = re.search(r"\.eggGroups\s*=\s*MON_EGG_GROUPS\(\s*EGG_GROUP_([A-Z0-9_]+)\s*,\s*EGG_GROUP_([A-Z0-9_]+)\s*\)", record["body"])
+        amatch = re.search(r"\.abilities\s*=\s*\{\s*ABILITY_([A-Z0-9_]+)\s*,\s*ABILITY_([A-Z0-9_]+)(?:\s*,\s*ABILITY_([A-Z0-9_]+))?\s*\}", record["body"])
+        imatch = re.search(r"\.itemRare\s*=\s*ITEM_([A-Z0-9_]+)", record["body"])
+        problems = []
+        type_pair = None
+        if tmatch:
+            type_pair = [tmatch.group(1), tmatch.group(2) or tmatch.group(1)]
+            for n in type_pair:
+                if n not in type_names:
+                    problems.append(f"unknown_type:{n}")
+        egg_pair = None
+        if ematch:
+            egg_pair = [ematch.group(1), ematch.group(2)]
+            for n in egg_pair:
+                if n not in egg_names:
+                    problems.append(f"unknown_egg_group:{n}")
+        ability_pair = None
+        if amatch:
+            ability_pair = [amatch.group(1), amatch.group(2)]
+            for n in ability_pair:
+                if n not in ability_names:
+                    problems.append(f"unknown_ability:{n}")
+        rare_item = imatch.group(1) if imatch else "ITEM_NONE"
+        if rare_item not in item_names:
+            problems.append(f"unknown_item:{rare_item}")
+        compact = {
+            "species_symbol": record["symbol"],
+            "base_stats": {k: scalar(k) for k in COMPACT_FIELDS[:6]},
+            "catch_rate": scalar("catchRate"),
+            "exp_yield": scalar("expYield"),
+            "ev_yields": {k: scalar("evYield_" + k, 0) for k in ("HP","Attack","Defense","Speed","SpAttack","SpDefense")},
+            "gender_ratio_raw": f.get("genderRatio"),
+            "egg_cycles": scalar("eggCycles"),
+            "friendship_raw": f.get("friendship"),
+            "growth_rate_raw": f.get("growthRate"),
+            "types": type_pair,
+            "egg_groups": egg_pair,
+            "abilities": ability_pair,
+            "body_color_raw": f.get("bodyColor"),
+            "rare_item": rare_item,
+            "unresolved": problems,
+        }
+        if not problems and type_pair and egg_pair and ability_pair:
+            output.append(compact)
+        else:
+            unresolved.append({"species_symbol": record["symbol"], "unresolved": problems or ["initializer_requires_manual_parse"]})
+    return {"source_record_count": len(records), "compact_records": output, "unresolved_records": unresolved}
 
 def generate(check: bool = False) -> dict:
-    source_species = parse_symbols(read(SRC_SPECIES), "SPECIES_", enum=True)
-    target_species = parse_symbols(read(DST_SPECIES), "SPECIES_")
-    source_moves = parse_symbols(read(SRC_MOVES), "MOVE_", enum=True)
-    target_moves = parse_symbols(read(DST_MOVES), "MOVE_")
-    learnsets = extract_learnsets(read(SRC_LEARNSETS))
+    source_species = symbols(read(SRC_SPECIES), "SPECIES_", enum=True)
+    target_species = symbols(read(DST_SPECIES), "SPECIES_")
+    source_moves = symbols(read(SRC_MOVES), "MOVE_", enum=True)
+    target_moves = symbols(read(DST_MOVES), "MOVE_")
     source_info_text = read(SRC_SPECIES_INFO)
     target_info_text = read(DST_INFO)
-    (ROOT / "src/data/gen8").mkdir(parents=True, exist_ok=True)
+    learnsets = extract_learnsets(read(SRC_LEARNSETS))
+    type_text, ability_text, item_text = read(DST_POKEMON_CONSTANTS), read(DST_ABILITIES), read(DST_ITEMS)
+    info_result = parse_species_info(source_info_text, target_info_text, type_text, ability_text, item_text)
 
-    # The pinned source enum's IDs 1..898 correspond to canonical National Dex.
     by_dex = {}
     for item in source_species:
         if 1 <= item["id"] <= 898:
@@ -171,86 +283,62 @@ def generate(check: bool = False) -> dict:
     if sorted(by_dex) != list(range(1, 899)):
         missing = sorted(set(range(1, 899)) - set(by_dex))
         raise RuntimeError(f"National Dex mapping incomplete: {missing}")
-
     target_by_name = {item["symbol"]: item["id"] for item in target_species}
     species_map = []
     for dex in range(1, 899):
         source_name = by_dex[dex]
         normalized = BASE_ALIASES.get(source_name, source_name)
         emerald_id = target_by_name.get(normalized)
-        species_map.append({
-            "national_dex": dex,
-            "source_symbol": source_name,
-            "normalized_symbol": normalized,
-            "emerald_internal_id": emerald_id,
-            "status": "existing_emerald_species" if emerald_id is not None else "new_species_id_required",
-        })
-    existing_count = sum(row["emerald_internal_id"] is not None for row in species_map)
-    new_species = [row for row in species_map if row["emerald_internal_id"] is None]
+        species_map.append({"national_dex": dex, "source_symbol": source_name,
+            "normalized_symbol": normalized, "emerald_internal_id": emerald_id,
+            "status": "existing_emerald_species" if emerald_id is not None else "new_species_id_required"})
+    existing_count = sum(x["emerald_internal_id"] is not None for x in species_map)
+    new_species = [x for x in species_map if x["emerald_internal_id"] is None]
     if existing_count != 386 or len(new_species) != 512:
-        raise RuntimeError(f"Unexpected split: existing={existing_count}, new={len(new_species)}")
+        raise RuntimeError(f"Unexpected species split: existing={existing_count}, new={len(new_species)}")
 
-    used_moves = sorted({move["move"] for row in learnsets for move in row["moves"]})
-    target_move_names = {item["symbol"] for item in target_moves}
+    used_moves = sorted({m["move"] for row in learnsets for m in row["moves"]})
+    target_move_names = {x["symbol"] for x in target_moves}
     missing_moves = sorted(set(used_moves) - target_move_names)
-
-    # This source snapshot has moves after Gen 3 too. Keep the first concrete
-    # numeric definition per symbol and limit the inventory to Gen 1-8 IDs <= 847.
     source_move_by_name = {}
     for item in source_moves:
         if item["id"] <= 847:
             source_move_by_name.setdefault(item["symbol"], item["id"])
     move_dependencies = [
-        {
-            "source_symbol": name,
-            "source_id": source_move_by_name[name],
-            "emerald_id": next((m["id"] for m in target_moves if m["symbol"] == name), None),
-            "used_by_gen8_learnset": name in used_moves,
-            "requires_battle_definition": name not in target_move_names,
-            "requires_contest_definition": name not in target_move_names,
-        }
-        for name in sorted(source_move_by_name)
-        if source_move_by_name[name] > 354
+        {"source_symbol": name, "source_id": source_move_by_name[name],
+         "emerald_id": next((m["id"] for m in target_moves if m["symbol"] == name), None),
+         "used_by_gen8_learnset": name in used_moves,
+         "requires_battle_definition": name not in target_move_names,
+         "requires_contest_definition": name not in target_move_names}
+        for name in sorted(source_move_by_name) if source_move_by_name[name] > 354
     ]
-
-    species_info_blocks = len(re.findall(r"^\s*\[SPECIES_[A-Z0-9_]+\]\s*=", source_info_text, re.M))
-    target_fields = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", target_info_text, re.M))
-    source_fields = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", source_info_text, re.M))
     counts = {
-        "canonical_dex_entries": len(species_map),
-        "existing_species": existing_count,
-        "new_species": len(new_species),
-        "source_moves_gen1_8": len({item["id"] for item in source_moves if 0 <= item["id"] <= 847}),
-        "learnset_blocks": len(learnsets),
-        "learnset_move_entries": sum(len(row["moves"]) for row in learnsets),
-        "distinct_learnset_moves": len(used_moves),
-        "missing_learnset_moves": len(missing_moves),
-        "species_info_blocks": species_info_blocks,
+        "canonical_dex_entries": len(species_map), "existing_species": existing_count,
+        "new_species": len(new_species), "source_moves_gen1_8": len({x["id"] for x in source_moves if x["id"] <= 847}),
+        "learnset_blocks": len(learnsets), "learnset_move_entries": sum(len(x["moves"]) for x in learnsets),
+        "distinct_learnset_moves": len(used_moves), "missing_learnset_moves": len(missing_moves),
+        "species_info_blocks": info_result["source_record_count"],
+        "species_info_compact_records": len(info_result["compact_records"]),
+        "species_info_unresolved_records": len(info_result["unresolved_records"]),
     }
     report = {
         "source": "pinned pokeemerald-expansion source snapshot",
         "scope": "National Dex 1-898 canonical species only",
         "counts": counts,
         "readiness": {
-            "canonical_dex_map_complete": True,
-            "existing_species_ids_preserved": True,
-            "new_species_ids_allocated": False,
-            "learnsets_parsed_from_expansion_syntax": True,
+            "canonical_dex_map_complete": True, "existing_species_ids_preserved": True,
+            "new_species_ids_allocated": False, "learnsets_parsed_from_expansion_syntax": True,
             "all_learnset_move_symbols_have_emerald_ids": not missing_moves,
-            "species_info_semantically_converted": False,
-            "evolutions_ready": False,
-            "pokedex_text_ready": False,
-            "cries_ready": False,
-            "graphics_ready": False,
-            "battle_and_contest_moves_ready": False,
-            "runtime_ready": False,
-            "num_species_change_allowed": False,
+            "species_info_compact_stage_generated": len(info_result["compact_records"]) > 0,
+            "species_info_complete": False, "save_extension_validated": False,
+            "evolutions_ready": False, "pokedex_text_ready": False, "cries_ready": False,
+            "graphics_ready": False, "battle_and_contest_moves_ready": False,
+            "runtime_ready": False, "num_species_change_allowed": False,
         },
         "species_mapping": species_map,
         "missing_learnset_move_symbols": missing_moves,
-        "species_info_fields_missing_from_emerald": sorted(source_fields - target_fields),
+        "species_info_compact_summary": counts,
     }
-
     if not check:
         OUT.mkdir(parents=True, exist_ok=True)
         write_json(OUT / "conversion_report.json", report)
@@ -259,39 +347,33 @@ def generate(check: bool = False) -> dict:
         write_json(OUT / "move_dependencies.json", move_dependencies)
         write_json(OUT / "level_up_learnsets.json", learnsets)
         write_json(OUT / "missing_learnset_moves.json", missing_moves)
+        write_json(OUT / "species_info_compact.json", info_result)
         with (OUT / "move_dependencies.csv").open("w", newline="", encoding="utf-8") as fp:
             writer = csv.DictWriter(fp, fieldnames=list(move_dependencies[0].keys()))
             writer.writeheader()
             writer.writerows(move_dependencies)
-
-        # Commit-safe and buildable C scaffolding. New species remain unmapped,
-        # so this table can coexist with vanilla NUM_SPECIES unchanged.
         write(ROOT / "include/gen8_species_map.h", emit_species_header())
         write(ROOT / "src/data/gen8/species_map.c", emit_species_c(species_map))
         write(ROOT / "include/gen8_conversion_status.h", emit_readiness_header(counts))
         write_json(ROOT / "data/pokemon/gen8_species_map.json", species_map)
-        write_json(ROOT / "data/pokemon/gen8_move_dependencies.json", move_dependencies)
         write_json(ROOT / "data/pokemon/gen8_level_up_learnsets.json", learnsets)
-
+        # Compact, canonical data table only. It is deliberately not linked into
+        # gSpeciesInfo until internal IDs and runtime storage have been assigned.
+        write(ROOT / "src/data/gen8/species_info_compact.json.h", json.dumps(info_result["compact_records"], indent=2) + "\n")
     return report
 
-
 def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--check", action="store_true")
-    args = parser.parse_args()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--check", action="store_true")
+    args = ap.parse_args()
     try:
         report = generate(check=args.check)
         print(json.dumps(report["counts"], indent=2))
-        if args.check:
-            print("PASS: canonical identities and source extraction are consistent.")
-        else:
-            print("Generated report package and isolated Emerald C staging structures.")
+        print("PASS: staging extraction completed; production IDs and save layouts untouched.")
         return 0
-    except (OSError, RuntimeError, ValueError, KeyError) as exc:
-        print(f"GEN8 CONVERSION FAILED: {exc}", file=sys.stderr)
+    except (OSError, RuntimeError, ValueError, KeyError) as e:
+        print(f"GEN8 CONVERSION FAILED: {e}", file=sys.stderr)
         return 2
-
 
 if __name__ == "__main__":
     raise SystemExit(main())
