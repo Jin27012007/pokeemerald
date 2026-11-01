@@ -519,6 +519,8 @@ def parse_species_info(source_text: str, target_info_text: str,
              lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else 0)),
             (r"\(?P_UPDATED_FRIENDSHIP\s*>=\s*GEN_(\d+)\)?\s*\?\s*(-?\d+)\s*:\s*(-?\d+)",
              lambda m: int(m.group(2) if TARGET_GAME_GENERATION >= int(m.group(1)) else m.group(3))),
+            (r"PERCENT_FEMALE\(\s*(\d+(?:\.\d+)?)\s*\)",
+             lambda m: min(254, int(float(m.group(1)) * 255 / 100))),
         ]
         for pattern, resolver in conditionals:
             match = re.fullmatch(pattern, raw)
