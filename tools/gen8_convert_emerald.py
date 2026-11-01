@@ -569,7 +569,7 @@ def parse_species_info(source_text: str, target_info_text: str,
             if raw is None:
                 values[field] = 0
             else:
-                resolved = resolve_generation_expression(raw, record["generation"])
+                resolved = resolve_generation_expression(raw, TARGET_GAME_GENERATION)
                 if resolved is None:
                     problems.append(f"unresolved_ev_yield:{field}:{raw}")
                 else:
@@ -584,7 +584,7 @@ def parse_species_info(source_text: str, target_info_text: str,
         if friendship_raw == "STANDARD_FRIENDSHIP":
             friendship = 50 if TARGET_GAME_GENERATION >= 8 else 70
         else:
-            friendship = resolve_generation_expression(friendship_raw, record["generation"])
+            friendship = resolve_generation_expression(friendship_raw, TARGET_GAME_GENERATION)
         if friendship is None:
             problems.append(f"unresolved_friendship:{friendship_raw}")
 
@@ -743,7 +743,8 @@ def generate(check: bool = False) -> dict:
                 "species_symbol": row["symbol"],
                 "generation": 3,
                 "source_raw": fields,
-                "status": "existing_emerald_species_info",
+                "status": "compact_fields_resolved",
+                "compatibility": "native_emerald",
                 "unresolved": [],
             }
 
