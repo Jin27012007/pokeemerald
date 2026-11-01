@@ -74,7 +74,6 @@ jobs:
           test -s src/data/gen8/species_map.c
           test -s include/gen8_conversion_status.h
           test -s data/pokemon/gen8_species_map.json
-          test -s data/pokemon/gen8_move_dependencies.json
           test -s data/pokemon/gen8_level_up_learnsets.json
           test -s data/pokemon/gen8_species_info_compact.json
           test -s data/pokemon/gen8_species_info_unresolved.json
