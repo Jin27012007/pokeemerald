@@ -66,13 +66,31 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
-    pattern = (
-        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*=\s*(\d+)\s*,?\s*(?://.*)?$"
-        if enum else
-        rf"^#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+(\d+)\s*$"
+    if not enum:
+        pattern = rf"^#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+(\d+)\s*$"
+        return [{"symbol": m.group(1), "id": int(m.group(2))}
+                for m in re.finditer(pattern, text, re.M)]
+
+    # C enums commonly omit explicit values. Resolve implicit increments while
+    # retaining explicit assignments and aliases that are plain numeric values.
+    pattern = re.compile(
+        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*(?:=\s*([^,]+))?\s*,?\s*(?://.*)?$",
+        re.M,
     )
-    return [{"symbol": m.group(1), "id": int(m.group(2))}
-            for m in re.finditer(pattern, text, re.M)]
+    values = []
+    next_value = 0
+    for match in pattern.finditer(text):
+        symbol, raw = match.group(1), match.group(2)
+        if raw is not None:
+            raw = raw.strip()
+            if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
+                next_value = int(raw, 0)
+            else:
+                # Macro expressions or aliases are not safe to numerically guess.
+                continue
+        values.append({"symbol": symbol, "id": next_value})
+        next_value += 1
+    return values
 
 def balanced_species_records(text: str) -> list[dict]:
     start_re = re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*\{", re.M)
@@ -361,6 +379,13 @@ def parse_species_info(source_text: str, target_info_text: str,
         "source_record_count": len(records),
         "compact_records": out,
         "unresolved_records": unresolved,
+        "source_enum_domains": {
+            "types": type_values,
+            "egg_groups": egg_values,
+            "growth_rates": growth_values,
+            "abilities": ability_values,
+            "items": item_values,
+        },
     }
 
 def generate(check: bool = False) -> dict:
