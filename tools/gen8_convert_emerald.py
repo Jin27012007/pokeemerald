@@ -770,9 +770,13 @@ def generate(check: bool = False) -> dict:
     source_info_text = "\n".join(source_info_texts.values())
     source_symbol_generation = {}
     source_symbol_macros = {}
+    # Global family macro catalog: each generation's macros are first
+    # collected separately and later overlaid in deterministic source order.
+    source_family_macro_catalog = {}
     for generation, path in zip(SOURCE_GENERATIONS, source_info_files):
         family_text = source_info_texts[path.name]
         family_macros = extract_c_macros(family_text)
+        source_family_macro_catalog.update(family_macros)
         for record in balanced_species_records(family_text):
             symbol = record["symbol"]
             if symbol in source_symbol_generation:
@@ -789,6 +793,7 @@ def generate(check: bool = False) -> dict:
     source_ability_text = read(VENDOR / "include/constants/abilities.h")
     source_item_text = read(VENDOR / "include/constants/items.h")
     source_pokemon_text = read(VENDOR / "include/constants/pokemon.h")
+    source_symbol_macros["__catalog__"] = source_family_macro_catalog
     info_result = parse_species_info(
         source_info_text, target_info_text, type_text, ability_text, item_text,
         source_symbol_generation, source_ability_text, source_item_text,
