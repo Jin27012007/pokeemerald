@@ -219,7 +219,7 @@ def generate(check: bool = False) -> dict:
         "canonical_dex_entries": len(species_map),
         "existing_species": existing_count,
         "new_species": len(new_species),
-        "source_moves_gen1_8": len(move_dependencies),
+        "source_moves_gen1_8": len({item["id"] for item in source_moves if 0 <= item["id"] <= 847}),
         "learnset_blocks": len(learnsets),
         "learnset_move_entries": sum(len(row["moves"]) for row in learnsets),
         "distinct_learnset_moves": len(used_moves),
