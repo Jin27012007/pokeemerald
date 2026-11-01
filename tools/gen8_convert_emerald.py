@@ -818,15 +818,19 @@ def generate(check: bool = False) -> dict:
     # Global macro catalog from Expansion's constants and all family files.
     # It is used for shared config macros (STANDARD_FRIENDSHIP, MON_TYPES,
     # MON_EGG_GROUPS, PERCENT_FEMALE) and species-specific helper aliases.
-    source_family_macro_catalog = extract_c_macros(
-        read(VENDOR / "include/constants/pokemon.h")
+    selected_source_pokemon_constants = resolve_source_conditionals(
+        read(VENDOR / "include/constants/pokemon.h"), TARGET_GAME_GENERATION
     )
+    source_family_macro_catalog = extract_c_macros(selected_source_pokemon_constants)
     source_family_macro_catalog.update(extract_c_macros(
         read(VENDOR / "include/constants/abilities.h")
     ))
     for generation, path in zip(SOURCE_GENERATIONS, source_info_files):
         family_text = source_info_texts[path.name]
-        family_macros = extract_c_macros(family_text)
+        selected_family_text = resolve_source_conditionals(
+            family_text, TARGET_GAME_GENERATION
+        )
+        family_macros = extract_c_macros(selected_family_text)
         source_family_macro_catalog.update(family_macros)
         for record in balanced_species_records(family_text):
             symbol = record["symbol"]
