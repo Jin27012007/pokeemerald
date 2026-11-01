@@ -733,6 +733,48 @@ def source_table_inventory() -> dict:
         for row in evolution_rows for entry in row["evolutions"]
         if entry.get("method_symbol")
     })
+    condition_candidate_methods = {
+        "IF_MIN_FRIENDSHIP": ["EVO_FRIENDSHIP"],
+        "IF_ATK_GT_DEF": ["EVO_LEVEL_ATK_GT_DEF"],
+        "IF_ATK_EQ_DEF": ["EVO_LEVEL_ATK_EQ_DEF"],
+        "IF_ATK_LT_DEF": ["EVO_LEVEL_ATK_LT_DEF"],
+        "IF_PID_UPPER_MODULO_10_GT": ["EVO_LEVEL_SILCOON"],
+        "IF_PID_UPPER_MODULO_10_LT": ["EVO_LEVEL_CASCOON"],
+        "IF_MIN_BEAUTY": ["EVO_BEAUTY"],
+        "IF_TIME": ["EVO_FRIENDSHIP_DAY", "EVO_FRIENDSHIP_NIGHT"],
+    }
+    condition_usage = {}
+    conditional_evolution_rows = []
+    for row in evolution_rows:
+        for entry in row["evolutions"]:
+            condition = entry.get("condition_expression")
+            if not condition:
+                continue
+            condition_symbols = sorted(set(re.findall(r"\bIF_[A-Z0-9_]+\b", condition)))
+            conditional_evolution_rows.append({
+                "national_dex": row["national_dex"],
+                "species_symbol": row["species_symbol"],
+                "slot": entry["slot"],
+                "method_symbol": entry["method_symbol"],
+                "parameter_expression": entry["parameter_expression"],
+                "target_species_symbol": entry["target_species_symbol"],
+                "source_condition_expression": condition,
+                "condition_symbols": condition_symbols,
+            })
+            for symbol in condition_symbols:
+                condition_usage.setdefault(symbol, set()).add(row["national_dex"])
+    evolution_condition_rows = [{
+        "condition_symbol": symbol,
+        "canonical_evolution_edge_count": len(dexes),
+        "canonical_species_examples": sorted(dexes)[:20],
+        "candidate_emerald_methods": condition_candidate_methods.get(symbol, []),
+        "compatibility": (
+            "candidate_method_mapping_requires_semantic_validation"
+            if symbol in condition_candidate_methods
+            else "new_evolution_condition_handler_required"
+        ),
+        "runtime_implemented": False,
+    } for symbol, dexes in sorted(condition_usage.items())]
     evolution_method_rows = []
     for method in source_evolution_methods:
         name = method["symbol"]
@@ -820,6 +862,11 @@ def source_table_inventory() -> dict:
             and row["compatibility"] == "target_evolution_method_or_handler_missing"
             for row in evolution_method_rows
         ),
+        "canonical_conditional_evolution_edges": len(conditional_evolution_rows),
+        "distinct_evolution_condition_symbols": len(evolution_condition_rows),
+        "evolution_conditions_with_candidate_target_methods": sum(
+            bool(row["candidate_emerald_methods"]) for row in evolution_condition_rows
+        ),
         "unknown_evolution_target_symbols": len(unknown_evolution_targets),
     }
 
@@ -871,6 +918,8 @@ def source_table_inventory() -> dict:
         "missing_emerald_growth_rates": missing_growth_rates,
         "unknown_evolution_targets": unknown_evolution_targets,
         "evolution_method_dependencies": evolution_method_rows,
+        "evolution_condition_dependencies": evolution_condition_rows,
+        "conditional_evolution_edges": conditional_evolution_rows,
     }
 
     outputs = {
@@ -888,6 +937,10 @@ def source_table_inventory() -> dict:
         DATA / "gen8_egg_group_source_dependencies.json": egg_group_rows,
         DATA / "gen8_growth_rate_source_dependencies.json": growth_rate_rows,
         DATA / "gen8_evolution_method_dependencies.json": evolution_method_rows,
+        DATA / "gen8_evolution_condition_dependencies.json": {
+            "conditions": evolution_condition_rows,
+            "conditional_evolution_edges": conditional_evolution_rows,
+        },
         DATA / "gen8_pokedex_orders.json": order_rows,
         REPORTS / "pending_species_tables_audit.json": report,
     }
