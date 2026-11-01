@@ -70,6 +70,7 @@ jobs:
           test -s data/pokemon/gen8_species_map.json
           test -s data/pokemon/gen8_move_dependencies.json
           test -s data/pokemon/gen8_level_up_learnsets.json
+          test -s reports/gen8-conversion/species_info_compact.json
           python3 - <<'PY'
           import json
           report = json.load(open("reports/gen8-conversion/conversion_report.json", encoding="utf-8"))
