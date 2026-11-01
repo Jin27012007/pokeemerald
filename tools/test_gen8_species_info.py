@@ -127,8 +127,9 @@ def check_macro_expansion_and_target_conditionals():
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
-        learnsets = module.SRC_LEARNSET_DIR / f"gen_{generation}.h"
         assert info.is_file(), f"Missing source SpeciesInfo: {info}"
+    for generation in module.LEARNSET_GENERATIONS:
+        learnsets = module.SRC_LEARNSET_DIR / f"gen_{generation}.h"
         assert learnsets.is_file(), f"Missing source learnsets: {learnsets}"
 
 
