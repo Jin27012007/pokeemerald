@@ -47,3 +47,32 @@ layouts. It is being used as a data reference only; its battle-engine hooks,
 assembly patches, save code, and FireRed engine files are out of scope.
 
 No species IDs, save fields, or C tables have been expanded in this audit.
+
+
+## Migration blockers confirmed from actual source tables
+
+A deeper comparison against CFRU's `include/constants/species.h`,
+`include/constants/pokedex.h`, `include/constants/moves.h`, and
+`src/Tables/level_up_learnsets.c` found:
+
+- The canonical target list is 898 National Dex numbers. CFRU's Pokédex header
+  contains repeated alternate-form aliases and post-Gen-8 entries 899-905;
+  the importer must filter these, not copy its header wholesale.
+- CFRU internal species IDs are not Emerald internal IDs. Existing Emerald
+  species IDs must remain stable; new species IDs must be allocated after the
+  existing internal range and before the final Egg/special-form boundary.
+- 510 canonical National Dex slots are new relative to the Emerald species
+  constants, but four canonical entries do not have the same direct base-form
+  name in CFRU's constants (Basculin, Minior, Alcremie and Urshifu), requiring
+  explicit base-form alias resolution.
+- CFRU Gen 4-8 level-up learnsets reference roughly 500 move constants that
+  do not exist in this Emerald move table (which currently ends at 354).
+  Importing the learnsets without the matching move definitions and compatible
+  contest/battle data would create invalid references. The contest-focused
+  project needs a separate move-compatibility pass; no numeric substitutions
+  are allowed.
+
+This confirms the migration order: canonical species mapping -> full move
+identifier reconciliation -> species metadata/evolutions/learnsets -> Pokédex
+strings/order/cries -> graphics -> species count/save expansion. Do not raise
+`NUM_SPECIES` until each stage passes the generator's validation.
