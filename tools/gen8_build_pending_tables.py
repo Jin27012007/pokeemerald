@@ -553,8 +553,11 @@ def source_table_inventory() -> dict:
     missing_battle_effects = sorted(set(source_effect_symbols) - target_effect_symbols)
 
     # Ability/item dependency closure for the selected 898 canonical rows.
-    source_ability_values = compact.get("source_enum_domains", {}).get("abilities", {})
-    source_item_values = compact.get("source_enum_domains", {}).get("items", {})
+    # The per-species compact file is a list; enum domains are stored in
+    # the converter's structured audit report, not in that list.
+    enum_audit = json.loads(read(REPORTS / "species_info_compact.json"))
+    source_ability_values = enum_audit.get("source_enum_domains", {}).get("abilities", {})
+    source_item_values = enum_audit.get("source_enum_domains", {}).get("items", {})
     target_ability_ids = {
         row["symbol"]: row["id"]
         for row in conv.symbols(read(ROOT / "include/constants/abilities.h"), "ABILITY_")
