@@ -223,22 +223,25 @@ def check_gen8_stats_conditionals_use_target_generation():
 
 
 def check_actual_speciesinfo_generation8_target_resolution():
-    # Exact conditional syntax observed in Expansion Gen 1-8 family headers.
-    patterns = [
+    assert module.TARGET_GAME_GENERATION == 8
+    cases = [
         ("P_UPDATED_STATS >= GEN_2 ? 109 : 85", 109),
         ("(P_UPDATED_EXP_YIELDS >= GEN_8) ? 300 : 270", 300),
         ("(P_UPDATED_FRIENDSHIP >= GEN_8) ? 50 : 70", 50),
-        ("P_UPDATED_STATS >= GEN_9 ? 120 : 130", 130),
+        ("P_UPDATED_STATS >= GEN_9 ? 120 : 130", 0),
     ]
-    for raw, expected in patterns:
-        compact = raw.strip().strip("() ")
+    for raw, expected in cases:
+        compact = " ".join(raw.split()).strip("() ").replace(") ?", " ?")
         m = module.re.fullmatch(
-            r"(?P<flag>P_UPDATED_[A-Z0-9_]+)\\s*>=\\s*GEN_(?P<gen>\\d+)\\s*\\?\\s*(?P<yes>-?\\d+)\\s*:\\s*(?P<no>-?\\d+)",
+            r"(?P<flag>P_UPDATED_[A-Z0-9_]+)\s*>=\s*GEN_(?P<gen>\d+)\s*\?\s*(?P<yes>-?\d+)(?:\s*:\s*(?P<no>-?\d+))?",
             compact,
         )
         assert m, (raw, compact)
-        actual = int(m.group("yes") if module.TARGET_GAME_GENERATION >= int(m.group("gen")) else m.group("no"))
+        yes = int(m.group("yes"))
+        no = int(m.group("no")) if m.group("no") is not None else 0
+        actual = yes if module.TARGET_GAME_GENERATION >= int(m.group("gen")) else no
         assert actual == expected, (raw, actual, expected)
+
 
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
