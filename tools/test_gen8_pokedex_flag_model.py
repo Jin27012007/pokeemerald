@@ -93,8 +93,10 @@ def main():
     # invalidate the flag in all redundant copies.
     model.flip_copy_for_test("sb1_seen_b", 898)
     assert not model.get_seen(898)
+    # GET_SEEN repairs only the three seen copies; owned remains set, so the
+    # next GET_CAUGHT detects the seen/owned mismatch and clears all four.
     assert not model.get_caught(898)
-    assert not model.get_seen(897)
+    assert model.get_seen(897)
     assert model.get_caught(897)
     # A caught bit without the matching seen bit/copies is cleared.
     model.set_caught(1)
