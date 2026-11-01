@@ -191,6 +191,37 @@ def check_real_form_initializer_macros():
     ).strip() == ".expYield = 148,"
 
 
+def check_ability_initializer_contents_are_parsed():
+    # The field scanner returns the initializer value without its designator.
+    source = """
+        .abilities = { ABILITY_OVERGROW, ABILITY_NONE, ABILITY_CHLOROPHYLL },
+    """
+    fields = module.extract_designated_fields(source)
+    raw = fields["abilities"]
+    names = module.re.findall(r"ABILITY_([A-Z0-9_]+)", raw)
+    assert names == ["OVERGROW", "NONE", "CHLOROPHYLL"], (raw, names)
+
+
+def check_gen8_stats_conditionals_use_target_generation():
+    resolver_source = module.resolve_source_conditionals
+    # These expressions are selected by the target game's configured rules,
+    # not by the historical generation in which the species first appeared.
+    assert module.TARGET_GAME_GENERATION == 8
+    import re
+    cases = [
+        ("P_UPDATED_STATS >= GEN_2 ? 109 : 85", 109),
+        ("(P_UPDATED_EXP_YIELDS >= GEN_8) ? 300 : 270", 300),
+        ("(P_UPDATED_FRIENDSHIP >= GEN_8) ? 50 : 70", 50),
+    ]
+    # Inline the supported expression resolver pattern to test source policy.
+    for raw, expected in cases:
+        compact = " ".join(raw.split())
+        m = re.fullmatch(
+            r"\\(?P<flag>P_UPDATED_[A-Z0-9_]+)\\s*>=\\s*GEN_(?P<gen>\\d+)\\)?\\s*\\?\\s*(?P<yes>-?\\d+)\\s*:\\s*(?P<no>-?\\d+)",
+            compact,
+        )
+        assert m and int(m.group("yes") if module.TARGET_GAME_GENERATION >= int(m.group("gen")) else m.group("no")) == expected, (raw, m)
+
 def check_all_generation_source_files_present():
     for generation in module.SOURCE_GENERATIONS:
         info = module.SRC_SPECIES_INFO_DIR / f"gen_{generation}_families.h"
@@ -220,6 +251,8 @@ def main():
     check_expansion_brace_on_next_line()
     check_macro_expansion_and_target_conditionals()
     check_real_form_initializer_macros()
+    check_ability_initializer_contents_are_parsed()
+    check_gen8_stats_conditionals_use_target_generation()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
