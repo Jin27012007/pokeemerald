@@ -105,30 +105,25 @@ def risk_for(line: str, expression: str | None, table: str | None, specials: set
 
 
 def extract_multiline_table_refs(source: str, table: str) -> list[dict]:
-    """Extract multiline table indexes with source line and balanced brackets."""
-    if table not in TABLE_PATTERNS:
-        raise ValueError(f"Unknown species table: {table}")
+    """Extract table index expressions, preserving starting line numbers."""
     names = {
         "species_info": "gSpeciesInfo",
         "evolution": "gEvolutionTable",
         "front_pic": "gMonFrontPicTable",
-        "back_pic": "gMonBackPicTable",
-        "footprint": "gMonFootprintTable",
     }
-    table_name = names.get(table)
-    if table_name is None:
-        return []
-    pattern = re.compile(rf"\b{re.escape(table_name)}\s*\[", re.S)
+    if table not in names:
+        raise ValueError(f"Unknown multiline table: {table}")
+    pattern = re.compile(rf"\b{re.escape(names[table])}\s*\[", re.S)
     results = []
     for match in pattern.finditer(source):
-        open_bracket = source.find("[", match.start())
+        opening = source.find("[", match.start())
         depth = 0
         in_string = False
         escaped = False
         line_comment = False
         block_comment = False
-        expression = None
-        pos = open_bracket
+        closing = None
+        pos = opening
         while pos < len(source):
             ch = source[pos]
             nxt = source[pos + 1] if pos + 1 < len(source) else ""
@@ -160,13 +155,19 @@ def extract_multiline_table_refs(source: str, table: str) -> list[dict]:
                 elif ch == "]":
                     depth -= 1
                     if depth == 0:
-                        expression = " ".join(source[open_bracket + 1:pos].split())
+                        closing = pos
                         break
             pos += 1
-        if expression:
-            line = source.count(chr(10), 0, match.start()) + 1
-            results.append({"expression": expression, "line": line})
+        if closing is not None:
+            expression = " ".join(source[opening + 1:closing].split())
+            if expression:
+                results.append({
+                    "expression": expression,
+                    "line": source.count("\n", 0, match.start()) + 1,
+                })
     return results
+
+
 
 def scan_source() -> tuple[list[dict], dict]:
     findings = []
