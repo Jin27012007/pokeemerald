@@ -173,9 +173,6 @@ def emit_gen8_pokedex_runtime(pokedex_rows: list[dict], order_rows: dict) -> tup
     c_lines.extend(["};", ""])
     runtime_source = "\n".join(c_lines)
 
-    # The legacy National Dex has 25 auxiliary Unown entries (B-Z) outside
-    # canonical 1-898. Keep them first in alphabetical order, as Emerald did.
-    old_unown = [f"NATIONAL_DEX_OLD_UNOWN_{letter}" for letter in "BCDEFGHIJKLMNOPQRSTUVWXYZ"]
     order_lines = []
     expected_orders = (
         "gPokedexOrder_Alphabetical",
@@ -190,8 +187,6 @@ def emit_gen8_pokedex_runtime(pokedex_rows: list[dict], order_rows: dict) -> tup
         if len(values) != 898 or set(values) != set(range(1, 899)):
             raise RuntimeError(f"Gen 8 Pokédex order failed one-to-one validation: {order_name}")
         symbols = [dex_symbol_by_number[dex] for dex in values]
-        if order_name == "gPokedexOrder_Alphabetical":
-            symbols = old_unown + symbols
         order_lines.append(f"const u16 {order_name}[] =")
         order_lines.append("{")
         for offset in range(0, len(symbols), 8):
