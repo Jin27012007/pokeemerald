@@ -955,6 +955,14 @@ def filter_canonical_species_info_candidates(candidates: list[dict],
         if candidate.get("species_symbol") in allowed_symbols
     ]
 
+def resolve_source_national_dex_id(dex_symbol: str | None, dex_values: dict) -> int | None:
+    """Resolve canonical NATIONAL_DEX_* tokens against parsed enum member names."""
+    if not dex_symbol:
+        return None
+    member = dex_symbol.removeprefix("NATIONAL_DEX_")
+    return dex_values.get(member)
+
+
 def is_species_info_source_complete(
     canonical_rows: list[dict],
     native_rows: list[dict],
@@ -1137,7 +1145,7 @@ def generate(check: bool = False) -> dict:
     info_candidates_by_dex = {}
     for row in info_result["compact_records"] + info_result["unresolved_records"]:
         dex_symbol = row.get("national_dex_symbol")
-        dex_id = source_natdex_values.get(dex_symbol) if dex_symbol else None
+        dex_id = resolve_source_national_dex_id(dex_symbol, source_natdex_values)
         if dex_id is not None and 1 <= dex_id <= 898:
             info_candidates_by_dex.setdefault(dex_id, []).append(row)
     canonical_species_info = []
