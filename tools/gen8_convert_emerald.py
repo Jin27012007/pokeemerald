@@ -1186,7 +1186,7 @@ def generate(check: bool = False) -> dict:
                 })
             missing_species_info.append({
                 "national_dex": dex,
-                "national_symbol": national_symbol,
+                "national_dex_symbol": national_symbol,
                 "expected_source_alias": preferred_symbol,
                 "status": "canonical_source_record_unresolved",
             })
