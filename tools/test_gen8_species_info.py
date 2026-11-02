@@ -75,14 +75,17 @@ def check_species_mapping_api_executes_as_c():
             encoding="utf-8",
         )
         executable = root / "species-map-test"
-        subprocess.run(
-            [compiler, "-std=c11", "-Wall", "-Wextra", "-Werror",
-             "-I", str(root), str(root / "species_map.c"),
-             str(root / "test.c"), "-o", str(executable)],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        try:
+            subprocess.run(
+                [compiler, "-std=c11", "-Wall", "-Wextra", "-Werror",
+                 "-I", str(root), str(root / "species_map.c"),
+                 str(root / "test.c"), "-o", str(executable)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as error:
+            raise AssertionError(error.stderr or error.stdout) from error
         subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
 
