@@ -24,6 +24,7 @@ SRC_SPECIES_INFO_DIR = VENDOR / "src/data/pokemon/species_info"
 SOURCE_GENERATIONS = (1, 2, 3, 4, 5, 6, 7, 8)
 LEARNSET_GENERATIONS = (4, 5, 6, 7, 8)
 TARGET_GAME_GENERATION = 8
+GEN8_EXISTING_BASE_SPECIES_COUNT = 386
 
 DST_SPECIES = ROOT / "include/constants/species.h"
 DST_MOVES = ROOT / "include/constants/moves.h"
