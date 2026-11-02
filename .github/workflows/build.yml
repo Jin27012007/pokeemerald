@@ -120,6 +120,9 @@ jobs:
       - name: Test Gen 8 pending table parsers
         run: python3 tools/test_gen8_pending_tables.py
 
+      - name: Test isolated Gen 8 Dex extension storage envelope
+        run: python3 tools/test_gen8_dex_extension.py
+
       - name: Test canonical Gen 8 intake contract
         run: python3 tools/test_gen8_intake.py
 
