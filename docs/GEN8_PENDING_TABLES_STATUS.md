@@ -33,36 +33,38 @@ A target symbol match is recorded as a mapping fact only. It is not treated as p
 
 ## Latest verified source-table measurements
 
-The successful CI run for commit `e18f216b57519d77ed38063130a453fa9da70ea8` generated the following independent coverage figures:
+The successful CI run at the current branch head generated the audit JSON used by the workflow. Source extraction and target compatibility are reported separately:
 
-| Table family | Verified source/target inventory |
+| Table family | Verified inventory |
 |---|---:|
-| Canonical species rows | 898 / 898 |
-| Gen 8 level-up learnsets | 898 / 898; 0 missing |
-| Evolution records | 480 parsed edges; 0 unresolved records |
-| Conditional evolution edges | 130 edges across 21 condition symbols |
-| Conditions with candidate Emerald methods | 8; candidate mappings still require semantic validation |
-| Evolution methods needing new target handlers | 2: `EVO_SCRIPT_TRIGGER` and `EVO_SPIN` |
+| Canonical species identities | 898 / 898 |
+| Canonical Gen 8 level-up learnsets | 898 / 898; 0 missing |
+| Evolution expressions | 480 parsed edges; 0 unresolved |
+| Conditional evolution expressions | 130 edges across 21 condition symbols |
+| Conditions with candidate Emerald methods | 8; candidates are not yet semantic implementations |
+| Evolution methods requiring new handlers | 2 |
 | Pokédex descriptions | 898 decoded; 0 unresolved |
-| Source cry identifiers | 898 matched to Expansion cry table |
-| Existing Emerald cry labels | 386 matched; 512 still absent |
-| Graphics reference rows | 898 complete |
-| Emerald graphics folders with all seven expected assets | 384 complete; 514 incomplete |
-| Form-species / form-change tables | 228 / 143 referenced; 0 missing source-table definitions |
+| Source cry labels | 898 / 898 matched to pinned Expansion cry table |
+| Emerald cry labels | 386 match; 512 missing from target cry table |
+| Graphics source references | 898 / 898 present |
+| Emerald graphics folders | 384 complete; 514 incomplete across the seven required files |
+| Form-species / form-change tables | 228 / 143 referenced; 0 missing source definitions |
 | National Pokédex orders | 3 / 3 complete |
-| Source MoveInfo definitions | 839 / 839 found |
+| Source MoveInfo records | 839 / 839 found |
 | Distinct Gen 8 level-up moves used | 639 |
-| Gen 8 moves missing Emerald move, battle and Contest records | 322 |
+| Gen 8 moves missing Emerald battle and Contest records | 322 |
 | Source battle-effect symbols missing in Emerald | 162 |
-| Source Contest effect definitions | 48; 0 missing target callbacks |
-| Canonical abilities used | 249; 172 have no Emerald constant |
-| Canonical held items used | 85; 85 have no Emerald constant; 30 have no target item-data record |
-| Types used | 18; 1 missing target type (Fairy) |
-| Egg groups / growth rates used | 15 / 6; none missing in the target catalogs |
+| Source Contest callbacks missing in Emerald | 0 |
+| Canonical abilities used | 249; 172 lack Emerald constants |
+| Canonical held items used | 85; 85 lack Emerald constants; 30 lack target item-data records |
+| Canonical types used | 18; Fairy and Stellar lack Emerald definitions |
+| Egg groups / growth rates used | 15 / 6; no missing target symbols |
 
-The cry and graphics measurements are not proof of imported assets. They explicitly compare source references against the current Emerald assembly table and graphics folders. The 514 incomplete graphics rows and 512 missing cry labels remain outstanding work.
+The cry and graphics numbers measure target repository coverage, not imported or verified payload compatibility. The 512 missing cry labels and 514 incomplete graphics folders remain open. Source cry symbols being present in the Expansion table does not make them playable in Emerald.
 
-The evolution inventory also keeps source method numbers separate from Emerald method numbers. For example, Expansion `EVO_LEVEL` has source enum value 1 while Emerald's target method macro is 4. Never copy source numeric method IDs into Emerald's `struct Evolution`.
+The evolution inventory keeps source method numbers separate from Emerald method numbers. Expansion `EVO_LEVEL` uses source enum value 1, while Emerald's target method macro uses 4. Never copy source numeric method IDs into Emerald's `struct Evolution`.
+
+The canonical Gen 8 learnset view intentionally selects the Generation 8 pointer for all 898 species. This differs from the broader converter catalog, which holds learnset blocks across generations 4–8; the two reports answer different questions and their move counts must not be compared as if they were the same denominator.
 
 ## Runtime blockers — intentionally not marked complete
 
@@ -81,4 +83,4 @@ The current vanilla Emerald `struct SpeciesInfo` is 26 bytes; the Expansion sour
 
 ## Safety gate
 
-Source-table extraction passing does not authorize internal species ID allocation, production C-table replacement, save-layout changes or a `NUM_SPECIES` change. Those steps remain blocked until the move/Contest, ability, item, Fairy type, audio, graphics and save/runtime implementations are validated independently.
+Source-table extraction passing does not authorize internal species ID allocation, production C-table replacement, save-layout changes or a `NUM_SPECIES` change. Those steps remain blocked until the move/Contest, ability, item, Fairy and Stellar types, audio, graphics and save/runtime implementations are validated independently.
