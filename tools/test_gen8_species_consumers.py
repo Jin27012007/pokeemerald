@@ -76,5 +76,4 @@ if __name__ == "__main__":
     test_classifies_sentinel_table_access()
     test_scans_core_consumers()
     test_scan_does_not_miss_multiline_species_table_index()
-    test_scan_does_not_miss_multiline_species_table_index()
     print("PASS: consumer inventory parser, namespace and sentinel-bound regressions.")
