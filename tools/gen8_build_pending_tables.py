@@ -528,7 +528,7 @@ def source_table_inventory() -> dict:
         refs = {field: fields.get(field) for field in GRAPHICS_FIELDS} if source is not None else {}
         required = ("frontPic", "backPic", "palette", "shinyPalette", "iconSprite")
         missing = [field for field in required if not refs.get(field)]
-        if missing:
+        if source is not None and missing:
             missing_graphics_refs.append({"national_dex": dex, "species_symbol": mapping["source_symbol"], "missing": missing})
         manifest_row = manifest_by_dex[dex]
         slug = manifest_row["slug"]
@@ -550,6 +550,8 @@ def source_table_inventory() -> dict:
         graphics_rows.append({
             "national_dex": dex,
             "species_symbol": mapping["source_symbol"],
+            "record_provenance": canonical_row.get("record_provenance"),
+            "graphics_source_status": "import_pending" if source is not None else "retained_from_emerald",
             "national_dex_slug": slug,
             "source_graphics_references": refs,
             "required_reference_fields_missing": missing,
