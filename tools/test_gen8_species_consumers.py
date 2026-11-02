@@ -56,19 +56,6 @@ def test_scans_core_consumers():
     assert any(path == "src/pokemon_icon.c" and table == "icon" for path, table in refs)
     assert summary["scanned_source_files"] > 100
     assert summary["finding_count"] > 0
-
-
-if __name__ == "__main__":
-    test_namespace_inventory()
-    test_sentinel_and_bounds_contracts()
-    test_classifies_sentinel_table_access()
-    test_scans_core_consumers()
-    test_risk_for_rejects_in_range_sentinels_and_auxiliary_forms()
-    test_scan_does_not_miss_multiline_species_table_index()
-    print("PASS: consumer inventory parser, namespace and sentinel-bound regressions.")
-
-
-
 def test_scan_does_not_miss_multiline_species_table_index():
     source = """
     value = gSpeciesInfo[
@@ -81,3 +68,13 @@ def test_scan_does_not_miss_multiline_species_table_index():
     assert module.extract_multiline_table_refs(source, "species_info") == [
         "species"
     ]
+
+
+if __name__ == "__main__":
+    test_namespace_inventory()
+    test_sentinel_and_bounds_contracts()
+    test_classifies_sentinel_table_access()
+    test_scans_core_consumers()
+    test_scan_does_not_miss_multiline_species_table_index()
+    test_scan_does_not_miss_multiline_species_table_index()
+    print("PASS: consumer inventory parser, namespace and sentinel-bound regressions.")
