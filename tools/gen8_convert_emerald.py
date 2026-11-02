@@ -1250,7 +1250,6 @@ def generate(check: bool = False) -> dict:
         and all(
             row.get("source_fields_resolved", False)
             and row.get("source_national_dex_matches_selected", False)
-            and row.get("target_mapping_compatible", False)
             for row in expansion_rows
         )
         and all(
@@ -1282,6 +1281,7 @@ def generate(check: bool = False) -> dict:
             "species_info_zero_unresolved_source_records": all(row.get("source_complete", False) for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer"),
             "species_info_all_source_fields_resolved": all(row.get("source_fields_resolved", False) for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer"),
             "species_info_all_target_mappings_compatible": all(row.get("target_mapping_compatible", False) for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer"),
+            "species_info_source_fields_complete_independent_of_target_mapping": species_info_source_complete,
             "species_info_zero_unresolved_runtime_gaps": all(not row.get("runtime_gaps") for row in canonical_species_info),
             "species_info_source_fields_complete": species_info_source_complete,
             "species_info_expansion_source_rows_complete": species_info_source_complete,
