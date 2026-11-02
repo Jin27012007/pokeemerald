@@ -278,7 +278,8 @@ int main(void)
 
         block_size = 0x3D88
         extension_offset = 0x3598
-        self.assertIn("sizeof(struct SaveBlock1)", global_source)
+        self.assertIn("// sizeof: 0x3D88", global_source)
+        self.assertIn("sizeof(((struct SaveBlock1 *)0)->dexFlagExtension)", global_source)
         self.assertLessEqual(extension_offset + SIZE, block_size)
         self.assertLessEqual(block_size, 4 * 3968)
 
