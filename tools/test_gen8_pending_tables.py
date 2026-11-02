@@ -300,7 +300,22 @@ def main():
     test_cry_table_labels()
     test_named_array_inventory()
     test_gen8_pokedex_runtime_tables()
+    test_runtime_national_dex_count_and_hoenn_filter()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
+
+
+
+def test_runtime_national_dex_count_and_hoenn_filter():
+    species_header = (ROOT / "include/constants/species.h").read_text(encoding="utf-8")
+    pokedex_header = (ROOT / "include/constants/pokedex.h").read_text(encoding="utf-8")
+    pokedex_source = (ROOT / "src/pokedex.c").read_text(encoding="utf-8")
+
+    assert "#define NUM_SPECIES SPECIES_EGG" in species_header
+    assert "#define NATIONAL_DEX_COUNT  NATIONAL_DEX_CALYREX" in pokedex_header
+    assert "return hoennNum != 0 && hoennNum <= dexCount;" in pokedex_source
+    assert pokedex_source.count(
+        "IsDexNumberInCurrentDex(temp_dexNum, temp_isHoennDex, temp_dexCount)"
+    ) == 5
 
 
 if __name__ == "__main__":
