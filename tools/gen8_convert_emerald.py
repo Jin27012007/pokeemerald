@@ -1185,44 +1185,45 @@ def generate(check: bool = False) -> dict:
         "canonical_species_info_source_unresolved_fields": sum(1 for row in canonical_species_info if row.get("source_unresolved_fields")),
         "missing_species_info_for_new_dex_species": len(missing_species_info),
     }
+    native_rows = [
+        row for row in canonical_species_info
+        if row.get("record_provenance") == "existing_emerald_runtime_record"
+    ]
+    expansion_rows = [
+        row for row in canonical_species_info
+        if row.get("record_provenance") == "expansion_source_initializer"
+    ]
     species_info_source_complete = (
         len(canonical_species_info) == 898
         and not missing_species_info
-        and all(
-            row.get("source_complete", False)
-            for row in canonical_species_info
-            if row.get("record_provenance") == "expansion_source_initializer"
-        )
+        and not species_info_identity_conflicts
+        and len(native_rows) == 386
+        and len(expansion_rows) == 512
+        and all(row.get("source_complete", False) for row in expansion_rows)
         and all(
             not row.get("source_missing_fields") and not row.get("source_unresolved_fields")
-            for row in canonical_species_info
-            if row.get("record_provenance") == "expansion_source_initializer"
+            for row in expansion_rows
         )
         and all(
             row.get("source_fields_resolved", False)
             and row.get("source_national_dex_matches_selected", False)
-            for row in canonical_species_info
-            if row.get("record_provenance") == "expansion_source_initializer"
+            and row.get("target_mapping_compatible", False)
+            for row in expansion_rows
         )
         and all(
             "baseHP" in row["source_fields_present"] and "natDexNum" in row["source_fields_present"]
-            for row in canonical_species_info
-            if row.get("record_provenance") == "expansion_source_initializer"
+            for row in expansion_rows
         )
     )
     species_info_compact_compatible = (
         species_info_source_complete
-        and all(
-            row.get("compact_compatible", False)
-            for row in canonical_species_info
-            if row.get("record_provenance") == "existing_emerald_runtime_record"
-        )
-        and all(
-            row.get("source_fields_resolved", False)
-            and row.get("target_mapping_compatible", False)
-            for row in canonical_species_info
-            if row.get("record_provenance") == "expansion_source_initializer"
-        )
+        and len(native_rows) == 386
+        and all(row.get("compact_compatible", False) for row in native_rows)
+        and len(expansion_rows) == 512
+        and all(row.get("source_fields_resolved", False)
+                and row.get("target_mapping_compatible", False)
+                and not row.get("runtime_gaps")
+                for row in expansion_rows)
     )
     report = {
         "source": "pinned pokeemerald-expansion source snapshot (Gen 4-9 family data)",
