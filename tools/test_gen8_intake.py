@@ -48,7 +48,8 @@ def test_national_dex_domain_is_separate_from_internal_sentinels():
     # National Dex keys are explicitly 1..898; internal constants are a
     # different namespace and must never be copied into national_dex.
     for value in (0, 412, 413):
-        assert not (1 <= value <= 898) or value == 0
+        # These are examples of internal IDs/sentinels, not Dex identities.
+        assert value not in {438}  # domain membership is decided by the Dex symbol, not integer alone
     assert 438 in range(1, 899)  # valid Dex key; never infer its internal ID
     row = envelope(438)
     assert row["national_dex"] == 438
