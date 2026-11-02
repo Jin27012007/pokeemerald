@@ -63,14 +63,24 @@ def test_scan_does_not_miss_multiline_species_table_index():
     value = gSpeciesInfo[
         species
     ];
+    value2 = gSpeciesInfo[lookup[form]];
+    value3 = gSpeciesInfo[
+        species /* ignored ] */
+    ];
+    value4 = gSpeciesInfo["not ] a delimiter"];
+    value5 = gEvolutionTable[
+        species
+    ];
     """
-    # The line scanner is line-oriented and currently cannot safely associate
-    # this index expression across physical lines. This fixture documents and
-    # guards a conservative multiline expression collector.
     assert module.extract_multiline_table_refs(source, "species_info") == [
-        "species"
+        {"expression": "species", "line": 2},
+        {"expression": "lookup[form]", "line": 5},
+        {"expression": "species /* ignored ] */", "line": 6},
+        {"expression": '"not ] a delimiter"', "line": 9},
     ]
-
+    assert module.extract_multiline_table_refs(source, "evolution") == [
+        {"expression": "species", "line": 10},
+    ]
 
 if __name__ == "__main__":
     test_namespace_inventory()
