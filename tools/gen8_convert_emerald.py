@@ -949,7 +949,11 @@ def filter_canonical_species_info_candidates(candidates: list[dict],
     compare the source .natDexNum token text with the species designator: form
     families legitimately use the base species' NATIONAL_DEX_* token.
     """
-    allowed_symbols = {canonical_symbol, preferred_symbol}
+    allowed_symbols = {
+        canonical_symbol,
+        preferred_symbol,
+        BASE_ALIASES.get(preferred_symbol, preferred_symbol),
+    }
     return [
         candidate for candidate in candidates
         if candidate.get("species_symbol") in allowed_symbols
@@ -1142,6 +1146,21 @@ def generate(check: bool = False) -> dict:
             "NATIONAL_DEX_", enum=True
         )
     }
+    source_natdex_symbols_by_dex = {}
+    for symbol, dex_id in source_natdex_values.items():
+        if not 1 <= dex_id <= 898:
+            continue
+        previous = source_natdex_symbols_by_dex.get(dex_id)
+        if previous is not None and previous != symbol:
+            raise RuntimeError(
+                f"Multiple Expansion National Dex symbols resolve to Dex {dex_id}: "
+                f"{previous} and {symbol}"
+            )
+        source_natdex_symbols_by_dex[dex_id] = symbol
+    if set(source_natdex_symbols_by_dex) != set(range(1, 899)):
+        missing_natdex = sorted(set(range(1, 899)) - set(source_natdex_symbols_by_dex))
+        raise RuntimeError(f"Expansion National Dex symbol map incomplete: {missing_natdex[:20]}")
+
     info_candidates_by_dex = {}
     for row in info_result["compact_records"] + info_result["unresolved_records"]:
         dex_symbol = row.get("national_dex_symbol")
@@ -1152,8 +1171,11 @@ def generate(check: bool = False) -> dict:
     missing_species_info = []
     species_info_identity_conflicts = []
     for dex in range(1, 899):
-        national_symbol = by_dex[dex]
-        preferred_symbol = BASE_ALIASES.get(national_symbol, national_symbol)
+        # The canonical identity comes from Expansion's National Dex enum.
+        # The species enum may instead name the representative/default form
+        # (for example BURMY_PLANT for NATIONAL_DEX_BURMY).
+        national_symbol = source_natdex_symbols_by_dex[dex]
+        preferred_symbol = by_dex[dex]
         candidates = info_candidates_by_dex.get(dex, [])
         has_existing_internal_id = species_map[dex - 1]["emerald_internal_id"] is not None
 
