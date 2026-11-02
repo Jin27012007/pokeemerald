@@ -36,7 +36,7 @@ The next SpeciesInfo phase must:
 
 - Save extension placement, versioning, flash write ordering, migration and recovery are not validated.
 - The storage capacity calculation does not audit all species-indexed consumers (graphics tables, cries, evolutions, learnsets, battle/contest tables, scripts, dex ordering and UI indices).
-- The current SpeciesInfo input is incomplete; the latest extractor reported 123 parsed records and zero complete compact records.
+- The current staged converter imports Gen 4–8 source families and covers all 898 canonical entries. Source coverage is complete, but compact/runtime compatibility remains blocked by type, ability, item, source-only field, and runtime table gaps.
 - The staging workflow's SaveBlock2 assertion was corrected to expect 4006 bytes and -38 bytes of headroom after in-place Pokédex expansion. The full CI result for the multi-generation extractor is still pending; individual commits triggered overlapping workflow runs.
 
 ## Release gate
