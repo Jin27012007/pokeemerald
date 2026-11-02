@@ -5506,6 +5506,7 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 mode, u16 evolutionItem)
     int i;
     u16 targetSpecies = 0;
     u16 species = GetMonData(mon, MON_DATA_SPECIES, 0);
+    const struct Evolution *evolutions = GetEvolutionTableSafe(species);
     u16 heldItem = GetMonData(mon, MON_DATA_HELD_ITEM, 0);
     u32 personality = GetMonData(mon, MON_DATA_PERSONALITY, 0);
     u8 level;
@@ -5531,56 +5532,56 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 mode, u16 evolutionItem)
 
         for (i = 0; i < EVOS_PER_MON; i++)
         {
-            switch (gEvolutionTable[species][i].method)
+            switch (evolutions[i].method)
             {
             case EVO_FRIENDSHIP:
                 if (friendship >= FRIENDSHIP_EVO_THRESHOLD)
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                    targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_FRIENDSHIP_DAY:
                 RtcCalcLocalTime();
                 if (gLocalTime.hours >= DAY_EVO_HOUR_BEGIN && gLocalTime.hours < DAY_EVO_HOUR_END && friendship >= FRIENDSHIP_EVO_THRESHOLD)
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                    targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_FRIENDSHIP_NIGHT:
                 RtcCalcLocalTime();
                 if (gLocalTime.hours >= NIGHT_EVO_HOUR_BEGIN && gLocalTime.hours < NIGHT_EVO_HOUR_END && friendship >= FRIENDSHIP_EVO_THRESHOLD)
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                    targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_LEVEL:
-                if (gEvolutionTable[species][i].param <= level)
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                if (evolutions[i].param <= level)
+                    targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_LEVEL_ATK_GT_DEF:
-                if (gEvolutionTable[species][i].param <= level)
+                if (evolutions[i].param <= level)
                     if (GetMonData(mon, MON_DATA_ATK, 0) > GetMonData(mon, MON_DATA_DEF, 0))
-                        targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                        targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_LEVEL_ATK_EQ_DEF:
-                if (gEvolutionTable[species][i].param <= level)
+                if (evolutions[i].param <= level)
                     if (GetMonData(mon, MON_DATA_ATK, 0) == GetMonData(mon, MON_DATA_DEF, 0))
-                        targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                        targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_LEVEL_ATK_LT_DEF:
-                if (gEvolutionTable[species][i].param <= level)
+                if (evolutions[i].param <= level)
                     if (GetMonData(mon, MON_DATA_ATK, 0) < GetMonData(mon, MON_DATA_DEF, 0))
-                        targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                        targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_LEVEL_SILCOON:
-                if (gEvolutionTable[species][i].param <= level && (upperPersonality % 10) <= 4)
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                if (evolutions[i].param <= level && (upperPersonality % 10) <= 4)
+                    targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_LEVEL_CASCOON:
-                if (gEvolutionTable[species][i].param <= level && (upperPersonality % 10) > 4)
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                if (evolutions[i].param <= level && (upperPersonality % 10) > 4)
+                    targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_LEVEL_NINJASK:
-                if (gEvolutionTable[species][i].param <= level)
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                if (evolutions[i].param <= level)
+                    targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_BEAUTY:
-                if (gEvolutionTable[species][i].param <= beauty)
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                if (evolutions[i].param <= beauty)
+                    targetSpecies = evolutions[i].targetSpecies;
                 break;
             }
         }
@@ -5588,17 +5589,17 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 mode, u16 evolutionItem)
     case EVO_MODE_TRADE:
         for (i = 0; i < EVOS_PER_MON; i++)
         {
-            switch (gEvolutionTable[species][i].method)
+            switch (evolutions[i].method)
             {
             case EVO_TRADE:
-                targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                targetSpecies = evolutions[i].targetSpecies;
                 break;
             case EVO_TRADE_ITEM:
-                if (gEvolutionTable[species][i].param == heldItem)
+                if (evolutions[i].param == heldItem)
                 {
                     heldItem = ITEM_NONE;
                     SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
-                    targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                    targetSpecies = evolutions[i].targetSpecies;
                 }
                 break;
             }
@@ -5608,10 +5609,10 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 mode, u16 evolutionItem)
     case EVO_MODE_ITEM_CHECK:
         for (i = 0; i < EVOS_PER_MON; i++)
         {
-            if (gEvolutionTable[species][i].method == EVO_ITEM
-             && gEvolutionTable[species][i].param == evolutionItem)
+            if (evolutions[i].method == EVO_ITEM
+             && evolutions[i].param == evolutionItem)
             {
-                targetSpecies = gEvolutionTable[species][i].targetSpecies;
+                targetSpecies = evolutions[i].targetSpecies;
                 break;
             }
         }
@@ -5637,6 +5638,16 @@ u16 HoennPokedexNumToSpecies(u16 hoennNum)
         return 0;
 
     return species + 1;
+}
+
+const struct Evolution *GetEvolutionTableSafe(u16 species)
+{
+    static const struct Evolution sEmptyEvolutionTable[EVOS_PER_MON] = {0};
+
+    if (species >= NUM_SPECIES)
+        return sEmptyEvolutionTable;
+
+    return gEvolutionTable[species];
 }
 
 const struct SpeciesInfo *GetSpeciesInfoSafe(u16 species)
