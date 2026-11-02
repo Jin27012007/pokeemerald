@@ -110,6 +110,7 @@ jobs:
           test -s reports/gen8-conversion/species_info_by_national_dex.json
           test -s reports/gen8-conversion/species_info_field_coverage.json
           test -s reports/gen8-conversion/emerald_species_info_compatibility.json
+          test -s reports/gen8-conversion/species_info_identity_conflicts.json
           test -s data/pokemon/gen8_species_evolutions.json
           test -s data/pokemon/gen8_species_pokedex_entries.json
           test -s data/pokemon/gen8_species_cry_map.json
@@ -143,6 +144,7 @@ jobs:
               "reports/gen8-conversion/species_info_by_national_dex.json",
               "reports/gen8-conversion/species_info_field_coverage.json",
               "reports/gen8-conversion/emerald_species_info_compatibility.json",
+              "reports/gen8-conversion/species_info_identity_conflicts.json",
               "data/pokemon/gen8_species_evolutions.json",
               "data/pokemon/gen8_species_pokedex_entries.json",
               "data/pokemon/gen8_species_cry_map.json",
