@@ -121,7 +121,8 @@ class Gen8DexExtensionTests(unittest.TestCase):
     def test_backup_disagreement_fails_closed(self):
         data = make_extension()
         set_flag(data, 500, False, True)
-        data[HEADER_BYTES + 2 * FLAG_BYTES + (500 - FIRST_EXTENDED_DEX) // 8] ^= 1
+        index = 500 - FIRST_EXTENDED_DEX
+        data[HEADER_BYTES + 2 * FLAG_BYTES + index // 8] ^= 1 << (index % 8)
         struct.pack_into("<I", data, 4, checksum(data))
         self.assertFalse(get_flag(data, 500, False))
 
