@@ -3,10 +3,11 @@
 
 #include <stddef.h>
 
-#define GEN8_DEX_EXT_COPY_COUNT GEN8_DEX_EXT_COPY_COUNT
+#define GEN8_DEX_EXT_LOCAL_COPY_COUNT 4
+
 
 STATIC_ASSERT(sizeof(struct Gen8DexExtension) == 256, Gen8DexExtension_must_fit_reserved_window);
-STATIC_ASSERT(GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_COPY_COUNT == 244, Gen8DexExtension_flag_payload_must_be_244_bytes);
+STATIC_ASSERT(GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_LOCAL_COPY_COUNT == 244, Gen8DexExtension_flag_payload_must_be_244_bytes);
 STATIC_ASSERT(GEN8_DEX_EXT_BYTES == 61, Gen8DexExtension_requires_486_dex_bits_per_copy);
 
 static u8 *GetGen8DexExtensionFlagArray(struct Gen8DexExtension *extension, u8 copy)
@@ -74,7 +75,7 @@ void Gen8DexExtensionInit(struct Gen8DexExtension *extension)
     CpuFill32(0, extension, sizeof(*extension));
     extension->magic = GEN8_DEX_EXT_MAGIC;
     extension->version = GEN8_DEX_EXT_VERSION;
-    extension->payloadSize = GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_COPY_COUNT;
+    extension->payloadSize = GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_LOCAL_COPY_COUNT;
     extension->generation = 1;
     extension->checksum = Gen8DexExtensionChecksum(extension);
 }
@@ -84,7 +85,7 @@ bool32 Gen8DexExtensionValidate(const struct Gen8DexExtension *extension)
     if (extension == NULL
      || extension->magic != GEN8_DEX_EXT_MAGIC
      || extension->version != GEN8_DEX_EXT_VERSION
-     || extension->payloadSize != GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_COPY_COUNT
+     || extension->payloadSize != GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_LOCAL_COPY_COUNT
      || extension->generation == 0)
         return FALSE;
 
@@ -146,7 +147,7 @@ enum Gen8DexExtensionResult Gen8DexExtensionWriteFlag(
     if (extension == NULL)
         return GEN8_DEX_EXTENSION_BAD_ARGUMENT;
     if (extension->magic != GEN8_DEX_EXT_MAGIC
-     || extension->payloadSize != GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_COPY_COUNT)
+     || extension->payloadSize != GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_LOCAL_COPY_COUNT)
         return GEN8_DEX_EXTENSION_BAD_HEADER;
     if (extension->version != GEN8_DEX_EXT_VERSION)
         return GEN8_DEX_EXTENSION_BAD_VERSION;
