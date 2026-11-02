@@ -122,7 +122,7 @@ def extract_multiline_table_refs(source: str, table: str) -> list[str]:
     table_name = name_by_table.get(table)
     if table_name is None:
         return []
-    pattern = re.compile(rf"\\b{re.escape(table_name)}\\s*\\[", re.S)
+    pattern = re.compile(rf"\b{re.escape(table_name)}\s*\[", re.S)
     results = []
     for match in pattern.finditer(source):
         open_bracket = source.find("[", match.start())
@@ -150,6 +150,11 @@ def scan_source() -> tuple[list[dict], dict]:
         except (UnicodeDecodeError, OSError):
             continue
         rel = path.relative_to(ROOT).as_posix()
+        full_source = "\n".join(lines)
+        full_table_refs = {
+            table_name: extract_multiline_table_refs(full_source, table_name)
+            for table_name in ("species_info", "evolution", "front_pic")
+        }
         for line_no, line in enumerate(lines, 1):
             stripped = line.strip()
             if not stripped or stripped.startswith("//") or stripped.startswith("*"):
@@ -159,6 +164,15 @@ def scan_source() -> tuple[list[dict], dict]:
             for table, pattern in TABLE_PATTERNS.items():
                 for match in pattern.finditer(line):
                     table_matches.append((table, match.group(1).strip()))
+            # Attach multiline references to their starting source line.
+            for table_name, expressions in full_table_refs.items():
+                for expression in expressions:
+                    if table_name == "species_info" and "gSpeciesInfo" in line and expression not in [x[1] for x in table_matches]:
+                        table_matches.append((table_name, expression))
+                    elif table_name == "evolution" and "gEvolutionTable" in line and expression not in [x[1] for x in table_matches]:
+                        table_matches.append((table_name, expression))
+                    elif table_name == "front_pic" and "gMonFrontPicTable" in line and expression not in [x[1] for x in table_matches]:
+                        table_matches.append((table_name, expression))
             generic_indexes = []
             for pattern in INDEX_PATTERNS:
                 for match in pattern.finditer(line):
@@ -166,12 +180,7 @@ def scan_source() -> tuple[list[dict], dict]:
                     if base.startswith(("gSpecies", "gEvolution", "gLevelUp", "gMon", "sSpeciesTo")):
                         generic_indexes.append((base, expr))
             form_tags = {name for name, pattern in FORM_PATTERNS.items() if pattern.search(line)}
-            if any(name in line for name in ("gSpeciesInfo", "gEvolutionTable", "gMonFrontPicTable")):
-                full_source = path.read_text(encoding="utf-8")
-                for table_name in ("species_info", "evolution", "front_pic"):
-                    for expression in extract_multiline_table_refs(full_source, table_name):
-                        if (table_name, expression) not in table_matches:
-                            table_matches.append((table_name, expression))
+
             if not (special or table_matches or generic_indexes or form_tags):
                 continue
             if table_matches:
