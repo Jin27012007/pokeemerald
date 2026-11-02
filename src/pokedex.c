@@ -1522,6 +1522,8 @@ void ResetPokedex(void)
         gSaveBlock1Ptr->seen1[i] = 0;
         gSaveBlock1Ptr->seen2[i] = 0;
     }
+    for (i = 0; i < sizeof(gSaveBlock1Ptr->dexFlagExtension); i++)
+        gSaveBlock1Ptr->dexFlagExtension[i] = 0;
 }
 
 void ResetPokedexScrollPositions(void)
@@ -4260,64 +4262,109 @@ u16 GetPokedexHeightWeight(u16 dexNum, u8 data)
     }
 }
 
+static u8 ReadDexFlagMirror(u8 mirror, u16 index)
+{
+    if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
+    {
+        if (mirror == 0)
+            return gSaveBlock2Ptr->pokedex.seen[index];
+        if (mirror == 1)
+            return gSaveBlock1Ptr->seen1[index];
+        return gSaveBlock1Ptr->seen2[index];
+    }
+    index -= GEN8_DEX_LEGACY_FLAG_BYTES;
+    return gSaveBlock1Ptr->dexFlagExtension[(mirror * GEN8_DEX_EXTENSION_FLAG_BYTES) + index];
+}
+
+static void WriteDexFlagMirror(u8 mirror, u16 index, u8 value)
+{
+    if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
+    {
+        if (mirror == 0)
+            gSaveBlock2Ptr->pokedex.seen[index] = value;
+        else if (mirror == 1)
+            gSaveBlock1Ptr->seen1[index] = value;
+        else
+            gSaveBlock1Ptr->seen2[index] = value;
+    }
+    else
+    {
+        index -= GEN8_DEX_LEGACY_FLAG_BYTES;
+        gSaveBlock1Ptr->dexFlagExtension[(mirror * GEN8_DEX_EXTENSION_FLAG_BYTES) + index] = value;
+    }
+}
+
+static u8 ReadDexOwnedMirror(u16 index)
+{
+    if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
+        return gSaveBlock2Ptr->pokedex.owned[index];
+    index -= GEN8_DEX_LEGACY_FLAG_BYTES;
+    return gSaveBlock1Ptr->dexFlagExtension[(3 * GEN8_DEX_EXTENSION_FLAG_BYTES) + index];
+}
+
+static void WriteDexOwnedMirror(u16 index, u8 value)
+{
+    if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
+        gSaveBlock2Ptr->pokedex.owned[index] = value;
+    else
+    {
+        index -= GEN8_DEX_LEGACY_FLAG_BYTES;
+        gSaveBlock1Ptr->dexFlagExtension[(3 * GEN8_DEX_EXTENSION_FLAG_BYTES) + index] = value;
+    }
+}
+
 s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)
 {
-    u8 index;
-    u8 bit;
-    u8 mask;
-    s8 retVal;
+    u16 index;
+    u8 bit, mask, seen0, seen1, seen2, owned;
+    s8 retVal = 0;
+
+    if (nationalDexNo == 0 || nationalDexNo > GEN8_DEX_COUNT)
+        return 0;
 
     nationalDexNo--;
     index = nationalDexNo / 8;
     bit = nationalDexNo % 8;
     mask = 1 << bit;
-    retVal = 0;
+    seen0 = ReadDexFlagMirror(0, index);
+    seen1 = ReadDexFlagMirror(1, index);
+    seen2 = ReadDexFlagMirror(2, index);
+    owned = ReadDexOwnedMirror(index);
+
     switch (caseID)
     {
     case FLAG_GET_SEEN:
-        if (gSaveBlock2Ptr->pokedex.seen[index] & mask)
+        if ((seen0 & mask) && (seen0 & mask) == (seen1 & mask) && (seen0 & mask) == (seen2 & mask))
+            retVal = 1;
+        else if ((seen0 | seen1 | seen2) & mask)
         {
-            if ((gSaveBlock2Ptr->pokedex.seen[index] & mask) == (gSaveBlock1Ptr->seen1[index] & mask)
-             && (gSaveBlock2Ptr->pokedex.seen[index] & mask) == (gSaveBlock1Ptr->seen2[index] & mask))
-                retVal = 1;
-            else
-            {
-                gSaveBlock2Ptr->pokedex.seen[index] &= ~mask;
-                gSaveBlock1Ptr->seen1[index] &= ~mask;
-                gSaveBlock1Ptr->seen2[index] &= ~mask;
-                retVal = 0;
-            }
+            WriteDexFlagMirror(0, index, seen0 & ~mask);
+            WriteDexFlagMirror(1, index, seen1 & ~mask);
+            WriteDexFlagMirror(2, index, seen2 & ~mask);
         }
         break;
     case FLAG_GET_CAUGHT:
-        if (gSaveBlock2Ptr->pokedex.owned[index] & mask)
+        if ((owned & mask) && (owned & mask) == (seen0 & mask) && (owned & mask) == (seen1 & mask) && (owned & mask) == (seen2 & mask))
+            retVal = 1;
+        else if ((owned | seen0 | seen1 | seen2) & mask)
         {
-            if ((gSaveBlock2Ptr->pokedex.owned[index] & mask) == (gSaveBlock2Ptr->pokedex.seen[index] & mask)
-             && (gSaveBlock2Ptr->pokedex.owned[index] & mask) == (gSaveBlock1Ptr->seen1[index] & mask)
-             && (gSaveBlock2Ptr->pokedex.owned[index] & mask) == (gSaveBlock1Ptr->seen2[index] & mask))
-                retVal = 1;
-            else
-            {
-                gSaveBlock2Ptr->pokedex.owned[index] &= ~mask;
-                gSaveBlock2Ptr->pokedex.seen[index] &= ~mask;
-                gSaveBlock1Ptr->seen1[index] &= ~mask;
-                gSaveBlock1Ptr->seen2[index] &= ~mask;
-                retVal = 0;
-            }
+            WriteDexOwnedMirror(index, owned & ~mask);
+            WriteDexFlagMirror(0, index, seen0 & ~mask);
+            WriteDexFlagMirror(1, index, seen1 & ~mask);
+            WriteDexFlagMirror(2, index, seen2 & ~mask);
         }
         break;
     case FLAG_SET_SEEN:
-        gSaveBlock2Ptr->pokedex.seen[index] |= mask;
-        gSaveBlock1Ptr->seen1[index] |= mask;
-        gSaveBlock1Ptr->seen2[index] |= mask;
+        WriteDexFlagMirror(0, index, seen0 | mask);
+        WriteDexFlagMirror(1, index, seen1 | mask);
+        WriteDexFlagMirror(2, index, seen2 | mask);
         break;
     case FLAG_SET_CAUGHT:
-        gSaveBlock2Ptr->pokedex.owned[index] |= mask;
+        WriteDexOwnedMirror(index, owned | mask);
         break;
     }
     return retVal;
 }
-
 u16 GetNationalPokedexCount(u8 caseID)
 {
     u16 count = 0;
