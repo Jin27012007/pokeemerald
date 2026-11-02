@@ -93,3 +93,5 @@ The canonical audit now tags each row as either `existing_emerald_runtime_record
 ### Provenance-aware readiness
 
 The 898-row canonical coverage count is intentionally split into 386 native Emerald rows and 512 Expansion-source rows. The `source_fields_resolved` counter applies only to the 512 Expansion rows; native rows are audited as preserved existing runtime records. Compact compatibility is evaluated in both groups using their respective provenance evidence. CI must verify the 386 + 512 split, 512 resolved Expansion records, and that the compact-stage readiness flag agrees with the combined compatible-row count. None of these checks alone makes runtime/save migration ready.
+
+The existing namespace audit currently finds unique explicit numeric IDs, ordinary species through 411, the Egg sentinel at 412, 25 numeric `SPECIES_OLD_UNOWN_*` constants, and 26 additional Unown constants expressed relative to `NUM_SPECIES`. This inventory is now covered by a parser-level regression test. It is not an approved allocation range: the Egg sentinel position and all consumers of the relative Unown constants still require a dedicated design and bounds audit.
