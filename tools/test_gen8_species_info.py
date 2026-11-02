@@ -395,7 +395,7 @@ def check_existing_species_namespace_has_no_numeric_collisions():
     entries = [
         (match.group(1), int(match.group(2)))
         for match in module.re.finditer(
-            r"^#define\\s+(SPECIES_[A-Z0-9_]+)\\s+(\\d+)$",
+            r"^#define\s+(SPECIES_[A-Z0-9_]+)\s+(\d+)$",
             header,
             module.re.M,
         )
