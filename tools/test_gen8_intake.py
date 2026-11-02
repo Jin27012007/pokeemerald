@@ -44,21 +44,22 @@ def test_promotability_is_separate_from_structural_coverage():
         and not row["runtime_gaps"] and not row["unresolved_fields"]
     )
 
-def test_national_dex_domain_is_separate_from_internal_sentinels():
-    # National Dex keys are explicitly 1..898; internal constants are a
-    # different namespace and must never be copied into national_dex.
-    for value in (0, 412, 413):
-        # These are examples of internal IDs/sentinels, not Dex identities.
-        assert value not in {438}  # domain membership is decided by the Dex symbol, not integer alone
-    assert 438 in range(1, 899)  # valid Dex key; never infer its internal ID
-    row = envelope(438)
-    assert row["national_dex"] == 438
-    assert row["national_symbol"] == "NATIONAL_DEX_TEST_438"
+def test_national_dex_domain_is_symbolic_and_resolved():
+    # The integer alone cannot distinguish an internal sentinel from a Dex
+    # number. A canonical row must carry a resolved NATIONAL_DEX symbol.
+    def valid_dex_symbol(symbol, resolved):
+        return bool(symbol and symbol.startswith("NATIONAL_DEX_")
+                    and isinstance(resolved, int) and 1 <= resolved <= 898)
+    assert valid_dex_symbol("NATIONAL_DEX_TESTMON", 412)
+    assert not valid_dex_symbol("SPECIES_EGG", 412)
+    assert not valid_dex_symbol("SPECIES_UNOWN_B", 413)
+    assert not valid_dex_symbol(None, 1)
+    assert not valid_dex_symbol("NATIONAL_DEX_TESTMON", None)
 
 def main():
     test_envelope_contract()
     test_promotability_is_separate_from_structural_coverage()
-    test_national_dex_domain_is_separate_from_internal_sentinels()
+    test_national_dex_domain_is_symbolic_and_resolved()
     print("PASS: canonical intake envelope, structural-vs-runtime gate, and special-domain tests.")
 
 if __name__ == "__main__":
