@@ -1,5 +1,7 @@
 #include "global.h"
 #include "gen8_dex_extension.h"
+
+static struct Gen8DexExtension *GetGen8DexExtension(void);
 #include "battle_main.h"
 #include "bg.h"
 #include "data.h"
