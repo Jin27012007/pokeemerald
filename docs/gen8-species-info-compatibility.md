@@ -68,3 +68,20 @@ SpeciesInfo source coverage is complete only when all 898 canonical National Dex
 Emerald runtime compatibility is a separate gate. It remains blocked until the 16-bit experience yield, Fairy/Stellar types, ability width/slot count, item definitions/effects, and every separate graphics, cry, evolution, learnset, Pokédex and form dependency have an explicit target implementation.
 
 Passing source coverage does not authorize species-ID allocation or a `NUM_SPECIES` change. Save-block and Pokédex storage validation must also pass independently.
+
+## ID-allocation preparation gate (not an allocation)
+
+The current converter is an audit/staging tool. It must not assign the 512 new internal species IDs or edit `NUM_SPECIES`. Before a separate ID-allocation change is proposed, the following evidence must exist in the same pinned source snapshot and CI run:
+
+1. Exactly 898 canonical National Dex rows, with unique Dex numbers 1–898 and exactly one selected canonical source initializer per number. Alternate forms must stay in a separate inventory and must not silently consume canonical IDs.
+2. Every selected row must retain its source generation, exact source designator, raw initializer, expanded field map, and Dex-number provenance. Missing fields and present-but-unresolved fields must be separate lists; both must be empty for required fields.
+3. The 386 existing Emerald species must retain their current internal IDs. A generated proposed mapping must prove that these IDs are unchanged and that the 512 remaining canonical identities are exactly the unassigned set. No ID can be inferred from source enum order.
+4. The proposed 512-ID map must be deterministic, collision-free against existing species, `SPECIES_NONE`, egg placeholders, form constants and all other reserved IDs. The policy for regional, battle-only and cosmetic forms must be explicit and independently tested.
+5. Every canonical SpeciesInfo field must have an explicit target policy. Width mismatches (notably 16-bit experience yields and source enum widths), the third ability slot, Fairy/Stellar, new ability/item identifiers and any source-only metadata must be represented as compatibility blockers or deliberate extension data. No truncation, arbitrary fallback ID or implicit zero is permitted.
+6. Every indexed runtime family must have a matching ID policy and bounds audit: SpeciesInfo, cries, graphics/palettes/icons, evolutions, learnsets, Pokédex orders/flags/text, form tables, abilities, items, moves, scripts and UI consumers.
+7. Save storage and migration must be independently approved with host-side serialization, round-trip, interrupted-write, corruption-recovery and old-save migration tests. The current SaveBlock2 in-place expansion exceeds its sector payload; the SaveBlock1 reserved bytes are only a candidate, not an approved design.
+8. Only after all prior gates pass may a separate change allocate IDs and update `NUM_SPECIES`. That change must include compile-time count/bounds assertions, generated-table consistency tests, a full ROM build and save compatibility tests. It must not be combined with the source extraction or runtime-data conversion commits.
+
+### Current decision
+
+ID allocation is **blocked**. Canonical source-row coverage is not equivalent to complete source-field resolution, compact struct compatibility, or runtime readiness. The CI must report those dimensions independently. In particular, a source-complete result does not satisfy the target mapping gate, and a target mapping gate does not prove save migration safety.
