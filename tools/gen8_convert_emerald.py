@@ -833,8 +833,14 @@ def parse_species_info(source_text: str, target_info_text: str,
         if body_color is None:
             problems.append("unresolved_body_color")
 
-        nat_match = re.fullmatch(r"NATIONAL_DEX_([A-Z0-9_]+)", fields.get("natDexNum", ""))
-        dex_value = nat_match.group(1) if nat_match else None
+        nat_raw = (fields.get("natDexNum", "") or "").strip()
+        # Expansion initializer macros may have already reduced NATIONAL_DEX_X
+        # to the bare enum member X. Normalize both valid representations to
+        # the canonical token and keep unknown expressions unresolved.
+        nat_match = re.fullmatch(
+            r"(?:NATIONAL_DEX_)?([A-Z][A-Z0-9_]*)", nat_raw
+        )
+        dex_value = f"NATIONAL_DEX_{nat_match.group(1)}" if nat_match else None
         raw_common_item = common_raw
         raw_rare_item = rare_raw
         source_required_fields = {
