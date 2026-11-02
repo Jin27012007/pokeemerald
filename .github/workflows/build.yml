@@ -57,7 +57,8 @@ jobs:
           assert save["current_species_flag_bytes"] == 208
           assert save["additional_flag_bytes_needed"] == 244
           assert save["pokedex_struct_bytes"] == 0x78
-          assert save["saveblock1_candidate_extension_capacity_bytes"] == 0x180
+          assert save["saveblock1_reserved_window_bytes"] == 0x180
+          assert save["saveblock1_candidate_extension_capacity_bytes"] == 0x100
           assert save["legacy_dex_flag_count"] == 412
           assert save["extension_dex_flag_count"] == 486
           assert save["extension_flag_bytes_per_copy"] == 61
