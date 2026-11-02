@@ -1040,7 +1040,7 @@ def generate(check: bool = False) -> dict:
                         if candidate["species_symbol"] == preferred_symbol), None)
         if row is None:
             row = info_by_symbol.get(preferred_symbol)
-        if row is None:
+        if row is None and species_map[dex - 1]["emerald_internal_id"] is not None:
             row = target_species_by_dex.get(dex)
         if row is None:
             missing_species_info.append({
