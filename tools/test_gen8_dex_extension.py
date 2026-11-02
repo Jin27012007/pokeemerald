@@ -75,7 +75,11 @@ def set_flag(data: bytearray, dex: int, owned: bool, value: bool) -> None:
         else:
             data[start + index // 8] &= ~mask
 
-    next_generation(data)
+    generation = struct.unpack_from("<H", data, 10)[0]
+    if generation == 0xFFFF:
+        raise OverflowError("generation exhausted")
+    struct.pack_into("<H", data, 10, generation + 1)
+    struct.pack_into("<I", data, 4, checksum(data))
 
 
 def get_flag(data: bytes, dex: int, owned: bool) -> bool:
