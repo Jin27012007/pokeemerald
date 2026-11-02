@@ -827,10 +827,15 @@ def parse_species_info(source_text: str, target_info_text: str,
             "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
             "baseSpDefense", "catchRate", "expYield", "genderRatio", "eggCycles",
             "friendship", "growthRate", "types", "eggGroups", "abilities",
-            "bodyColor",
+            "bodyColor", "natDexNum",
         }
         source_missing_fields = sorted(source_required_fields - set(fields))
-        source_complete = not source_missing_fields
+        # Presence alone is insufficient: canonical Dex identity must resolve
+        # to a known NATIONAL_DEX_* symbol before a row counts as complete.
+        source_unresolved_fields = []
+        if dex_value is None:
+            source_unresolved_fields.append("natDexNum")
+        source_complete = not source_missing_fields and not source_unresolved_fields
         runtime_gaps = []
         if hidden_ability is not None and hidden_ability > 255:
             runtime_gaps.append("hidden_ability_id_exceeds_u8")
@@ -869,6 +874,7 @@ def parse_species_info(source_text: str, target_info_text: str,
             "body_color": body_color,
             "source_complete": source_complete,
             "source_missing_fields": source_missing_fields,
+            "source_unresolved_fields": source_unresolved_fields,
             "compact_compatible": not problems,
             "runtime_gaps": sorted(set(runtime_gaps)),
             "status": "compact_fields_resolved" if not problems else "manual_mapping_required",
