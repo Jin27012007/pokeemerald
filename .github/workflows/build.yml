@@ -184,6 +184,9 @@ jobs:
           assert report["counts"]["new_species"] == 512
           assert report["counts"]["canonical_species_info_covered"] == 898
           assert report["counts"]["canonical_species_info_missing"] == 0
+          assert report["counts"]["canonical_species_info_native_emerald_preserved_rows"] == 386
+          assert report["counts"]["canonical_species_info_expansion_source_rows"] == 512
+          assert (report["counts"]["canonical_species_info_native_emerald_preserved_rows"] + report["counts"]["canonical_species_info_expansion_source_rows"]) == 898
           assert report["readiness"]["species_info_zero_missing_canonical_entries"] is True
           # Source-field completeness and runtime compatibility are separate,
           # non-blocking audit gates until their explicit mappings are closed.
