@@ -232,7 +232,7 @@ def main() -> int:
         "bounds_guard": "species >= NUM_SPECIES",
     }
     (ROOT / "reports/gen8-conversion/species_info_access_audit.json").write_text(
-        json.dumps(access_report, indent=2) + "\\n", encoding="utf-8"
+        json.dumps(access_report, indent=2) + "\n", encoding="utf-8"
     )
 
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
