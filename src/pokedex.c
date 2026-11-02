@@ -1522,8 +1522,6 @@ void ResetPokedex(void)
         gSaveBlock1Ptr->seen1[i] = 0;
         gSaveBlock1Ptr->seen2[i] = 0;
     }
-    for (i = 0; i < sizeof(gSaveBlock1Ptr->dexFlagExtension); i++)
-        gSaveBlock1Ptr->dexFlagExtension[i] = 0;
 }
 
 void ResetPokedexScrollPositions(void)
@@ -4262,6 +4260,34 @@ u16 GetPokedexHeightWeight(u16 dexNum, u8 data)
     }
 }
 
+static bool32 IsDexExtensionPayloadValid(void)
+{
+    const u8 *payload = gSaveBlock1Ptr->dexFlagExtension;
+    u32 storedChecksum;
+    u32 checksum = 2166136261u;
+    u32 i;
+
+    // Until the versioned header and write protocol are integrated, the
+    // reserved payload is treated as uninitialized rather than trusted.
+    // This prevents reads from accidentally treating arbitrary save bytes
+    // as Gen 8 flags.
+    if (payload[0] == 0 && payload[1] == 0 && payload[2] == 0 && payload[3] == 0)
+        return FALSE;
+
+    storedChecksum = (u32)payload[4]
+                   | ((u32)payload[5] << 8)
+                   | ((u32)payload[6] << 16)
+                   | ((u32)payload[7] << 24);
+    for (i = 0; i < sizeof(gSaveBlock1Ptr->dexFlagExtension); i++)
+    {
+        if (i >= 4 && i < 8)
+            continue;
+        checksum ^= payload[i];
+        checksum *= 16777619u;
+    }
+    return checksum == storedChecksum;
+}
+
 static u8 ReadDexSeenMirror(u8 mirror, u16 index)
 {
     if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
@@ -4272,8 +4298,7 @@ static u8 ReadDexSeenMirror(u8 mirror, u16 index)
             return gSaveBlock1Ptr->seen1[index];
         return gSaveBlock1Ptr->seen2[index];
     }
-    index -= GEN8_DEX_LEGACY_FLAG_BYTES;
-    return gSaveBlock1Ptr->dexFlagExtension[(mirror * GEN8_DEX_EXTENSION_FLAG_BYTES) + index];
+    return 0;
 }
 
 static void WriteDexSeenMirror(u8 mirror, u16 index, u8 value)
@@ -4287,31 +4312,26 @@ static void WriteDexSeenMirror(u8 mirror, u16 index, u8 value)
         else
             gSaveBlock1Ptr->seen2[index] = value;
     }
-    else
-    {
-        index -= GEN8_DEX_LEGACY_FLAG_BYTES;
-        gSaveBlock1Ptr->dexFlagExtension[(mirror * GEN8_DEX_EXTENSION_FLAG_BYTES) + index] = value;
-    }
+    // Extension writes remain disabled until a generation/checksum protocol
+    // is wired through save serialization and recovery.
+    (void)value;
 }
 
 static u8 ReadDexOwnedMirror(u16 index)
 {
     if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
         return gSaveBlock2Ptr->pokedex.owned[index];
-    index -= GEN8_DEX_LEGACY_FLAG_BYTES;
-    return gSaveBlock1Ptr->dexFlagExtension[(3 * GEN8_DEX_EXTENSION_FLAG_BYTES) + index];
+    return 0;
 }
 
 static void WriteDexOwnedMirror(u16 index, u8 value)
 {
     if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
         gSaveBlock2Ptr->pokedex.owned[index] = value;
-    else
-    {
-        index -= GEN8_DEX_LEGACY_FLAG_BYTES;
-        gSaveBlock1Ptr->dexFlagExtension[(3 * GEN8_DEX_EXTENSION_FLAG_BYTES) + index] = value;
-    }
+    // Extension writes remain disabled until the save protocol is complete.
+    (void)value;
 }
+
 
 s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)
 {
@@ -4320,7 +4340,7 @@ s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)
     u8 mirror;
     s8 retVal = 0;
 
-    if (nationalDexNo == 0 || nationalDexNo > GEN8_DEX_COUNT)
+    if (nationalDexNo == 0 || nationalDexNo > GEN8_DEX_LEGACY_COUNT)
         return 0;
 
     nationalDexNo--;
