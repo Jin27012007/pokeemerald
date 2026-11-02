@@ -85,3 +85,7 @@ The current converter is an audit/staging tool. It must not assign the 512 new i
 ### Current decision
 
 ID allocation is **blocked**. Canonical source-row coverage is not equivalent to complete source-field resolution, compact struct compatibility, or runtime readiness. The CI must report those dimensions independently. In particular, a source-complete result does not satisfy the target mapping gate, and a target mapping gate does not prove save migration safety.
+
+### Provenance of the 898 canonical rows
+
+The canonical audit now tags each row as either `existing_emerald_runtime_record` or `expansion_source_initializer`. CI expects exactly 386 preserved native Emerald rows and 512 Expansion-source rows, totaling 898. The preserved native rows prove that existing runtime records were found and retained; they do not claim that those rows were imported from Expansion. The 512 Expansion-source rows must independently pass the source-field and target-mapping audits above.
