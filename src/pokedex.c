@@ -1515,13 +1515,15 @@ void ResetPokedex(void)
     gSaveBlock2Ptr->pokedex.spindaPersonality = 0;
     gSaveBlock2Ptr->pokedex.unknown3 = 0;
     DisableNationalPokedex();
-    for (i = 0; i < NUM_DEX_FLAG_BYTES; i++)
+    for (i = 0; i < GEN8_DEX_LEGACY_FLAG_BYTES; i++)
     {
         gSaveBlock2Ptr->pokedex.owned[i] = 0;
         gSaveBlock2Ptr->pokedex.seen[i] = 0;
         gSaveBlock1Ptr->seen1[i] = 0;
         gSaveBlock1Ptr->seen2[i] = 0;
     }
+    for (i = 0; i < sizeof(gSaveBlock1Ptr->dexFlagExtension); i++)
+        gSaveBlock1Ptr->dexFlagExtension[i] = 0;
     for (i = 0; i < sizeof(gSaveBlock1Ptr->dexFlagExtension); i++)
         gSaveBlock1Ptr->dexFlagExtension[i] = 0;
 }
@@ -4262,7 +4264,7 @@ u16 GetPokedexHeightWeight(u16 dexNum, u8 data)
     }
 }
 
-static u8 ReadDexFlagMirror(u8 mirror, u16 index)
+static u8 ReadDexSeenMirror(u8 mirror, u16 index)
 {
     if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
     {
@@ -4276,7 +4278,7 @@ static u8 ReadDexFlagMirror(u8 mirror, u16 index)
     return gSaveBlock1Ptr->dexFlagExtension[(mirror * GEN8_DEX_EXTENSION_FLAG_BYTES) + index];
 }
 
-static void WriteDexFlagMirror(u8 mirror, u16 index, u8 value)
+static void WriteDexSeenMirror(u8 mirror, u16 index, u8 value)
 {
     if (index < GEN8_DEX_LEGACY_FLAG_BYTES)
     {
@@ -4316,7 +4318,8 @@ static void WriteDexOwnedMirror(u16 index, u8 value)
 s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)
 {
     u16 index;
-    u8 bit, mask, seen0, seen1, seen2, owned;
+    u8 bit, mask, seen[3], owned;
+    u8 mirror;
     s8 retVal = 0;
 
     if (nationalDexNo == 0 || nationalDexNo > GEN8_DEX_COUNT)
@@ -4326,38 +4329,34 @@ s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)
     index = nationalDexNo / 8;
     bit = nationalDexNo % 8;
     mask = 1 << bit;
-    seen0 = ReadDexFlagMirror(0, index);
-    seen1 = ReadDexFlagMirror(1, index);
-    seen2 = ReadDexFlagMirror(2, index);
+    for (mirror = 0; mirror < 3; mirror++)
+        seen[mirror] = ReadDexSeenMirror(mirror, index);
     owned = ReadDexOwnedMirror(index);
 
     switch (caseID)
     {
     case FLAG_GET_SEEN:
-        if ((seen0 & mask) && (seen0 & mask) == (seen1 & mask) && (seen0 & mask) == (seen2 & mask))
+        if ((seen[0] & mask) && (seen[0] & mask) == (seen[1] & mask) && (seen[0] & mask) == (seen[2] & mask))
             retVal = 1;
-        else if ((seen0 | seen1 | seen2) & mask)
+        else if ((seen[0] | seen[1] | seen[2]) & mask)
         {
-            WriteDexFlagMirror(0, index, seen0 & ~mask);
-            WriteDexFlagMirror(1, index, seen1 & ~mask);
-            WriteDexFlagMirror(2, index, seen2 & ~mask);
+            for (mirror = 0; mirror < 3; mirror++)
+                WriteDexSeenMirror(mirror, index, seen[mirror] & ~mask);
         }
         break;
     case FLAG_GET_CAUGHT:
-        if ((owned & mask) && (owned & mask) == (seen0 & mask) && (owned & mask) == (seen1 & mask) && (owned & mask) == (seen2 & mask))
+        if ((owned & mask) && (owned & mask) == (seen[0] & mask) && (owned & mask) == (seen[1] & mask) && (owned & mask) == (seen[2] & mask))
             retVal = 1;
-        else if ((owned | seen0 | seen1 | seen2) & mask)
+        else if ((owned | seen[0] | seen[1] | seen[2]) & mask)
         {
             WriteDexOwnedMirror(index, owned & ~mask);
-            WriteDexFlagMirror(0, index, seen0 & ~mask);
-            WriteDexFlagMirror(1, index, seen1 & ~mask);
-            WriteDexFlagMirror(2, index, seen2 & ~mask);
+            for (mirror = 0; mirror < 3; mirror++)
+                WriteDexSeenMirror(mirror, index, seen[mirror] & ~mask);
         }
         break;
     case FLAG_SET_SEEN:
-        WriteDexFlagMirror(0, index, seen0 | mask);
-        WriteDexFlagMirror(1, index, seen1 | mask);
-        WriteDexFlagMirror(2, index, seen2 | mask);
+        for (mirror = 0; mirror < 3; mirror++)
+            WriteDexSeenMirror(mirror, index, seen[mirror] | mask);
         break;
     case FLAG_SET_CAUGHT:
         WriteDexOwnedMirror(index, owned | mask);
