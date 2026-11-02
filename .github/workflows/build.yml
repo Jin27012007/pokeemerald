@@ -102,6 +102,13 @@ jobs:
       - name: Verify canonical map against legacy Emerald Dex lookup
         run: python3 tools/test_gen8_species_map_parity.py
 
+      - name: Verify clean build can regenerate the species map
+        run: |
+          rm -f include/gen8_species_map.h src/data/gen8/species_map.c
+          make gen8_species_map
+          test -s include/gen8_species_map.h
+          test -s src/data/gen8/species_map.c
+
       # Compile the current runtime before the separate canonical data-coverage gate.
       - name: Correct Route 121 vertical fence tiles
         run: python3 tools/fix_route121_fence.py
