@@ -194,7 +194,7 @@ typedef uint32_t u32;
 typedef int32_t bool32;
 #define TRUE 1
 #define FALSE 0
-#define GEN8_SPECIES_DEX_LAST 898
+#define GEN8_DEX_COUNT 898
 #define GEN8_DEX_EXT_MAGIC_VALUE 0x38445847
 #define GEN8_DEX_EXT_FORMAT_VERSION 1
 #define GEN8_DEX_EXT_FLAG_BYTES 61
