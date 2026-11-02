@@ -192,8 +192,11 @@ jobs:
           assert report["counts"]["canonical_species_info_source_missing_fields"] == 0
           assert report["counts"]["canonical_species_info_source_unresolved_fields"] == 0
           assert report["counts"]["canonical_species_info_runtime_gap_records"] >= 0
-          assert report["counts"]["canonical_species_info_source_complete_rows"] <= 898
+          assert report["counts"]["canonical_species_info_source_complete_rows"] == 898
+          assert report["counts"]["canonical_species_info_source_fields_resolved_rows"] == 898
           assert report["counts"]["canonical_species_info_compact_compatible_rows"] <= 898
+          assert report["counts"]["canonical_species_info_target_mapping_compatible_rows"] <= 898
+          assert report["counts"]["canonical_species_info_compatibility_issue_records"] >= 0
           assert report["counts"]["missing_species_info_for_new_dex_species"] == 0
           assert report["readiness"]["new_species_ids_allocated"] is False
           assert report["readiness"]["runtime_ready"] is False
@@ -202,6 +205,8 @@ jobs:
               and report["counts"]["canonical_species_info_missing"] == 0
               and report["counts"]["canonical_species_info_source_complete_rows"] == 898
               and report["counts"]["canonical_species_info_source_missing_fields"] == 0
+              and report["counts"]["canonical_species_info_source_unresolved_fields"] == 0
+              and report["counts"]["canonical_species_info_source_fields_resolved_rows"] == 898
           )
           print("PASS: 898 canonical identities covered; source-field and runtime gaps remain explicitly audited.")
           PY
