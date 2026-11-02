@@ -836,8 +836,13 @@ def parse_species_info(source_text: str, target_info_text: str,
             runtime_gaps.append("hidden_ability_id_exceeds_u8")
         if len(ability_names) > 2 and hidden_ability not in (None, ability_values.get("NONE", 0)):
             runtime_gaps.append("third_ability_slot_not_in_emerald_struct")
-        if "FAIRY" in re.findall(r"TYPE_([A-Z0-9_]+)", fields.get("types", "")):
+        species_type_names = set(
+            re.findall(r"TYPE_([A-Z0-9_]+)", fields.get("types", ""))
+        )
+        if "FAIRY" in species_type_names:
             runtime_gaps.append("fairy_type_not_in_emerald_enum")
+        if "STELLAR" in species_type_names:
+            runtime_gaps.append("stellar_type_not_in_emerald_enum")
         if any(problem.startswith(("unknown_ability:", "unknown_hidden_ability:")) for problem in problems):
             runtime_gaps.append("source_ability_missing_from_emerald_target")
         if any(problem.startswith("unknown_item:") for problem in problems):
