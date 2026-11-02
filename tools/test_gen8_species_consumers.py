@@ -63,4 +63,39 @@ if __name__ == "__main__":
     test_sentinel_and_bounds_contracts()
     test_classifies_sentinel_table_access()
     test_scans_core_consumers()
+    test_risk_for_rejects_in_range_sentinels_and_auxiliary_forms()
+    test_scan_does_not_miss_multiline_species_table_index()
     print("PASS: consumer inventory parser, namespace and sentinel-bound regressions.")
+
+
+
+def test_risk_for_rejects_in_range_sentinels_and_auxiliary_forms():
+    # A sentinel can be dangerous even when the source line does not mention
+    # its symbol: the indexed value may have come from a party/box/save field.
+    level, reasons = module.risk_for(
+        "value = gSpeciesInfo[species];", "species", "species_info", set()
+    )
+    assert level == "high"
+    assert "species_derived_index" in reasons
+
+    # Validate the scanner's special-domain detection independently of token
+    # co-occurrence on the exact indexed line.
+    level, reasons = module.risk_for(
+        "icon = gMonIconTable[species];", "species", "icon", {"unown"}
+    )
+    assert level == "medium"
+    assert "sentinel_token_near_table_index" in reasons
+
+
+def test_scan_does_not_miss_multiline_species_table_index():
+    source = """
+    value = gSpeciesInfo[
+        species
+    ];
+    """
+    # The line scanner is line-oriented and currently cannot safely associate
+    # this index expression across physical lines. This fixture documents and
+    # guards a conservative multiline expression collector.
+    assert module.extract_multiline_table_refs(source, "species_info") == [
+        "species"
+    ]
