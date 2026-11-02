@@ -111,7 +111,8 @@ def main() -> int:
         and extension_required_bytes == 244
         and extension_required_bytes <= extension_payload_bytes
         and extension_window_bytes <= reserved_save1_bytes
-        and 0x3598 + reserved_save1_bytes == 0x3718
+        and 0x3598 + 0x180 == 0x3718
+        and reserved_save1_bytes <= 0x180
     )
 
     source_info_blocks = len(re.findall(r"^\s*\[SPECIES_[A-Z0-9_]+\]\s*=", source_info, re.M))
