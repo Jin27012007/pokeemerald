@@ -1,5 +1,6 @@
 #include "global.h"
 #include "gen8_dex_extension.h"
+#include "gen8_pokedex_data.h"
 
 static struct Gen8DexExtension *GetGen8DexExtension(void);
 #include "battle_main.h"
@@ -312,7 +313,7 @@ static void PrintSearchParameterTitle(u32, const u8 *);
 static void ClearSearchParameterBoxText(void);
 
 // const rom data
-#include "data/pokemon/pokedex_orders.h"
+#include "data/gen8/pokedex_orders.h"
 
 static const struct OamData sOamData_ScrollBar =
 {
@@ -855,6 +856,26 @@ ALIGNED(4) static const u8 sExpandedPlaceholder_PokedexDescription[] = _("");
 
 #include "data/pokemon/pokedex_text.h"
 #include "data/pokemon/pokedex_entries.h"
+
+static const struct PokedexEntry *GetPokedexEntryByDexNum(u16 dexNum)
+{
+    if (dexNum > NATIONAL_DEX_DEOXYS && dexNum <= GEN8_DEX_COUNT)
+        return &gGen8PokedexData[dexNum].entry;
+    return &gPokedexEntries[dexNum <= NATIONAL_DEX_DEOXYS ? dexNum : NATIONAL_DEX_NONE];
+}
+
+static const u8 *GetPokedexNameByDexNum(u16 dexNum)
+{
+    u16 species;
+
+    if (dexNum > NATIONAL_DEX_DEOXYS && dexNum <= GEN8_DEX_COUNT)
+        return gGen8PokedexData[dexNum].speciesName;
+
+    species = NationalPokedexNumToSpecies(dexNum);
+    if (species != SPECIES_NONE)
+        return gSpeciesNames[species];
+    return sText_TenDashes;
+}
 
 static const u16 sSizeScreenSilhouette_Pal[] = INCGFX_U16("graphics/pokedex/size_silhouette.pal", ".gbapal");
 
@@ -2245,7 +2266,7 @@ static void CreatePokedexList(u8 dexMode, u8 order)
         }
         break;
     case ORDER_ALPHABETICAL:
-        for (i = 0; i < NUM_SPECIES - 1; i++)
+        for (i = 0; i < NATIONAL_DEX_ORDER_COUNT; i++)
         {
             temp_dexNum = gPokedexOrder_Alphabetical[i];
 
@@ -2449,13 +2470,8 @@ static void CreateCaughtBall(bool16 owned, u8 x, u8 y, u16 unused)
 
 static u8 CreateMonName(u16 num, u8 left, u8 top)
 {
-    const u8 *str;
+    const u8 *str = GetPokedexNameByDexNum(num);
 
-    num = NationalPokedexNumToSpecies(num);
-    if (num)
-        str = gSpeciesNames[num];
-    else
-        str = sText_TenDashes;
     PrintMonDexNumAndName(0, FONT_NARROW, str, left, top);
     return StringLength(str);
 }
@@ -3778,8 +3794,8 @@ static void Task_LoadSizeScreen(u8 taskId)
         gSprites[spriteId].oam.affineMode = ST_OAM_AFFINE_NORMAL;
         gSprites[spriteId].oam.matrixNum = 1;
         gSprites[spriteId].oam.priority = 0;
-        gSprites[spriteId].y2 = gPokedexEntries[sPokedexListItem->dexNum].trainerOffset;
-        SetOamMatrix(1, gPokedexEntries[sPokedexListItem->dexNum].trainerScale, 0, 0, gPokedexEntries[sPokedexListItem->dexNum].trainerScale);
+        gSprites[spriteId].y2 = GetPokedexEntryByDexNum(sPokedexListItem->dexNum)->trainerOffset;
+        SetOamMatrix(1, GetPokedexEntryByDexNum(sPokedexListItem->dexNum)->trainerScale, 0, 0, GetPokedexEntryByDexNum(sPokedexListItem->dexNum)->trainerScale);
         LoadPalette(sSizeScreenSilhouette_Pal, OBJ_PLTT_ID2(gSprites[spriteId].oam.paletteNum), PLTT_SIZE_4BPP);
         gTasks[taskId].tTrainerSpriteId = spriteId;
         gMain.state++;
@@ -3789,8 +3805,8 @@ static void Task_LoadSizeScreen(u8 taskId)
         gSprites[spriteId].oam.affineMode = ST_OAM_AFFINE_NORMAL;
         gSprites[spriteId].oam.matrixNum = 2;
         gSprites[spriteId].oam.priority = 0;
-        gSprites[spriteId].y2 = gPokedexEntries[sPokedexListItem->dexNum].pokemonOffset;
-        SetOamMatrix(2, gPokedexEntries[sPokedexListItem->dexNum].pokemonScale, 0, 0, gPokedexEntries[sPokedexListItem->dexNum].pokemonScale);
+        gSprites[spriteId].y2 = GetPokedexEntryByDexNum(sPokedexListItem->dexNum)->pokemonOffset;
+        SetOamMatrix(2, GetPokedexEntryByDexNum(sPokedexListItem->dexNum)->pokemonScale, 0, 0, GetPokedexEntryByDexNum(sPokedexListItem->dexNum)->pokemonScale);
         LoadPalette(sSizeScreenSilhouette_Pal, OBJ_PLTT_ID2(gSprites[spriteId].oam.paletteNum), PLTT_SIZE_4BPP);
         gTasks[taskId].tMonSpriteId = spriteId;
         CopyWindowToVram(WIN_INFO, COPYWIN_FULL);
@@ -4120,11 +4136,7 @@ static void PrintMonInfo(u32 num, u32 value, u32 owned, u32 newEntry)
         value = num;
     ConvertIntToDecimalStringN(StringCopy(str, gText_NumberClear01), value, STR_CONV_MODE_LEADING_ZEROS, 3);
     PrintInfoScreenText(str, 0x60, 0x19);
-    natNum = NationalPokedexNumToSpecies(num);
-    if (natNum)
-        name = gSpeciesNames[natNum];
-    else
-        name = sText_TenDashes2;
+    name = GetPokedexNameByDexNum(num);
     PrintInfoScreenText(name, 0x84, 0x19);
     if (owned)
     {
@@ -4140,8 +4152,8 @@ static void PrintMonInfo(u32 num, u32 value, u32 owned, u32 newEntry)
     PrintInfoScreenText(gText_WTWeight, 0x60, 0x49);
     if (owned)
     {
-        PrintMonHeight(gPokedexEntries[num].height, 0x81, 0x39);
-        PrintMonWeight(gPokedexEntries[num].weight, 0x81, 0x49);
+        PrintMonHeight(GetPokedexEntryByDexNum(num)->height, 0x81, 0x39);
+        PrintMonWeight(GetPokedexEntryByDexNum(num)->weight, 0x81, 0x49);
     }
     else
     {
@@ -4149,7 +4161,7 @@ static void PrintMonInfo(u32 num, u32 value, u32 owned, u32 newEntry)
         PrintInfoScreenText(gText_UnkWeight, 0x81, 0x49);
     }
     if (owned)
-        description = gPokedexEntries[num].description;
+        description = GetPokedexEntryByDexNum(num)->description;
     else
         description = sExpandedPlaceholder_PokedexDescription;
     PrintInfoScreenText(description, GetStringCenterAlignXOffset(FONT_NORMAL, description, DISPLAY_WIDTH), 95);
@@ -4248,7 +4260,7 @@ static void PrintMonWeight(u16 weight, u8 left, u8 top)
 
 const u8 *GetPokedexCategoryName(u16 dexNum) // unused
 {
-    return gPokedexEntries[dexNum].categoryName;
+    return GetPokedexEntryByDexNum(dexNum)->categoryName;
 }
 
 u16 GetPokedexHeightWeight(u16 dexNum, u8 data)
@@ -4256,9 +4268,9 @@ u16 GetPokedexHeightWeight(u16 dexNum, u8 data)
     switch (data)
     {
     case 0:  // height
-        return gPokedexEntries[dexNum].height;
+        return GetPokedexEntryByDexNum(dexNum)->height;
     case 1:  // weight
-        return gPokedexEntries[dexNum].weight;
+        return GetPokedexEntryByDexNum(dexNum)->weight;
     default:
         return 1;
     }
@@ -4582,17 +4594,11 @@ static u8 PrintCryScreenSpeciesName(u8 windowId, u16 num, u8 left, u8 top)
 
     for (i = 0; i < ARRAY_COUNT(str); i++)
         str[i] = EOS;
-    num = NationalPokedexNumToSpecies(num);
-    switch (num)
     {
-    default:
-        for (i = 0; gSpeciesNames[num][i] != EOS && i < POKEMON_NAME_LENGTH; i++)
-            str[i] = gSpeciesNames[num][i];
-        break;
-    case 0:
-        for (i = 0; i < 5; i++)
-            str[i] = CHAR_HYPHEN;
-        break;
+        const u8 *name = GetPokedexNameByDexNum(num);
+
+        for (i = 0; name[i] != EOS && i < POKEMON_NAME_LENGTH; i++)
+            str[i] = name[i];
     }
     PrintInfoSubMenuText(windowId, str, left, top);
     return i;
@@ -4781,8 +4787,7 @@ static int DoPokedexSearch(u8 dexMode, u8 order, u8 abcGroup, u8 bodyColor, u8 t
         {
             u8 firstLetter;
 
-            species = NationalPokedexNumToSpecies(sPokedexView->pokedexList[i].dexNum);
-            firstLetter = gSpeciesNames[species][0];
+            firstLetter = GetPokedexNameByDexNum(sPokedexView->pokedexList[i].dexNum)[0];
             if (LETTER_IN_RANGE_UPPER(firstLetter, abcGroup) || LETTER_IN_RANGE_LOWER(firstLetter, abcGroup))
             {
                 sPokedexView->pokedexList[resultsCount] = sPokedexView->pokedexList[i];
