@@ -346,12 +346,10 @@ def resolve_target_move_symbol(source_symbol: str, target_symbols: set[str]) -> 
     if source_symbol in target_symbols:
         return source_symbol
     aliases = {
+        # Canonical Expansion spellings that differ from Emerald's legacy IDs.
+        "VISE_GRIP": "VICE_GRIP",
         "VICEGRIP": "VICE_GRIP",
-        "WILL_O_WISP": "WILL_O_WISP",
         "FEINT_ATTACK": "FAINT_ATTACK",
-        "SMOG": "SMOG",
-        "HI_JUMP_KICK": "HI_JUMP_KICK",
-        "DOUBLE_EDGE": "DOUBLE_EDGE",
     }
     candidate = aliases.get(source_symbol)
     return candidate if candidate in target_symbols else None
