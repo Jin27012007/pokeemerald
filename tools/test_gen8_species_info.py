@@ -32,7 +32,15 @@ def check_species_mapping_api_generation():
     assert "case 277:" in source
     assert "return FALSE;" in source
     assert "[387] = { .nationalDex = 387, .emeraldSpecies = SPECIES_NONE }" in source
-    assert "Duplicate Emerald internal ID" in module.emit_species_c.__code__.co_consts
+    try:
+        module.emit_species_c([
+            {"national_dex": 1, "source_symbol": "A", "emerald_internal_id": 1},
+            {"national_dex": 2, "source_symbol": "B", "emerald_internal_id": 1},
+        ])
+    except RuntimeError as error:
+        assert "Duplicate Emerald internal ID" in str(error)
+    else:
+        raise AssertionError("duplicate Emerald internal ID was accepted")
 
 
 def check_enum_implicit_and_explicit_values():
