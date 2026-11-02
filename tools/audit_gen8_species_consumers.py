@@ -106,14 +106,26 @@ def risk_for(line: str, expression: str | None, table: str | None, specials: set
 
 def extract_multiline_table_refs(source: str, table: str) -> list[str]:
     """Extract bracket contents for a named species table across line breaks."""
-    pattern = TABLE_PATTERNS[table]
+    if table not in TABLE_PATTERNS:
+        raise ValueError(f"Unknown species table: {table}")
+    name_by_table = {
+        "species_info": "gSpeciesInfo",
+        "evolution": "gEvolutionTable",
+        "learnset": None,
+        "front_pic": "gMonFrontPicTable",
+        "back_pic": "gMonBackPicTable",
+        "palette": None,
+        "icon": None,
+        "footprint": "gMonFootprintTable",
+        "animation": None,
+    }
+    table_name = name_by_table.get(table)
+    if table_name is None:
+        return []
+    pattern = re.compile(rf"\\b{re.escape(table_name)}\\s*\\[", re.S)
     results = []
     for match in pattern.finditer(source):
-        # The ordinary TABLE_PATTERNS expression ends at the first closing
-        # bracket. Extend from the matched opening bracket with balanced scans.
         open_bracket = source.find("[", match.start())
-        if open_bracket < 0:
-            continue
         depth = 0
         for pos in range(open_bracket, len(source)):
             if source[pos] == "[":
@@ -121,27 +133,10 @@ def extract_multiline_table_refs(source: str, table: str) -> list[str]:
             elif source[pos] == "]":
                 depth -= 1
                 if depth == 0:
-                    expression = source[open_bracket + 1:pos].strip()
+                    expression = " ".join(source[open_bracket + 1:pos].split())
                     if expression:
-                        results.append(" ".join(expression.split()))
+                        results.append(expression)
                     break
-    # Also recognize the table name followed by a multiline bracket, which
-    # the line-anchored scanner cannot see by design.
-    fallback = re.compile(rf"\\b{re.escape('gSpeciesInfo' if table == 'species_info' else '')}\\s*\\[", re.S)
-    if table == "species_info":
-        for match in fallback.finditer(source):
-            open_bracket = source.find("[", match.start())
-            depth = 0
-            for pos in range(open_bracket, len(source)):
-                if source[pos] == "[":
-                    depth += 1
-                elif source[pos] == "]":
-                    depth -= 1
-                    if depth == 0:
-                        expression = " ".join(source[open_bracket + 1:pos].split())
-                        if expression and expression not in results:
-                            results.append(expression)
-                        break
     return results
 
 
