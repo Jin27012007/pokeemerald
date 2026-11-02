@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Test the isolated Gen 8 National Dex extension envelope.
-
-The C implementation is staging-only and is not connected to save IO.
-"""
+"""Test the staged Gen 8 National Dex envelope and its disabled runtime boundary."""
 from __future__ import annotations
 
 import struct
@@ -149,6 +146,29 @@ class Gen8DexExtensionTests(unittest.TestCase):
         struct.pack_into("<I", data, 0, 0)
         struct.pack_into("<I", data, 4, checksum(data))
         self.assertFalse(valid(data))
+
+
+
+class RuntimeBoundaryTests(unittest.TestCase):
+    def test_extension_payload_not_consumed_or_written_by_live_dex_accessors(self):
+        source = (ROOT / "src/pokedex.c").read_text(encoding="utf-8")
+        start = source.index("static u8 ReadDexSeenMirror(u8 mirror, u16 index)")
+        end = source.index("s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)", start)
+        accessors = source[start:end]
+        self.assertIn("return 0;", accessors)
+        self.assertNotIn("dexFlagExtension[", accessors)
+        self.assertIn("Extension writes remain disabled", accessors)
+
+        reset_start = source.index("void ResetPokedex(void)")
+        reset_end = source.index("void ResetPokedexScrollPositions", reset_start)
+        reset = source[reset_start:reset_end]
+        self.assertNotIn("dexFlagExtension", reset)
+
+        getter_start = source.index("s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)")
+        getter_end = source.index("u16 GetNationalPokedexCount", getter_start)
+        getter = source[getter_start:getter_end]
+        self.assertIn("nationalDexNo > GEN8_DEX_LEGACY_COUNT", getter)
+        self.assertNotIn("GEN8_DEX_COUNT)", getter)
 
 
 if __name__ == "__main__":
