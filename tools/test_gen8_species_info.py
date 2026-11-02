@@ -16,6 +16,29 @@ sys.modules[SPEC.name] = module
 SPEC.loader.exec_module(module)
 
 
+def check_species_mapping_api_generation():
+    header = module.emit_species_header()
+    source = module.emit_species_c([
+        {
+            "national_dex": 1,
+            "source_symbol": "BULBASAUR",
+            "emerald_internal_id": 1,
+        },
+        {
+            "national_dex": 387,
+            "source_symbol": "TURTWIG",
+            "emerald_internal_id": None,
+        },
+    ])
+    assert "Gen8SpeciesMap_GetEmeraldId(u16 nationalDex)" in header
+    assert "Gen8SpeciesMap_IsAssigned(u16 nationalDex)" in header
+    assert "nationalDex == 0 || nationalDex > GEN8_NATIONAL_DEX_COUNT" in source
+    assert "return gGen8SpeciesMap[nationalDex].emeraldSpecies;" in source
+    assert "[1] = { .nationalDex = 1, .emeraldSpecies = 1 }" in source
+    assert "[387] = { .nationalDex = 387, .emeraldSpecies = SPECIES_NONE }" in source
+    assert "return Gen8SpeciesMap_GetEmeraldId(nationalDex) != SPECIES_NONE;" in source
+
+
 def check_enum_implicit_and_explicit_values():
     source = """
     enum __attribute__((packed)) EggGroup
@@ -598,6 +621,7 @@ def check_source_completeness_is_independent_of_target_mapping():
 
 
 def main():
+    check_species_mapping_api_generation()
     check_enum_implicit_and_explicit_values()
     check_nested_designated_initializers()
     check_balanced_species_record_strings()
