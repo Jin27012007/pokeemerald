@@ -98,8 +98,8 @@ def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
     return result
 
 def balanced_species_records(text: str) -> list[dict]:
-    """Read C designated initializers whose RHS is either a brace block or macro."""
-    start_re = re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*", re.M)
+    """Read C designated initializers while respecting strings and comments."""
+    start_re = re.compile(r"^\\s*\\[SPECIES_([A-Z0-9_]+)\\]\\s*=\\s*", re.M)
     records = []
     for match in start_re.finditer(text):
         start = match.end()
@@ -109,19 +109,33 @@ def balanced_species_records(text: str) -> list[dict]:
             continue
         i = start
         paren = brace = bracket = 0
-        in_string = escaped = False
+        in_string = escaped = in_line_comment = in_block_comment = False
         is_brace_block = text[start] == "{"
         while i < len(text):
             ch = text[i]
-            if in_string:
+            nxt = text[i + 1] if i + 1 < len(text) else ""
+            if in_line_comment:
+                if ch == "\\n":
+                    in_line_comment = False
+            elif in_block_comment:
+                if ch == "*" and nxt == "/":
+                    in_block_comment = False
+                    i += 1
+            elif in_string:
                 if escaped:
                     escaped = False
-                elif ch == "\\":
+                elif ch == "\\\\":
                     escaped = True
                 elif ch == '"':
                     in_string = False
             else:
-                if ch == '"':
+                if ch == "/" and nxt == "/":
+                    in_line_comment = True
+                    i += 1
+                elif ch == "/" and nxt == "*":
+                    in_block_comment = True
+                    i += 1
+                elif ch == '"':
                     in_string = True
                 elif ch == "(":
                     paren += 1
@@ -150,7 +164,6 @@ def balanced_species_records(text: str) -> list[dict]:
             body = raw
         records.append({"symbol": match.group(1), "body": body})
     return records
-
 
 def split_c_arguments(raw: str) -> list[str]:
     """Split macro arguments at commas that are not nested or quoted."""
