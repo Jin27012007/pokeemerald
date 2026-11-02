@@ -101,6 +101,15 @@ enum Type {
     assert values["STELLAR"] is None
 
 
+def test_explicit_target_move_alias_resolution():
+    targets = {"VICE_GRIP", "FAINT_ATTACK", "WILL_O_WISP"}
+    assert module.resolve_target_move_symbol("VICEGRIP", targets) == "VICE_GRIP"
+    assert module.resolve_target_move_symbol("FEINT_ATTACK", targets) == "FAINT_ATTACK"
+    assert module.resolve_target_move_symbol("WILL_O_WISP", targets) == "WILL_O_WISP"
+    assert module.resolve_target_move_symbol("SPECTRAL_THIEF", targets) is None
+    assert module.resolve_target_move_symbol("VICEGRIP", {"VICEGRIP"}) == "VICEGRIP"
+
+
 def test_numeric_define_catalog_with_comments():
     source = """
 #define EVO_LEVEL 4 // level-up evolution
@@ -147,6 +156,7 @@ def main():
     test_conditional_shared_pokedex_text_pointer()
     test_numeric_define_catalog_with_comments()
     test_enum_symbol_catalog_keeps_symbolic_aliases()
+    test_explicit_target_move_alias_resolution()
     test_cry_table_labels()
     test_named_array_inventory()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
