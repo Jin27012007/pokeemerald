@@ -257,5 +257,45 @@ int main(void)
             subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
 
+
+    def test_saveblock1_extension_survives_sector_chunk_round_trip(self):
+        save_header = (ROOT / "include/save.h").read_text(encoding="utf-8")
+        save_source = (ROOT / "src/save.c").read_text(encoding="utf-8")
+        global_source = (ROOT / "include/global.h").read_text(encoding="utf-8")
+
+        self.assertIn("#define SECTOR_DATA_SIZE 3968", save_header)
+        self.assertIn("SAVEBLOCK_CHUNK(struct SaveBlock1, 0)", save_source)
+        self.assertIn("SAVEBLOCK_CHUNK(struct SaveBlock1, 1)", save_source)
+        self.assertIn("SAVEBLOCK_CHUNK(struct SaveBlock1, 2)", save_source)
+        self.assertIn("SAVEBLOCK_CHUNK(struct SaveBlock1, 3)", save_source)
+        self.assertIn("(void *)(gSaveBlock1Ptr) + sSaveSlotLayout[i].offset", save_source)
+        self.assertIn("gRamSaveSectorLocations[i].size = sSaveSlotLayout[i].size", save_source)
+        self.assertIn("gReadWriteSector->data[i] = data[i]", save_source)
+        self.assertIn("data[i] = sector->data[i]", save_source)
+
+        block_size = 0x3D88
+        extension_offset = 0x3598
+        self.assertIn("sizeof(struct SaveBlock1)", global_source)
+        self.assertLessEqual(extension_offset + SIZE, block_size)
+        self.assertLessEqual(block_size, 4 * 3968)
+
+        original = bytearray(block_size)
+        original[extension_offset:extension_offset + SIZE] = make_extension()
+        sectors = []
+        for chunk in range(4):
+            offset = chunk * 3968
+            size = min(max(block_size - offset, 0), 3968)
+            sectors.append(bytes(original[offset:offset + size]))
+
+        restored = bytearray(block_size)
+        for chunk, payload in enumerate(sectors):
+            offset = chunk * 3968
+            restored[offset:offset + len(payload)] = payload
+
+        self.assertEqual(
+            restored[extension_offset:extension_offset + SIZE],
+            original[extension_offset:extension_offset + SIZE],
+        )
+
 if __name__ == "__main__":
     unittest.main()
