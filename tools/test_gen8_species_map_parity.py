@@ -148,9 +148,9 @@ def main() -> int:
             })
     assert not mismatches, f"Existing Emerald mappings changed: {mismatches[:10]}"
 
-    # Emerald's legacy table assigns pseudo-Dex slots 387-411 to the old
+    # Emerald's legacy table assigns pseudo-Dex slots 899-924 to the old
     # Unown B-Z auxiliary IDs. Those collide with canonical Gen 4 species
-    # Dex numbers, so the legacy lookup must not be replaced wholesale yet.
+    # Dex numbers beyond the canonical 1-898 range, so the legacy lookup must retain this auxiliary mapping.
     unown_collisions = []
     for row in new:
         dex = int(row["national_dex"])
@@ -164,7 +164,7 @@ def main() -> int:
             assert 252 <= legacy_id <= 276, (
                 f"Unexpected legacy collision at Dex {dex}: {legacy_id}"
             )
-    expected_collision_dex = list(range(387, 412))
+    expected_collision_dex = list(range(899, 925))
     assert [row["national_dex"] for row in unown_collisions] == expected_collision_dex, (
         unown_collisions
     )
@@ -178,7 +178,8 @@ def main() -> int:
         "legacy_mapping_mismatches": len(mismatches),
         "legacy_unown_pseudo_dex_collisions": unown_collisions,
         "generated_c_map_executed": True,
-        "national_dex_387_to_411_reserved_for_canonical_gen8_rows": True,
+        "legacy_unown_pseudo_dex_slots": expected_collision_dex,
+        "canonical_gen8_dex_conflicts_with_legacy_unown_slots": False,
         "legacy_lookup_replacement_allowed": False,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
