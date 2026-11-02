@@ -98,7 +98,7 @@ static bool32 ReadFlagFromCopy(const struct Gen8DexExtension *extension, u16 nat
     const u8 *array = GetGen8DexExtensionFlagArrayConst(extension, copy);
     u16 index;
 
-    if (array == NULL || nationalDex < 413 || nationalDex > GEN8_SPECIES_DEX_LAST)
+    if (array == NULL || nationalDex < 413 || nationalDex > GEN8_DEX_COUNT)
         return FALSE;
 
     index = nationalDex - 413;
@@ -110,7 +110,7 @@ bool32 Gen8DexExtensionReadFlag(const struct Gen8DexExtension *extension, u16 na
     bool32 primary;
     bool32 backup;
 
-    if (!Gen8DexExtensionValidate(extension) || nationalDex < 1 || nationalDex > GEN8_SPECIES_DEX_LAST)
+    if (!Gen8DexExtensionValidate(extension) || nationalDex < 1 || nationalDex > GEN8_DEX_COUNT)
         return FALSE;
 
     // Original 1..412 National Dex flags remain in legacy Pokedex arrays.
@@ -151,7 +151,7 @@ enum Gen8DexExtensionResult Gen8DexExtensionWriteFlag(
         return GEN8_DEX_EXTENSION_BAD_VERSION;
     if (!Gen8DexExtensionValidate(extension))
         return GEN8_DEX_EXTENSION_BAD_CHECKSUM;
-    if (nationalDex < 413 || nationalDex > GEN8_SPECIES_DEX_LAST)
+    if (nationalDex < 413 || nationalDex > GEN8_DEX_COUNT)
         return GEN8_DEX_EXTENSION_BAD_ARGUMENT;
     if (extension->generation == 0xFFFFu)
         return GEN8_DEX_EXTENSION_BAD_GENERATION;
