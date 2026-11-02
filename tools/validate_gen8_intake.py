@@ -56,6 +56,12 @@ def main() -> int:
             fail(f"Dex {dex}: target marked compatible while runtime gaps exist")
     if seen != set(range(1, 899)):
         fail(f"canonical Dex key set incomplete: missing={sorted(set(range(1,899))-seen)[:20]}")
+    provenance = {
+        "existing_emerald_runtime_record": sum(1 for row in rows if row["record_provenance"] == "existing_emerald_runtime_record"),
+        "expansion_source_initializer": sum(1 for row in rows if row["record_provenance"] == "expansion_source_initializer"),
+    }
+    if provenance != {"existing_emerald_runtime_record": 386, "expansion_source_initializer": 512}:
+        fail(f"expected provenance split 386 native + 512 Expansion, got {provenance}")
     counts = report.get("counts", {})
     if counts.get("canonical_species_info_covered") != 898:
         fail("conversion report coverage count disagrees with canonical table")
