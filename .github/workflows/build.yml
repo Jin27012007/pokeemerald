@@ -49,6 +49,7 @@ jobs:
           import json
           report = json.load(open("reports/gen8-conversion/storage_architecture_audit.json", encoding="utf-8"))
           save = report["save_layout"]
+          readiness = report["readiness"]
           assert save["national_dex_count"] == 898
           assert save["required_pokedex_flag_bytes_per_set"] == 113
           assert save["required_seen_owned_flag_bytes"] == 226
@@ -64,8 +65,11 @@ jobs:
           assert save["saveblock2_expanded_headroom_bytes"] == -38
           assert save["saveblock2_fits_after_dex_expansion"] is False
           assert save["sector_data_bytes"] == 3968
-          assert report["readiness"]["num_species_change_allowed"] is False
-          print("PASS: save sector sizing and National Dex flag calculations verified.")
+          assert readiness["num_species_change_allowed"] is False
+          assert readiness["save_extension_sector_plan_validated"] is False
+          assert readiness["save_extension_read_write_tests"] is False
+          assert readiness["runtime_ready"] is False
+          print("PASS: save sector sizing verified; runtime/save migration remains blocked.")
           PY
 
       - name: Test Gen 8 SpeciesInfo parsers and source mappings
