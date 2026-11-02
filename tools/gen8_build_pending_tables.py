@@ -444,7 +444,7 @@ def source_table_inventory() -> dict:
         shared_dex_text_values[match.group(1)] = string_fragments(match.group(2))
     pokedex_rows = []
     unresolved_text = []
-    for dex, mapping, _, source, fields in source_rows:
+    for dex, mapping, canonical_row, source, fields in source_rows:
         description_expression = fields.get("description") if source is not None else None
         description_pointer = resolve_shared_text_pointer(
             description_expression, shared_dex_text_values
@@ -497,7 +497,7 @@ def source_table_inventory() -> dict:
     cry_rows = []
     missing_cries = []
     missing_target_cries = []
-    for dex, mapping, _, source, fields in source_rows:
+    for dex, mapping, canonical_row, source, fields in source_rows:
         cry_symbol = fields.get("cryId") if source is not None else None
         normalized_cry = normalize_cry(cry_symbol) if cry_symbol else None
         source_matched = bool(normalized_cry and normalized_cry in source_cry_set)
@@ -525,7 +525,7 @@ def source_table_inventory() -> dict:
     graphics_rows = []
     missing_graphics_refs = []
     missing_target_graphics_assets = []
-    for dex, mapping, _, source, fields in source_rows:
+    for dex, mapping, canonical_row, source, fields in source_rows:
         refs = {field: fields.get(field) for field in GRAPHICS_FIELDS} if source is not None else {}
         required = ("frontPic", "backPic", "palette", "shinyPalette", "iconSprite")
         missing = [field for field in required if not refs.get(field)]
