@@ -368,7 +368,7 @@ static void InitContestMonPixels(u16 species, bool8 backPic)
     if (!backPic)
     {
         HandleLoadSpecialPokePic_DontHandleDeoxys(
-            &gMonFrontPicTable[species],
+            GetMonFrontPicTableEntry(species),
             gMonSpritesGfxPtr->sprites.ptr[B_POSITION_OPPONENT_LEFT],
             species,
             gContestPaintingWinner->personality);
@@ -377,7 +377,7 @@ static void InitContestMonPixels(u16 species, bool8 backPic)
     else
     {
         HandleLoadSpecialPokePic_DontHandleDeoxys(
-            &gMonBackPicTable[species],
+            GetMonBackPicTableEntry(species),
             gMonSpritesGfxPtr->sprites.ptr[B_POSITION_PLAYER_LEFT],
             species,
             gContestPaintingWinner->personality);

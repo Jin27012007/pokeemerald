@@ -16,6 +16,11 @@ void LoadCompressedSpritePalette(const struct CompressedSpritePalette *src);
 void LoadCompressedSpritePaletteOverrideBuffer(const struct CompressedSpritePalette *src, void *buffer);
 bool8 LoadCompressedSpritePaletteUsingHeap(const struct CompressedSpritePalette *src);
 
+const struct CompressedSpriteSheet *GetMonFrontPicTableEntry(s32 species);
+const struct CompressedSpriteSheet *GetMonBackPicTableEntry(s32 species);
+const struct CompressedSpritePalette *GetMonPaletteTableEntry(s32 species);
+const struct CompressedSpritePalette *GetMonShinyPaletteTableEntry(s32 species);
+
 void DecompressPicFromTable(const struct CompressedSpriteSheet *src, void *buffer, s32 species);
 void DecompressPicFromTable_2(const struct CompressedSpriteSheet *src, void *buffer, s32 species);
 void DecompressPicFromTable_DontHandleDeoxys(const struct CompressedSpriteSheet *src, void *buffer, s32 species);

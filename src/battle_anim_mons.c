@@ -2098,13 +2098,13 @@ u8 CreateAdditionalMonSpriteForMoveAnim(u16 species, bool8 isBackpic, u8 id, s16
     {
         LoadCompressedPalette(GetMonSpritePalFromSpeciesAndPersonality(species, trainerId, personality), OBJ_PLTT_ID(palette), PLTT_SIZE_4BPP);
         if (ignoreDeoxysForm == TRUE || ShouldIgnoreDeoxysForm(5, battler) == TRUE || gBattleSpritesDataPtr->battlerData[battler].transformSpecies != 0)
-            LoadSpecialPokePic_DontHandleDeoxys(&gMonFrontPicTable[species],
+            LoadSpecialPokePic_DontHandleDeoxys(GetMonFrontPicTableEntry(species),
                                                 gMonSpritesGfxPtr->buffer,
                                                 species,
                                                 personality,
                                                 TRUE);
         else
-            LoadSpecialPokePic_2(&gMonFrontPicTable[species],
+            LoadSpecialPokePic_2(GetMonFrontPicTableEntry(species),
                                  gMonSpritesGfxPtr->buffer,
                                  species,
                                  personality,
@@ -2114,13 +2114,13 @@ u8 CreateAdditionalMonSpriteForMoveAnim(u16 species, bool8 isBackpic, u8 id, s16
     {
         LoadCompressedPalette(GetMonSpritePalFromSpeciesAndPersonality(species, trainerId, personality), OBJ_PLTT_ID(palette), PLTT_SIZE_4BPP);
         if (ignoreDeoxysForm == TRUE || ShouldIgnoreDeoxysForm(5, battler) == TRUE || gBattleSpritesDataPtr->battlerData[battler].transformSpecies != 0)
-            LoadSpecialPokePic_DontHandleDeoxys(&gMonBackPicTable[species],
+            LoadSpecialPokePic_DontHandleDeoxys(GetMonBackPicTableEntry(species),
                                                 gMonSpritesGfxPtr->buffer,
                                                 species,
                                                 personality,
                                                 FALSE);
         else
-            LoadSpecialPokePic_2(&gMonBackPicTable[species],
+            LoadSpecialPokePic_2(GetMonBackPicTableEntry(species),
                                  gMonSpritesGfxPtr->buffer,
                                  species,
                                  personality,
