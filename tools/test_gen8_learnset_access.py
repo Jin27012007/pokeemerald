@@ -62,6 +62,7 @@ def main() -> int:
         "void DeleteFirstMoveAndGiveMoveToMon",
     )
     assert "GetLevelUpLearnsetSafe(species)" in learn_move
+    assert "if (learnset[0] == LEVEL_UP_END)" in learn_move
     assert "learnset[sLearningMoveTableID] != LEVEL_UP_END" in learn_move
     assert "if (learnset[sLearningMoveTableID] == LEVEL_UP_END)" in learn_move
     assert "gLevelUpLearnsets[" not in learn_move
