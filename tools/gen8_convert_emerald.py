@@ -1203,7 +1203,7 @@ def generate(check: bool = False) -> dict:
         is_native = row.get("record_provenance") == "existing_emerald_runtime_record"
         canonical_species_info.append({
             "national_dex": dex,
-            "source_national_dex_symbol": national_symbol,
+            "national_symbol": national_symbol,
             "source_record_symbol": row["species_symbol"],
             "source_national_dex_symbol": row.get("national_dex_symbol"),
             "source_national_dex_matches_selected": (
