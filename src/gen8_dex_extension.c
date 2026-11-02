@@ -10,23 +10,6 @@ STATIC_ASSERT(sizeof(struct Gen8DexExtension) == 256, Gen8DexExtension_must_fit_
 STATIC_ASSERT(GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_LOCAL_COPY_COUNT == 244, Gen8DexExtension_flag_payload_must_be_244_bytes);
 STATIC_ASSERT(GEN8_DEX_EXT_BYTES == 61, Gen8DexExtension_requires_486_dex_bits_per_copy);
 
-static u8 *GetGen8DexExtensionFlagArray(struct Gen8DexExtension *extension, u8 copy)
-{
-    switch (copy)
-    {
-    case GEN8_DEX_COPY_SEEN:
-        return extension->seen;
-    case GEN8_DEX_COPY_OWNED:
-        return extension->owned;
-    case GEN8_DEX_COPY_SEEN_BACKUP:
-        return extension->seenBackup;
-    case GEN8_DEX_COPY_OWNED_BACKUP:
-        return extension->ownedBackup;
-    default:
-        return NULL;
-    }
-}
-
 static const u8 *GetGen8DexExtensionFlagArrayConst(const struct Gen8DexExtension *extension, u8 copy)
 {
     switch (copy)
