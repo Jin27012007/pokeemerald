@@ -165,6 +165,12 @@ class RuntimeIntegrationTests(unittest.TestCase):
         self.assertIn("Gen8DexExtensionInit(GetGen8DexExtension())", source)
         self.assertIn("nationalDexNo > GEN8_DEX_COUNT", source)
         self.assertIn("nationalDexNo > GEN8_DEX_LEGACY_COUNT", source)
+        prepare_start = source.index("static bool32 PrepareGen8DexExtensionForWrite")
+        prepare_end = source.index("static s8 GetSetGen8DexFlag", prepare_start)
+        prepare = source[prepare_start:prepare_end]
+        self.assertIn("IsGen8DexExtensionBlank(extension)", prepare)
+        self.assertIn("Gen8DexExtensionInit(extension)", prepare)
+        self.assertIn("return Gen8DexExtensionValidate(extension)", prepare)
 
         reset_start = source.index("void ResetPokedex(void)")
         reset_end = source.index("void ResetPokedexScrollPositions", reset_start)
@@ -275,6 +281,12 @@ int main(void)
         self.assertIn("gRamSaveSectorLocations[i].size = sSaveSlotLayout[i].size", save_source)
         self.assertIn("gReadWriteSector->data[i] = data[i]", save_source)
         self.assertIn("data[i] = sector->data[i]", save_source)
+        self.assertIn("#define NUM_SAVE_SLOTS 2", save_header)
+        self.assertIn("for (i = 0; i < NUM_SECTORS_PER_SLOT; i++)", save_source)
+        self.assertIn("if (gDamagedSaveSectors)", save_source)
+        self.assertIn("gLastWrittenSector = gLastKnownGoodSector", save_source)
+        self.assertIn("validSectorFlags == (1 << NUM_SECTORS_PER_SLOT) - 1", save_source)
+        self.assertIn("sector += NUM_SECTORS_PER_SLOT * (gSaveCounter % NUM_SAVE_SLOTS)", save_source)
 
         block_size = 0x3D88
         extension_offset = 0x3598
