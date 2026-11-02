@@ -2405,8 +2405,8 @@ static void InitDomeTrainers(void)
         rankingScores[0] += GetMonData(&gPlayerParty[trainerId], MON_DATA_SPDEF, NULL);
         rankingScores[0] += GetMonData(&gPlayerParty[trainerId], MON_DATA_SPEED, NULL);
         rankingScores[0] += GetMonData(&gPlayerParty[trainerId], MON_DATA_MAX_HP, NULL);
-        monTypesBits |= gBitTable[gSpeciesInfo[GetMonData(&gPlayerParty[trainerId], MON_DATA_SPECIES, NULL)].types[0]];
-        monTypesBits |= gBitTable[gSpeciesInfo[GetMonData(&gPlayerParty[trainerId], MON_DATA_SPECIES, NULL)].types[1]];
+        monTypesBits |= gBitTable[GetSpeciesInfoSafe(GetMonData(&gPlayerParty[trainerId], MON_DATA_SPECIES, NULL))->types[0]];
+        monTypesBits |= gBitTable[GetSpeciesInfoSafe(GetMonData(&gPlayerParty[trainerId], MON_DATA_SPECIES, NULL))->types[1]];
     }
 
     // Count the number of types in the players party, to factor into the ranking
@@ -2440,8 +2440,8 @@ static void InitDomeTrainers(void)
             rankingScores[i] += statValues[STAT_SPDEF];
             rankingScores[i] += statValues[STAT_SPEED];
             rankingScores[i] += statValues[STAT_HP];
-            monTypesBits |= gBitTable[gSpeciesInfo[gFacilityTrainerMons[DOME_MONS[i][j]].species].types[0]];
-            monTypesBits |= gBitTable[gSpeciesInfo[gFacilityTrainerMons[DOME_MONS[i][j]].species].types[1]];
+            monTypesBits |= gBitTable[GetSpeciesInfoSafe(gFacilityTrainerMons[DOME_MONS[i][j]].species)->types[0]];
+            monTypesBits |= gBitTable[GetSpeciesInfoSafe(gFacilityTrainerMons[DOME_MONS[i][j]].species)->types[1]];
         }
 
         for (monTypesCount = 0, j = 0; j < 32; j++)
@@ -2505,7 +2505,7 @@ static void InitDomeTrainers(void)
 
 #define CALC_STAT(base, statIndex)                                                          \
 {                                                                                           \
-    u8 baseStat = gSpeciesInfo[species].base;                                                 \
+    u8 baseStat = GetSpeciesInfoSafe(species)->base;                                                 \
     stats[statIndex] = (((2 * baseStat + ivs + evs[statIndex] / 4) * level) / 100) + 5;     \
     stats[statIndex] = (u8) ModifyStatByNature(nature, stats[statIndex], statIndex);        \
 }
@@ -2538,7 +2538,7 @@ static void CalcDomeMonStats(u16 species, int level, int ivs, u8 evBits, u8 natu
     }
     else
     {
-        int n = 2 * gSpeciesInfo[species].baseHP;
+        int n = 2 * GetSpeciesInfoSafe(species)->baseHP;
         stats[STAT_HP] = (((n + ivs + evs[STAT_HP] / 4) * level) / 100) + level + 10;
     }
 
@@ -2807,9 +2807,9 @@ static int GetTypeEffectivenessPoints(int move, int targetSpecies, int mode)
     if (move == MOVE_NONE || move == MOVE_UNAVAILABLE || gBattleMoves[move].power == 0)
         return 0;
 
-    defType1 = gSpeciesInfo[targetSpecies].types[0];
-    defType2 = gSpeciesInfo[targetSpecies].types[1];
-    defAbility = gSpeciesInfo[targetSpecies].abilities[0];
+    defType1 = GetSpeciesInfoSafe(targetSpecies)->types[0];
+    defType2 = GetSpeciesInfoSafe(targetSpecies)->types[1];
+    defAbility = GetSpeciesInfoSafe(targetSpecies)->abilities[0];
     moveType = gBattleMoves[move].type;
 
     if (defAbility == ABILITY_LEVITATE && moveType == TYPE_GROUND)
@@ -5261,9 +5261,9 @@ static u16 GetWinningMove(int winnerTournamentId, int loserTournamentId, u8 roun
 
                 targetSpecies = gFacilityTrainerMons[DOME_MONS[loserTournamentId][k]].species;
                 if (var & 1)
-                    targetAbility = gSpeciesInfo[targetSpecies].abilities[1];
+                    targetAbility = GetSpeciesInfoSafe(targetSpecies)->abilities[1];
                 else
-                    targetAbility = gSpeciesInfo[targetSpecies].abilities[0];
+                    targetAbility = GetSpeciesInfoSafe(targetSpecies)->abilities[0];
 
                 var = AI_TypeCalc(moves[i * MAX_MON_MOVES + j], targetSpecies, targetAbility);
                 if (var & MOVE_RESULT_NOT_VERY_EFFECTIVE && var & MOVE_RESULT_SUPER_EFFECTIVE)
@@ -5940,8 +5940,8 @@ static void InitRandomTourneyTreeResults(void)
             statSums[i] += statValues[STAT_SPDEF];
             statSums[i] += statValues[STAT_SPEED];
             statSums[i] += statValues[STAT_HP];
-            monTypesBits |= gBitTable[gSpeciesInfo[gFacilityTrainerMons[DOME_MONS[i][j]].species].types[0]];
-            monTypesBits |= gBitTable[gSpeciesInfo[gFacilityTrainerMons[DOME_MONS[i][j]].species].types[1]];
+            monTypesBits |= gBitTable[GetSpeciesInfoSafe(gFacilityTrainerMons[DOME_MONS[i][j]].species)->types[0]];
+            monTypesBits |= gBitTable[GetSpeciesInfoSafe(gFacilityTrainerMons[DOME_MONS[i][j]].species)->types[1]];
         }
 
         // Because GF hates temporary vars, trainerId acts like monTypesCount here.
@@ -6067,12 +6067,12 @@ static void DecideRoundWinners(u8 roundId)
                     }
                 }
                 species = gFacilityTrainerMons[DOME_MONS[tournamentId1][monId1]].species;
-                points1 += ( gSpeciesInfo[species].baseHP
-                           + gSpeciesInfo[species].baseAttack
-                           + gSpeciesInfo[species].baseDefense
-                           + gSpeciesInfo[species].baseSpeed
-                           + gSpeciesInfo[species].baseSpAttack
-                           + gSpeciesInfo[species].baseSpDefense) / 10;
+                points1 += ( GetSpeciesInfoSafe(species)->baseHP
+                           + GetSpeciesInfoSafe(species)->baseAttack
+                           + GetSpeciesInfoSafe(species)->baseDefense
+                           + GetSpeciesInfoSafe(species)->baseSpeed
+                           + GetSpeciesInfoSafe(species)->baseSpAttack
+                           + GetSpeciesInfoSafe(species)->baseSpDefense) / 10;
             }
             // Random part of the formula.
             points1 += (Random() & 0x1F);
@@ -6090,12 +6090,12 @@ static void DecideRoundWinners(u8 roundId)
                     }
                 }
                 species = gFacilityTrainerMons[DOME_MONS[tournamentId2][monId1]].species;
-                points2 += ( gSpeciesInfo[species].baseHP
-                           + gSpeciesInfo[species].baseAttack
-                           + gSpeciesInfo[species].baseDefense
-                           + gSpeciesInfo[species].baseSpeed
-                           + gSpeciesInfo[species].baseSpAttack
-                           + gSpeciesInfo[species].baseSpDefense) / 10;
+                points2 += ( GetSpeciesInfoSafe(species)->baseHP
+                           + GetSpeciesInfoSafe(species)->baseAttack
+                           + GetSpeciesInfoSafe(species)->baseDefense
+                           + GetSpeciesInfoSafe(species)->baseSpeed
+                           + GetSpeciesInfoSafe(species)->baseSpAttack
+                           + GetSpeciesInfoSafe(species)->baseSpDefense) / 10;
             }
             // Random part of the formula.
             points2 += (Random() & 0x1F);

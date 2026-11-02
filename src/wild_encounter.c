@@ -383,7 +383,7 @@ static void CreateWildMon(u16 species, u8 level)
     ZeroEnemyPartyMons();
     checkCuteCharm = TRUE;
 
-    switch (gSpeciesInfo[species].genderRatio)
+    switch (GetSpeciesInfoSafe(species)->genderRatio)
     {
     case MON_MALE:
     case MON_FEMALE:
@@ -922,7 +922,7 @@ static bool8 TryGetRandomWildMonIndexByType(const struct WildPokemon *wildMon, u
 
     for (validMonCount = 0, i = 0; i < numMon; i++)
     {
-        if (gSpeciesInfo[wildMon[i].species].types[0] == type || gSpeciesInfo[wildMon[i].species].types[1] == type)
+        if (GetSpeciesInfoSafe(wildMon[i].species)->types[0] == type || GetSpeciesInfoSafe(wildMon[i].species)->types[1] == type)
             validIndexes[validMonCount++] = i;
     }
 

@@ -3112,7 +3112,7 @@ static void BattleStartClearSetData(void)
     gBattleStruct->runTries = 0;
     gBattleStruct->safariGoNearCounter = 0;
     gBattleStruct->safariPkblThrowCounter = 0;
-    *(&gBattleStruct->safariCatchFactor) = gSpeciesInfo[GetMonData(&gEnemyParty[0], MON_DATA_SPECIES)].catchRate * 100 / 1275;
+    *(&gBattleStruct->safariCatchFactor) = GetSpeciesInfoSafe(GetMonData(&gEnemyParty[0], MON_DATA_SPECIES))->catchRate * 100 / 1275;
     gBattleStruct->safariEscapeFactor = 3;
     gBattleStruct->wildVictorySong = 0;
     gBattleStruct->moneyMultiplier = 1;
@@ -3347,8 +3347,8 @@ void FaintClearSetData(void)
 
     gBattleResources->flags->flags[gActiveBattler] = 0;
 
-    gBattleMons[gActiveBattler].types[0] = gSpeciesInfo[gBattleMons[gActiveBattler].species].types[0];
-    gBattleMons[gActiveBattler].types[1] = gSpeciesInfo[gBattleMons[gActiveBattler].species].types[1];
+    gBattleMons[gActiveBattler].types[0] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[0];
+    gBattleMons[gActiveBattler].types[1] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[1];
 
     ClearBattlerMoveHistory(gActiveBattler);
     ClearBattlerAbilityHistory(gActiveBattler);
@@ -3415,8 +3415,8 @@ static void BattleIntroDrawTrainersOrMonsSprites(void)
             for (i = 0; i < sizeof(struct BattlePokemon); i++)
                 ptr[i] = gBattleBufferB[gActiveBattler][4 + i];
 
-            gBattleMons[gActiveBattler].types[0] = gSpeciesInfo[gBattleMons[gActiveBattler].species].types[0];
-            gBattleMons[gActiveBattler].types[1] = gSpeciesInfo[gBattleMons[gActiveBattler].species].types[1];
+            gBattleMons[gActiveBattler].types[0] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[0];
+            gBattleMons[gActiveBattler].types[1] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[1];
             gBattleMons[gActiveBattler].ability = GetAbilityBySpecies(gBattleMons[gActiveBattler].species, gBattleMons[gActiveBattler].abilityNum);
             hpOnSwitchout = &gBattleStruct->hpOnSwitchout[GetBattlerSide(gActiveBattler)];
             *hpOnSwitchout = gBattleMons[gActiveBattler].hp;
