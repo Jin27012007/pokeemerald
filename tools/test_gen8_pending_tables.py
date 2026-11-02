@@ -134,17 +134,26 @@ def test_move_alias_catalog_and_conflict_detection():
         "SPECTRAL_THIEF": None,
     }
 
-    # Several source spellings can be aliases of one canonical move, but
-    # their shared target ID is not a target-ID collision.
-    source_owner = {}
-    for source_symbol, target_symbol in resolved.items():
-        if target_symbol is None:
-            continue
-        target_id = {"VICE_GRIP": 11, "FAINT_ATTACK": 185}[target_symbol]
-        previous = source_owner.get(target_id)
-        if previous is not None:
-            assert previous != source_symbol
-        source_owner[target_id] = source_symbol
+    # Alias spellings intentionally converge on an existing ID.
+    assert resolved["VISE_GRIP"] == resolved["VICEGRIP"]
+    assert resolved["FEINT_ATTACK"] == "FAINT_ATTACK"
+
+    # Collision detection is by canonical source record after aliases resolve.
+    source_records = [
+        {"source_move_symbol": "VISE_GRIP", "emerald_move_symbol": "VICE_GRIP", "emerald_move_id": 11},
+        {"source_move_symbol": "VICEGRIP", "emerald_move_symbol": "VICE_GRIP", "emerald_move_id": 11},
+        {"source_move_symbol": "FEINT_ATTACK", "emerald_move_symbol": "FAINT_ATTACK", "emerald_move_id": 185},
+    ]
+    owners = {}
+    conflicts = {}
+    for row in source_records:
+        key = row["emerald_move_id"]
+        previous = owners.get(key)
+        if previous is not None and previous != row["emerald_move_symbol"]:
+            conflicts.setdefault(key, [previous]).append(row["emerald_move_symbol"])
+        else:
+            owners[key] = row["emerald_move_symbol"]
+    assert conflicts == {}
 
 
 def test_cry_table_labels():
