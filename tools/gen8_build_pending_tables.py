@@ -395,6 +395,9 @@ def source_table_inventory() -> dict:
     missing_learnsets = []
     used_move_symbols = set()
     for dex, mapping, _, source, fields in source_rows:
+        if source is None:
+            missing_learnsets.append({"national_dex": dex, "species": mapping["source_symbol"], "pointer": None, "status": "native_emerald_learnset_retained"})
+            continue
         pointer = fields.get("levelUpLearnset")
         block = gen8_blocks.get(pointer)
         if block is None:
@@ -415,7 +418,7 @@ def source_table_inventory() -> dict:
     evolution_rows = []
     unresolved_evolutions = []
     for dex, mapping, _, source, fields in source_rows:
-        raw = fields.get("evolutions")
+        raw = fields.get("evolutions") if source is not None else None
         parsed = [] if raw is None else parse_evolution_expression(raw)
         if raw is not None and parsed is None:
             unresolved_evolutions.append({"national_dex": dex, "species_symbol": mapping["source_symbol"], "raw": raw})
@@ -451,7 +454,8 @@ def source_table_inventory() -> dict:
         row = {
             "national_dex": dex,
             "species_symbol": mapping["source_symbol"],
-            "source_generation": source["generation"],
+            "source_generation": source["generation"] if source is not None else canonical_row.get("source_generation"),
+            "record_provenance": canonical_row.get("record_provenance"),
             "species_name_expression": fields.get("speciesName"),
             "species_name_fragments": string_fragments(fields.get("speciesName", "")),
             "category_expression": fields.get("categoryName"),
@@ -489,7 +493,7 @@ def source_table_inventory() -> dict:
     missing_cries = []
     missing_target_cries = []
     for dex, mapping, _, source, fields in source_rows:
-        cry_symbol = fields.get("cryId")
+        cry_symbol = fields.get("cryId") if source is not None else None
         normalized_cry = normalize_cry(cry_symbol) if cry_symbol else None
         source_matched = bool(normalized_cry and normalized_cry in source_cry_set)
         target_matched = bool(normalized_cry and normalized_cry in target_cry_set)
@@ -564,8 +568,8 @@ def source_table_inventory() -> dict:
     referenced_form_species = set()
     referenced_form_changes = set()
     for dex, mapping, _, source, fields in source_rows:
-        species_pointer = fields.get("formSpeciesIdTable")
-        change_pointer = fields.get("formChangeTable")
+        species_pointer = fields.get("formSpeciesIdTable") if source is not None else None
+        change_pointer = fields.get("formChangeTable") if source is not None else None
         species_table = form_species_arrays.get(species_pointer) if species_pointer else None
         change_table = form_change_arrays.get(change_pointer) if change_pointer else None
         missing = []
