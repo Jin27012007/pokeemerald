@@ -36,42 +36,51 @@ def check_species_mapping_api_executes_as_c():
         root = Path(temporary)
         (root / "constants").mkdir()
         (root / "global.h").write_text(
-            "#ifndef GLOBAL_H\\n#define GLOBAL_H\\n"
-            "#include <stdint.h>\\n"
-            "typedef uint8_t u8; typedef uint16_t u16; typedef int32_t bool32;\\n"
-            "#define TRUE 1\\n#define FALSE 0\\n"
-            "#endif\\n",
+            """#ifndef GLOBAL_H
+#define GLOBAL_H
+#include <stdint.h>
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef int32_t bool32;
+#define TRUE 1
+#define FALSE 0
+#endif
+""",
             encoding="utf-8",
         )
         (root / "constants/species.h").write_text(
-            "#define SPECIES_NONE 0\\n"
-            "#define SPECIES_EGG 412\\n"
-            "#define NUM_SPECIES SPECIES_EGG\\n"
-            "#define SPECIES_UNOWN_B (NUM_SPECIES + 1)\\n",
+            """#define SPECIES_NONE 0
+#define SPECIES_EGG 412
+#define NUM_SPECIES SPECIES_EGG
+#define SPECIES_UNOWN_B (NUM_SPECIES + 1)
+""",
             encoding="utf-8",
         )
         (root / "gen8_species_map.h").write_text(generated_header, encoding="utf-8")
         (root / "species_map.c").write_text(generated_source, encoding="utf-8")
         (root / "test.c").write_text(
-            '#include "gen8_species_map.h"\\n'
-            "int main(void)\\n{\\n"
-            "    if (Gen8SpeciesMap_GetEmeraldId(1) != 1) return 1;\\n"
-            "    if (Gen8SpeciesMap_GetEmeraldId(252) != 277) return 2;\\n"
-            "    if (Gen8SpeciesMap_GetEmeraldId(387) != SPECIES_NONE) return 3;\\n"
-            "    if (Gen8SpeciesMap_GetEmeraldId(0) != SPECIES_NONE) return 4;\\n"
-            "    if (Gen8SpeciesMap_GetEmeraldId(899) != SPECIES_NONE) return 5;\\n"
-            "    if (Gen8SpeciesMap_GetEmeraldId(65535) != SPECIES_NONE) return 6;\\n"
-            "    if (!Gen8SpeciesMap_IsAssigned(252) || Gen8SpeciesMap_IsAssigned(387)) return 7;\\n"
-            "    if (!Gen8SpeciesMap_IsValidInternalId(277)) return 8;\\n"
-            "    if (Gen8SpeciesMap_IsValidInternalId(0)) return 9;\\n"
-            "    if (Gen8SpeciesMap_IsValidInternalId(2)) return 10;\\n"
-            "    if (Gen8SpeciesMap_IsValidInternalId(SPECIES_EGG)) return 11;\\n"
-            "    if (Gen8SpeciesMap_IsValidInternalId(SPECIES_UNOWN_B)) return 12;\\n"
-            "    if (Gen8SpeciesMap_GetNationalDex(277) != 252) return 13;\\n"
-            "    if (Gen8SpeciesMap_GetNationalDex(1) != 1) return 14;\\n"
-            "    if (Gen8SpeciesMap_GetNationalDex(2) != 0) return 15;\\n"
-            "    if (Gen8SpeciesMap_GetNationalDex(SPECIES_EGG) != 0) return 16;\\n"
-            "    return 0;\\n}\\n",
+            """#include "gen8_species_map.h"
+int main(void)
+{
+    if (Gen8SpeciesMap_GetEmeraldId(1) != 1) return 1;
+    if (Gen8SpeciesMap_GetEmeraldId(252) != 277) return 2;
+    if (Gen8SpeciesMap_GetEmeraldId(387) != SPECIES_NONE) return 3;
+    if (Gen8SpeciesMap_GetEmeraldId(0) != SPECIES_NONE) return 4;
+    if (Gen8SpeciesMap_GetEmeraldId(899) != SPECIES_NONE) return 5;
+    if (Gen8SpeciesMap_GetEmeraldId(65535) != SPECIES_NONE) return 6;
+    if (!Gen8SpeciesMap_IsAssigned(252) || Gen8SpeciesMap_IsAssigned(387)) return 7;
+    if (!Gen8SpeciesMap_IsValidInternalId(277)) return 8;
+    if (Gen8SpeciesMap_IsValidInternalId(0)) return 9;
+    if (Gen8SpeciesMap_IsValidInternalId(2)) return 10;
+    if (Gen8SpeciesMap_IsValidInternalId(SPECIES_EGG)) return 11;
+    if (Gen8SpeciesMap_IsValidInternalId(SPECIES_UNOWN_B)) return 12;
+    if (Gen8SpeciesMap_GetNationalDex(277) != 252) return 13;
+    if (Gen8SpeciesMap_GetNationalDex(1) != 1) return 14;
+    if (Gen8SpeciesMap_GetNationalDex(2) != 0) return 15;
+    if (Gen8SpeciesMap_GetNationalDex(SPECIES_EGG) != 0) return 16;
+    return 0;
+}
+""",
             encoding="utf-8",
         )
         executable = root / "species-map-test"
@@ -87,7 +96,6 @@ def check_species_mapping_api_executes_as_c():
         except subprocess.CalledProcessError as error:
             raise AssertionError(error.stderr or error.stdout) from error
         subprocess.run([str(executable)], check=True, capture_output=True, text=True)
-
 
 
 def check_species_mapping_api_generation():
