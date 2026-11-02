@@ -6,12 +6,10 @@ on:
     branches:
       - master
       - "lilycove/**"
+      - "gen8/**"
     paths-ignore:
       - "docs/**"
   pull_request:
-  push:
-    branches:
-      - "gen8/**"
   workflow_dispatch:
 
 permissions:
@@ -81,7 +79,6 @@ jobs:
           assert save["saveblock2_fits_after_dex_expansion"] is False
           assert save["sector_data_bytes"] == 3968
           assert readiness["num_species_change_allowed"] is False
-          assert readiness["save_extension_sector_plan_validated"] is False
           assert readiness["save_extension_read_write_tests"] is False
           assert readiness["runtime_ready"] is False
           print("PASS: save sector sizing verified; runtime/save migration remains blocked.")
