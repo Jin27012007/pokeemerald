@@ -188,6 +188,36 @@ def test_resolved_aliases_do_not_create_false_id_collisions():
     assert conflicts == {11: ["VICE_GRIP", "ANOTHER_MOVE"]}
 
 
+def test_battle_effect_dependency_grouping():
+    move_rows = [
+        {"source_move_symbol": "TEST_A", "battle_fields": {"effect": "EFFECT_HIT"}, "target_battle_record_present": False},
+        {"source_move_symbol": "TEST_B", "battle_fields": {"effect": "EFFECT_HIT"}, "target_battle_record_present": True},
+        {"source_move_symbol": "TEST_C", "battle_fields": {"effect": "EFFECT_CUSTOM"}, "target_battle_record_present": False},
+    ]
+    effect_symbols = ["EFFECT_HIT", "EFFECT_CUSTOM"]
+    rows = []
+    for effect in effect_symbols:
+        affected = [
+            row for row in move_rows
+            if effect in module.re.findall(
+                r"\bEFFECT_[A-Z0-9_]+\b",
+                row["battle_fields"].get("effect") or "",
+            )
+        ]
+        rows.append({
+            "effect_symbol": effect,
+            "canonical_move_count": len(affected),
+            "canonical_moves": sorted(row["source_move_symbol"] for row in affected),
+            "missing_move_record_count": sum(1 for row in affected if not row["target_battle_record_present"]),
+        })
+    assert rows == [
+        {"effect_symbol": "EFFECT_HIT", "canonical_move_count": 2,
+         "canonical_moves": ["TEST_A", "TEST_B"], "missing_move_record_count": 1},
+        {"effect_symbol": "EFFECT_CUSTOM", "canonical_move_count": 1,
+         "canonical_moves": ["TEST_C"], "missing_move_record_count": 1},
+    ]
+
+
 def test_cry_table_labels():
     source = """gCryTable::
     cry Cry_Bulbasaur
@@ -227,6 +257,7 @@ def main():
     test_explicit_target_move_alias_resolution()
     test_move_alias_catalog_and_conflict_detection()
     test_resolved_aliases_do_not_create_false_id_collisions()
+    test_battle_effect_dependency_grouping()
     test_cry_table_labels()
     test_named_array_inventory()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
