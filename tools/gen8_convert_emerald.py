@@ -535,6 +535,12 @@ struct Gen8SpeciesMapEntry
     u16 emeraldSpecies; // SPECIES_NONE means no Emerald internal ID assigned.
 };
 extern const struct Gen8SpeciesMapEntry gGen8SpeciesMap[GEN8_NATIONAL_DEX_COUNT + 1];
+
+// Accepts National Dex numbers only. Returns SPECIES_NONE for invalid Dex
+// values and for species whose Emerald internal ID has not been allocated.
+u16 Gen8SpeciesMap_GetEmeraldId(u16 nationalDex);
+bool32 Gen8SpeciesMap_IsAssigned(u16 nationalDex);
+
 #endif // GUARD_GEN8_SPECIES_MAP_H
 """
 
@@ -549,7 +555,22 @@ def emit_species_c(rows: list[dict]) -> str:
     for row in rows:
         value = str(row["emerald_internal_id"]) if row["emerald_internal_id"] is not None else "SPECIES_NONE"
         lines.append(f'    [{row["national_dex"]}] = {{ .nationalDex = {row["national_dex"]}, .emeraldSpecies = {value} }}, // {row["source_symbol"]}')
-    lines.extend(["};", ""])
+    lines.extend([
+        "};",
+        "",
+        "u16 Gen8SpeciesMap_GetEmeraldId(u16 nationalDex)",
+        "{",
+        "    if (nationalDex == 0 || nationalDex > GEN8_NATIONAL_DEX_COUNT)",
+        "        return SPECIES_NONE;",
+        "    return gGen8SpeciesMap[nationalDex].emeraldSpecies;",
+        "}",
+        "",
+        "bool32 Gen8SpeciesMap_IsAssigned(u16 nationalDex)",
+        "{",
+        "    return Gen8SpeciesMap_GetEmeraldId(nationalDex) != SPECIES_NONE;",
+        "}",
+        "",
+    ])
     return "\n".join(lines)
 
 def emit_readiness_header(counts: dict) -> str:
