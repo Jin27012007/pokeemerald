@@ -741,6 +741,28 @@ def source_table_inventory() -> dict:
         row["source_move_symbol"] for row in used_move_rows
         if not row["target_contest_record_present"]
     )
+    move_alias_rows = [
+        {
+            "source_move_symbol": row["source_move_symbol"],
+            "source_move_id": row["source_move_id"],
+            "emerald_move_symbol": row["emerald_move_symbol"],
+            "emerald_move_id": row["emerald_move_id"],
+            "used_by_canonical_gen8_learnsets": row["used_by_canonical_gen8_learnsets"],
+        }
+        for row in move_rows
+        if row["emerald_move_symbol"] is not None
+        and row["source_move_symbol"] != row["emerald_move_symbol"]
+    ]
+    move_id_conflicts = {}
+    target_id_owners = {}
+    for row in move_rows:
+        if row["emerald_move_id"] is None:
+            continue
+        previous = target_id_owners.get(row["emerald_move_id"])
+        if previous is not None and previous != row["source_move_symbol"]:
+            move_id_conflicts.setdefault(row["emerald_move_id"], [previous]).append(row["source_move_symbol"])
+        else:
+            target_id_owners[row["emerald_move_id"]] = row["source_move_symbol"]
 
     # Ability/item dependency closure for the selected 898 canonical rows.
     # The per-species compact file is a list; enum domains are stored in
@@ -980,6 +1002,8 @@ def source_table_inventory() -> dict:
         "source_battle_effect_symbols_missing_in_emerald": len(missing_battle_effects),
         "canonical_gen8_learnset_moves_missing_target_battle_records": len(missing_target_battle_move_records),
         "canonical_gen8_learnset_moves_missing_target_contest_records": len(missing_target_contest_move_records),
+        "canonical_gen8_move_aliases_resolved_to_emerald_ids": sum(1 for row in move_alias_rows if row["used_by_canonical_gen8_learnsets"]),
+        "canonical_gen8_move_id_conflicts": len(move_id_conflicts),
         "canonical_abilities_used": len(ability_rows),
         "canonical_abilities_without_emerald_constant": sum(not row["target_ability_constant_present"] for row in ability_rows),
         "canonical_abilities_without_source_info_record": sum(not row["source_ability_info_record_present"] for row in ability_rows),
@@ -1067,6 +1091,8 @@ def source_table_inventory() -> dict:
         "missing_battle_effect_symbols": missing_battle_effects,
         "missing_target_battle_move_records": missing_target_battle_move_records,
         "missing_target_contest_move_records": missing_target_contest_move_records,
+        "move_aliases_resolved_to_emerald_ids": move_alias_rows,
+        "move_id_conflicts": move_id_conflicts,
         "missing_emerald_abilities": [row["ability_symbol"] for row in ability_rows if not row["target_ability_constant_present"]],
         "abilities_without_source_info_records": [row["ability_symbol"] for row in ability_rows if not row["source_ability_info_record_present"]],
         "missing_emerald_items": [row["item_symbol"] for row in item_rows if not row["target_item_constant_present"]],
@@ -1089,6 +1115,8 @@ def source_table_inventory() -> dict:
         DATA / "gen8_species_form_references.json": form_rows,
         DATA / "gen8_species_level_up_learnsets.json": canonical_learnsets,
         DATA / "gen8_move_source_catalog.json": move_rows,
+        DATA / "gen8_move_alias_map.json": move_alias_rows,
+        DATA / "gen8_move_id_conflicts.json": move_id_conflicts,
         DATA / "gen8_contest_effect_source_catalog.json": contest_effect_rows,
         DATA / "gen8_ability_source_dependencies.json": ability_rows,
         DATA / "gen8_item_source_dependencies.json": item_rows,
