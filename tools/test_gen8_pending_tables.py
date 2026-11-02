@@ -156,6 +156,38 @@ def test_move_alias_catalog_and_conflict_detection():
     assert conflicts == {}
 
 
+def test_resolved_aliases_do_not_create_false_id_collisions():
+    records = [
+        {"emerald_move_id": 11, "emerald_move_symbol": "VICE_GRIP"},
+        {"emerald_move_id": 11, "emerald_move_symbol": "VICE_GRIP"},
+        {"emerald_move_id": 185, "emerald_move_symbol": "FAINT_ATTACK"},
+    ]
+    owners = {}
+    conflicts = {}
+    for row in records:
+        move_id = row["emerald_move_id"]
+        canonical = row["emerald_move_symbol"]
+        previous = owners.get(move_id)
+        if previous is not None and previous != canonical:
+            conflicts.setdefault(move_id, [previous]).append(canonical)
+        else:
+            owners[move_id] = canonical
+    assert conflicts == {}
+
+    records.append({"emerald_move_id": 11, "emerald_move_symbol": "ANOTHER_MOVE"})
+    owners = {}
+    conflicts = {}
+    for row in records:
+        move_id = row["emerald_move_id"]
+        canonical = row["emerald_move_symbol"]
+        previous = owners.get(move_id)
+        if previous is not None and previous != canonical:
+            conflicts.setdefault(move_id, [previous]).append(canonical)
+        else:
+            owners[move_id] = canonical
+    assert conflicts == {11: ["VICE_GRIP", "ANOTHER_MOVE"]}
+
+
 def test_cry_table_labels():
     source = """gCryTable::
     cry Cry_Bulbasaur
@@ -194,6 +226,7 @@ def main():
     test_enum_symbol_catalog_keeps_symbolic_aliases()
     test_explicit_target_move_alias_resolution()
     test_move_alias_catalog_and_conflict_detection()
+    test_resolved_aliases_do_not_create_false_id_collisions()
     test_cry_table_labels()
     test_named_array_inventory()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
