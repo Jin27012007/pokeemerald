@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import shutil
+import subprocess
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -14,6 +17,74 @@ assert SPEC and SPEC.loader
 module = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = module
 SPEC.loader.exec_module(module)
+
+
+
+def check_species_mapping_api_executes_as_c():
+    compiler = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
+    assert compiler, "A C compiler is required to execute the generated species-map test"
+
+    rows = [
+        {"national_dex": 1, "source_symbol": "BULBASAUR", "emerald_internal_id": 1},
+        {"national_dex": 252, "source_symbol": "TREECKO", "emerald_internal_id": 277},
+        {"national_dex": 387, "source_symbol": "TURTWIG", "emerald_internal_id": None},
+    ]
+    generated_header = module.emit_species_header()
+    generated_source = module.emit_species_c(rows, expected_existing_count=2)
+
+    with tempfile.TemporaryDirectory(prefix="gen8-species-map-") as temporary:
+        root = Path(temporary)
+        (root / "constants").mkdir()
+        (root / "global.h").write_text(
+            "#ifndef GLOBAL_H\\n#define GLOBAL_H\\n"
+            "#include <stdint.h>\\n"
+            "typedef uint8_t u8; typedef uint16_t u16; typedef int32_t bool32;\\n"
+            "#define TRUE 1\\n#define FALSE 0\\n"
+            "#endif\\n",
+            encoding="utf-8",
+        )
+        (root / "constants/species.h").write_text(
+            "#define SPECIES_NONE 0\\n"
+            "#define SPECIES_EGG 412\\n"
+            "#define NUM_SPECIES SPECIES_EGG\\n"
+            "#define SPECIES_UNOWN_B (NUM_SPECIES + 1)\\n",
+            encoding="utf-8",
+        )
+        (root / "gen8_species_map.h").write_text(generated_header, encoding="utf-8")
+        (root / "species_map.c").write_text(generated_source, encoding="utf-8")
+        (root / "test.c").write_text(
+            '#include "gen8_species_map.h"\\n'
+            "int main(void)\\n{\\n"
+            "    if (Gen8SpeciesMap_GetEmeraldId(1) != 1) return 1;\\n"
+            "    if (Gen8SpeciesMap_GetEmeraldId(252) != 277) return 2;\\n"
+            "    if (Gen8SpeciesMap_GetEmeraldId(387) != SPECIES_NONE) return 3;\\n"
+            "    if (Gen8SpeciesMap_GetEmeraldId(0) != SPECIES_NONE) return 4;\\n"
+            "    if (Gen8SpeciesMap_GetEmeraldId(899) != SPECIES_NONE) return 5;\\n"
+            "    if (Gen8SpeciesMap_GetEmeraldId(65535) != SPECIES_NONE) return 6;\\n"
+            "    if (!Gen8SpeciesMap_IsAssigned(252) || Gen8SpeciesMap_IsAssigned(387)) return 7;\\n"
+            "    if (!Gen8SpeciesMap_IsValidInternalId(277)) return 8;\\n"
+            "    if (Gen8SpeciesMap_IsValidInternalId(0)) return 9;\\n"
+            "    if (Gen8SpeciesMap_IsValidInternalId(2)) return 10;\\n"
+            "    if (Gen8SpeciesMap_IsValidInternalId(SPECIES_EGG)) return 11;\\n"
+            "    if (Gen8SpeciesMap_IsValidInternalId(SPECIES_UNOWN_B)) return 12;\\n"
+            "    if (Gen8SpeciesMap_GetNationalDex(277) != 252) return 13;\\n"
+            "    if (Gen8SpeciesMap_GetNationalDex(1) != 1) return 14;\\n"
+            "    if (Gen8SpeciesMap_GetNationalDex(2) != 0) return 15;\\n"
+            "    if (Gen8SpeciesMap_GetNationalDex(SPECIES_EGG) != 0) return 16;\\n"
+            "    return 0;\\n}\\n",
+            encoding="utf-8",
+        )
+        executable = root / "species-map-test"
+        subprocess.run(
+            [compiler, "-std=c11", "-Wall", "-Wextra", "-Werror",
+             "-I", str(root), str(root / "species_map.c"),
+             str(root / "test.c"), "-o", str(executable)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
 
 
 def check_species_mapping_api_generation():
@@ -626,6 +697,7 @@ def check_source_completeness_is_independent_of_target_mapping():
 
 def main():
     check_species_mapping_api_generation()
+    check_species_mapping_api_executes_as_c()
     check_enum_implicit_and_explicit_values()
     check_nested_designated_initializers()
     check_balanced_species_record_strings()
