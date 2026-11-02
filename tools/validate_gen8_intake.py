@@ -43,6 +43,17 @@ def main() -> int:
             fail(f"Dex {dex}: invalid provenance {row['record_provenance']!r}")
         if not row["national_symbol"] or not row["source_record_symbol"]:
             fail(f"Dex {dex}: empty identity symbol")
+        if row["record_provenance"] == "expansion_source_initializer":
+            if row.get("source_national_dex_symbol") != row["national_symbol"]:
+                fail(
+                    f"Dex {dex}: Expansion natDexNum mismatch "
+                    f"({row.get('source_national_dex_symbol')!r} != {row['national_symbol']!r})"
+                )
+            if row.get("source_national_dex_matches_selected") is not True:
+                fail(f"Dex {dex}: Expansion record lacks verified canonical Dex identity")
+        elif row["record_provenance"] == "existing_emerald_runtime_record":
+            if not row["source_record_symbol"].startswith("SPECIES_"):
+                fail(f"Dex {dex}: native Emerald record has invalid source symbol")
         if not isinstance(row["source_fields_present"], list):
             fail(f"Dex {dex}: source_fields_present must be a list")
         if not isinstance(row["source_missing_fields"], list) or not isinstance(row["source_unresolved_fields"], list):
@@ -65,6 +76,14 @@ def main() -> int:
     counts = report.get("counts", {})
     if counts.get("canonical_species_info_covered") != 898:
         fail("conversion report coverage count disagrees with canonical table")
+    if counts.get("canonical_species_info_native_emerald_preserved_rows") != 386:
+        fail("conversion report must contain exactly 386 preserved Emerald records")
+    if counts.get("canonical_species_info_expansion_source_rows") != 512:
+        fail("conversion report must contain exactly 512 selected Expansion records")
+    if counts.get("canonical_species_info_source_dex_mismatches") != 0:
+        fail("conversion report contains source National Dex identity mismatches")
+    if counts.get("canonical_species_info_identity_conflicts") != 0:
+        fail("conversion report contains unresolved canonical identity conflicts")
     if len(report.get("species_mapping", [])) != 898:
         fail("species ID mapping must contain 898 canonical rows")
     print("PASS: 898 canonical intake envelopes are structurally valid and uniquely keyed.")
