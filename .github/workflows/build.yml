@@ -189,7 +189,8 @@ jobs:
           # non-blocking audit gates until their explicit mappings are closed.
           # Keep all unresolved fields in the uploaded report; never hide them
           # behind a false-positive full-readiness assertion.
-          assert report["counts"]["canonical_species_info_source_missing_fields"] >= 0
+          assert report["counts"]["canonical_species_info_source_missing_fields"] == 0
+          assert report["counts"]["canonical_species_info_source_unresolved_fields"] == 0
           assert report["counts"]["canonical_species_info_runtime_gap_records"] >= 0
           assert report["counts"]["canonical_species_info_source_complete_rows"] <= 898
           assert report["counts"]["canonical_species_info_compact_compatible_rows"] <= 898
