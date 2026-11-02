@@ -473,15 +473,19 @@ def check_expansion_natdex_domain_and_form_alias_selection():
     assert target_values["ARCHAEOPS"] == 567
     assert target_values["CARBINK"] == 702
 
-    # Form rows can use the base species in .natDexNum while retaining the
-    # canonical form in their initializer designator.
+    # Canonical identity comes from NATIONAL_DEX_BURMY, while the
+    # representative Expansion species ID/designator is BURMY_PLANT.
+    source_symbols_by_dex = {row["id"]: row["symbol"] for row in source_values and [
+        {"id": dex_id, "symbol": symbol} for symbol, dex_id in source_values.items()
+    ]}
+    assert source_symbols_by_dex[412] == "BURMY"
     candidates = [
         {"species_symbol": "BURMY_PLANT", "national_dex_symbol": "BURMY"},
         {"species_symbol": "BURMY_SANDY", "national_dex_symbol": "BURMY"},
         {"species_symbol": "WORMADAM_PLANT", "national_dex_symbol": "BURMY"},
     ]
     selected = module.filter_canonical_species_info_candidates(
-        candidates, "BURMY_PLANT", "BURMY"
+        candidates, "BURMY", "BURMY_PLANT"
     )
     assert [row["species_symbol"] for row in selected] == ["BURMY_PLANT"]
 
