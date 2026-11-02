@@ -257,11 +257,15 @@ jobs:
           assert report["counts"]["canonical_species_info_runtime_gap_records"] >= 0
           assert report["counts"]["canonical_species_info_source_complete_rows"] == 512
           assert report["counts"]["canonical_species_info_source_fields_resolved_rows"] == 512
+          # All canonical rows are parser-resolved, but source parsing alone
+          # does not establish compatibility with Emerald's compact runtime.
+          assert report["counts"]["canonical_species_info_source_parse_compatible_rows"] == 898
           assert report["counts"]["canonical_species_info_compact_compatible_rows"] <= 898
           assert report["counts"]["canonical_species_info_target_mapping_compatible_rows"] <= 512
           assert report["readiness"]["species_info_compact_stage_compatible"] == (
               report["counts"]["canonical_species_info_compact_compatible_rows"] == 898
           )
+          assert report["readiness"]["species_info_compact_stage_compatible"] is False
           assert report["counts"]["canonical_species_info_compatibility_issue_records"] >= 0
           assert report["counts"]["missing_species_info_for_new_dex_species"] == 0
           assert report["readiness"]["new_species_ids_allocated"] is False
