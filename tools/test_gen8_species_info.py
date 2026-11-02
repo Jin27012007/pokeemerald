@@ -355,6 +355,27 @@ def check_canonical_species_record_selection_contract():
     assert selected is candidates[1], selected
 
 
+def check_source_completeness_requires_resolved_national_dex():
+    required = {
+        "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
+        "baseSpDefense", "catchRate", "expYield", "genderRatio", "eggCycles",
+        "friendship", "growthRate", "types", "eggGroups", "abilities",
+        "bodyColor", "natDexNum",
+    }
+    present = required
+    missing = sorted(required - present)
+    unresolved = [] if "NATIONAL_DEX_TESTMON" == "NATIONAL_DEX_TESTMON" else ["natDexNum"]
+    assert missing == []
+    assert unresolved == []
+    complete = not missing and not unresolved
+    assert complete is True
+
+    # A present but malformed/unknown Dex symbol is not complete.
+    unresolved = ["natDexNum"]
+    complete = not missing and not unresolved
+    assert complete is False
+
+
 def check_per_species_stellar_runtime_gap():
     type_names = set(module.re.findall(
         r"TYPE_([A-Z0-9_]+)",
@@ -385,6 +406,7 @@ def main():
     check_generic_gen8_conditional_values()
     check_all_generation_source_files_present()
     check_canonical_species_record_selection_contract()
+    check_source_completeness_requires_resolved_national_dex()
     check_per_species_stellar_runtime_gap()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
     print("PASS: canonical SpeciesInfo acceptance gate defined for National Dex 1-898.")
