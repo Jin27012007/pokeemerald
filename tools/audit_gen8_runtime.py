@@ -89,10 +89,10 @@ def main() -> int:
     required_seen_owned_bytes = 2 * dex_bytes_per_set
     required_total_flag_bytes = 4 * dex_bytes_per_set
     current_species_bytes = 4 * ((412 + 7) // 8)
-    reserved = re.search(r"(?:unused_3598|dexFlagExtension)\[(0x[0-9A-Fa-f]+)\]", save1)
+    reserved = re.search(r"dexFlagExtension\[(0x[0-9A-Fa-f]+)\]", save1)
     reserved_save1_bytes = int(reserved.group(1), 16) if reserved else 0
-    if reserved_save1_bytes != 0x180:
-        raise RuntimeError(f"Unexpected SaveBlock1 reserved area: {reserved_save1_bytes:#x}")
+    if reserved_save1_bytes != 0x100:
+        raise RuntimeError(f"Unexpected SaveBlock1 dex extension area: {reserved_save1_bytes:#x}")
     # Staged National Dex expansion plan: keep the legacy 52-byte arrays and
     # store the additional 486 entries in a versioned SaveBlock1 reserved area.
     legacy_dex_count = 412
