@@ -152,6 +152,9 @@ jobs:
       - name: Test bounded learnset table access
         run: python3 tools/test_gen8_learnset_access.py
 
+      - name: Test bounded species graphics table access
+        run: python3 tools/test_gen8_graphics_access.py
+
       - name: Generate comprehensive canonical Gen 8 source tables
         run: python3 tools/gen8_build_pending_tables.py
 
@@ -187,6 +190,7 @@ jobs:
           test -s reports/gen8-conversion/pending_species_tables_audit.json
           test -s reports/gen8-conversion/evolution_access_audit.json
           test -s reports/gen8-conversion/learnset_access_audit.json
+          test -s reports/gen8-conversion/graphics_access_audit.json
           test -s docs/GEN8_CANONICAL_INTAKE_CONTRACT.md
           python3 - <<'PY'
           import json
@@ -216,6 +220,7 @@ jobs:
               "reports/gen8-conversion/pending_species_tables_audit.json",
               "reports/gen8-conversion/evolution_access_audit.json",
               "reports/gen8-conversion/learnset_access_audit.json",
+              "reports/gen8-conversion/graphics_access_audit.json",
           ]
           missing = [p for p in expected if not Path(p).is_file() or Path(p).stat().st_size == 0]
           assert not missing, f"Missing or empty generated files: {missing}"
