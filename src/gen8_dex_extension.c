@@ -75,7 +75,6 @@ void Gen8DexExtensionInit(struct Gen8DexExtension *extension)
     CpuFill32(0, extension, sizeof(*extension));
     extension->magic = GEN8_DEX_EXT_MAGIC;
     extension->version = GEN8_DEX_EXT_VERSION;
-    extension->payloadSize = GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_LOCAL_COPY_COUNT;
     extension->generation = 1;
     extension->checksum = Gen8DexExtensionChecksum(extension);
 }
@@ -85,7 +84,6 @@ bool32 Gen8DexExtensionValidate(const struct Gen8DexExtension *extension)
     if (extension == NULL
      || extension->magic != GEN8_DEX_EXT_MAGIC
      || extension->version != GEN8_DEX_EXT_VERSION
-     || extension->payloadSize != GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_LOCAL_COPY_COUNT
      || extension->generation == 0)
         return FALSE;
 
@@ -147,7 +145,7 @@ enum Gen8DexExtensionResult Gen8DexExtensionWriteFlag(
     if (extension == NULL)
         return GEN8_DEX_EXTENSION_BAD_ARGUMENT;
     if (extension->magic != GEN8_DEX_EXT_MAGIC
-     || extension->payloadSize != GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_LOCAL_COPY_COUNT)
+     || extension->generation == 0)
         return GEN8_DEX_EXTENSION_BAD_HEADER;
     if (extension->version != GEN8_DEX_EXT_VERSION)
         return GEN8_DEX_EXTENSION_BAD_VERSION;
@@ -155,7 +153,7 @@ enum Gen8DexExtensionResult Gen8DexExtensionWriteFlag(
         return GEN8_DEX_EXTENSION_BAD_CHECKSUM;
     if (nationalDex < 413 || nationalDex > GEN8_SPECIES_DEX_LAST)
         return GEN8_DEX_EXTENSION_BAD_ARGUMENT;
-    if (extension->generation == 0xFFFFFFFFu)
+    if (extension->generation == 0xFFFFu)
         return GEN8_DEX_EXTENSION_BAD_GENERATION;
 
     index = nationalDex - 413;
