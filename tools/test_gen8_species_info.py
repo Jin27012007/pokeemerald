@@ -390,6 +390,30 @@ def check_per_species_stellar_runtime_gap():
     assert "fairy_type_not_in_emerald_enum" not in runtime_gaps
 
 
+def check_existing_species_namespace_has_no_numeric_collisions():
+    header = (ROOT / "include/constants/species.h").read_text(encoding="utf-8")
+    entries = [
+        (match.group(1), int(match.group(2)))
+        for match in module.re.finditer(
+            r"^#define\\s+(SPECIES_[A-Z0-9_]+)\\s+(\\d+)$",
+            header,
+            module.re.M,
+        )
+    ]
+    ids = [value for _name, value in entries]
+    assert len(ids) == len(set(ids)), entries
+    values = dict(entries)
+    assert values["SPECIES_EGG"] == 412
+    assert max(value for name, value in entries
+               if name != "SPECIES_EGG" and not name.startswith("SPECIES_OLD_UNOWN_")) == 411
+    old_unown = [name for name, _value in entries if name.startswith("SPECIES_OLD_UNOWN_")]
+    assert len(old_unown) == 25, old_unown
+    # Extended Unown forms are expressions relative to NUM_SPECIES, not
+    # explicit numeric IDs. Keep them outside the proposed canonical block.
+    assert "SPECIES_UNOWN_B (NUM_SPECIES + 1)" in header
+    assert "SPECIES_UNOWN_QMARK (SPECIES_UNOWN_B + 26)" in header
+
+
 def main():
     check_enum_implicit_and_explicit_values()
     check_nested_designated_initializers()
@@ -408,6 +432,7 @@ def main():
     check_canonical_species_record_selection_contract()
     check_source_completeness_requires_resolved_national_dex()
     check_per_species_stellar_runtime_gap()
+    check_existing_species_namespace_has_no_numeric_collisions()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
     print("PASS: canonical SpeciesInfo acceptance gate defined for National Dex 1-898.")
 
