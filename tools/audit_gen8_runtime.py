@@ -175,6 +175,7 @@ def main() -> int:
             "additional_flag_bytes_needed": required_total_flag_bytes - current_species_bytes,
             "single_sector_extension_payload_bytes": sector_bytes - 16,
             "double_buffer_extension_bytes": 2 * (required_total_flag_bytes + 16),
+            "saveblock1_reserved_window_bytes": 0x180,
             "saveblock1_candidate_extension_capacity_bytes": reserved_save1_bytes,
             "legacy_dex_flag_count": legacy_dex_count,
             "extension_dex_flag_count": extension_dex_count,
