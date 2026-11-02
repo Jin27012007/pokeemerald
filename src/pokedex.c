@@ -1011,8 +1011,6 @@ static const struct WindowTemplate sNewEntryInfoScreen_WindowTemplates[] =
     DUMMY_WIN_TEMPLATE
 };
 
-static const u8 sText_TenDashes2[] = _("----------");
-
 #include "data/pokemon_graphics/footprint_table.h"
 
 // First character in range followed by number of characters in range for upper and lowercase
@@ -4123,7 +4121,6 @@ static void PrintMonInfo(u32 num, u32 value, u32 owned, u32 newEntry)
 {
     u8 str[16];
     u8 str2[32];
-    u16 natNum;
     const u8 *name;
     const u8 *category;
     const u8 *description;
