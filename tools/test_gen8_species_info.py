@@ -373,6 +373,29 @@ def check_canonical_species_record_selection_contract():
     assert selected is candidates[1], selected
 
 
+def check_natdex_symbol_normalization_after_macro_expansion():
+    # Macro expansion can turn NATIONAL_DEX_BULBASAUR into the bare enum
+    # token BULBASAUR. Both forms must normalize to the same source symbol.
+    cases = {
+        "NATIONAL_DEX_BULBASAUR": "NATIONAL_DEX_BULBASAUR",
+        "BULBASAUR": "NATIONAL_DEX_BULBASAUR",
+        "NATIONAL_DEX_MR_MIME": "NATIONAL_DEX_MR_MIME",
+        "MR_MIME": "NATIONAL_DEX_MR_MIME",
+    }
+    for raw, expected in cases.items():
+        value = raw.strip()
+        match = module.re.fullmatch(
+            r"(?:NATIONAL_DEX_)?([A-Z][A-Z0-9_]*)", value
+        )
+        actual = f"NATIONAL_DEX_{match.group(1)}" if match else None
+        assert actual == expected, (raw, actual, expected)
+    for invalid in ("", "0", "UNKNOWN()"):
+        match = module.re.fullmatch(
+            r"(?:NATIONAL_DEX_)?([A-Z][A-Z0-9_]*)", invalid
+        )
+        assert match is None, invalid
+
+
 def check_source_completeness_requires_resolved_national_dex():
     required = {
         "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
