@@ -156,6 +156,7 @@ jobs:
           test -s src/data/gen8/species_map.c
           test -s include/gen8_conversion_status.h
           test -s reports/gen8-conversion/species_map_parity.json
+          test -s reports/gen8-conversion/species_info_access_audit.json
           test -s data/pokemon/gen8_species_evolutions.json
           test -s data/pokemon/gen8_species_pokedex_entries.json
           test -s data/pokemon/gen8_species_cry_map.json
