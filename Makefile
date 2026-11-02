@@ -195,7 +195,7 @@ endif
 
 # Collect sources
 C_SRCS_IN := $(wildcard $(C_SUBDIR)/*.c $(C_SUBDIR)/*/*.c $(C_SUBDIR)/*/*/*.c)
-C_SRCS_IN += $(filter-out $(C_SRCS_IN),src/data/gen8/species_map.c)
+C_SRCS_IN += $(filter-out $(C_SRCS_IN),src/data/gen8/species_map.c src/data/gen8/pokedex_data.c)
 C_SRCS := $(foreach src,$(C_SRCS_IN),$(if $(findstring .inc.c,$(src)),,$(src)))
 C_OBJS := $(patsubst $(C_SUBDIR)/%.c,$(C_BUILDDIR)/%.o,$(C_SRCS))
 
@@ -209,6 +209,15 @@ src/data/gen8/species_map.c include/gen8_species_map.h: | gen8_species_map
 
 $(C_BUILDDIR)/pokemon.o: include/gen8_species_map.h
 $(C_BUILDDIR)/pokemon.o $(C_BUILDDIR)/data/gen8/species_map.o: | gen8_species_map
+
+# Generate the canonical Gen 8 Pokédex runtime data before compiling the
+# National Dex UI and its data translation unit.
+.PHONY: gen8_pokedex_runtime
+gen8_pokedex_runtime: gen8_species_map
+	@python3 tools/gen8_build_pending_tables.py
+
+src/data/gen8/pokedex_data.c src/data/gen8/pokedex_orders.h: | gen8_pokedex_runtime
+$(C_BUILDDIR)/pokedex.o $(C_BUILDDIR)/data/gen8/pokedex_data.o: | gen8_pokedex_runtime
 
 C_ASM_SRCS := $(wildcard $(C_SUBDIR)/*.s $(C_SUBDIR)/*/*.s $(C_SUBDIR)/*/*/*.s)
 C_ASM_OBJS := $(patsubst $(C_SUBDIR)/%.s,$(C_BUILDDIR)/%.o,$(C_ASM_SRCS))
