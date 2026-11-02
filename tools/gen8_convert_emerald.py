@@ -974,8 +974,9 @@ def generate(check: bool = False) -> dict:
             target_species_by_dex[dex_id] = {
                 "species_symbol": row["symbol"],
                 "generation": 3,
+                "record_provenance": "existing_emerald_runtime_record",
                 "source_raw": fields,
-                "status": "compact_fields_resolved",
+                "status": "native_emerald_preserved",
                 "compatibility": "native_emerald",
                 "source_complete": True,
                 "source_missing_fields": [],
@@ -1052,6 +1053,7 @@ def generate(check: bool = False) -> dict:
                 "national_symbol": national_symbol,
                 "source_record_symbol": row["species_symbol"],
                 "source_generation": row["generation"],
+                "record_provenance": row.get("record_provenance", "expansion_source_initializer"),
                 "source_fields_present": sorted(
                     row.get("source_expanded_fields", row.get("source_raw", {})).keys()
                 ),
@@ -1125,6 +1127,8 @@ def generate(check: bool = False) -> dict:
         "species_info_unresolved_records": len(info_result["unresolved_records"]),
         "species_info_hidden_abilities_resolved": sum(1 for row in info_result["compact_records"] + info_result["unresolved_records"] if row["hidden_ability"] is not None),
         "canonical_species_info_covered": len(canonical_species_info),
+        "canonical_species_info_native_emerald_preserved_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "existing_emerald_runtime_record"),
+        "canonical_species_info_expansion_source_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer"),
         "canonical_species_info_missing": len(missing_species_info),
         "canonical_species_info_raw_field_coverage": field_coverage,
         "canonical_species_info_source_complete_rows": sum(1 for row in canonical_species_info if row.get("source_complete", False)),
