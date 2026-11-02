@@ -545,6 +545,7 @@ def check_source_completeness_is_independent_of_target_mapping():
     # Source values can be complete and canonically identified while Emerald
     # still lacks a compatible compact/runtime representation for the row.
     expansion = {
+        "record_provenance": "expansion_source_initializer",
         "source_complete": True,
         "source_missing_fields": [],
         "source_unresolved_fields": [],
@@ -565,6 +566,16 @@ def check_source_completeness_is_independent_of_target_mapping():
         expected_expansion=1,
     )
     assert source_complete is True
+    # Complete source parsing does not imply an Emerald-compatible row.
+    assert module.is_species_info_compact_row_compatible(expansion) is False
+    native = {
+        "record_provenance": "existing_emerald_runtime_record",
+        "compact_compatible": True,
+    }
+    assert module.is_species_info_compact_row_compatible(native) is True
+    native["compact_compatible"] = False
+    assert module.is_species_info_compact_row_compatible(native) is False
+
     assert module.is_species_info_compact_compatible(
         source_complete,
         native_rows=[],
@@ -580,6 +591,7 @@ def check_source_completeness_is_independent_of_target_mapping():
         source_complete, [], [expansion], expected_native=0, expected_expansion=1
     ) is False
     expansion["runtime_gaps"] = []
+    assert module.is_species_info_compact_row_compatible(expansion) is True
     assert module.is_species_info_compact_compatible(
         source_complete, [], [expansion], expected_native=0, expected_expansion=1
     ) is True
