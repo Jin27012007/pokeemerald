@@ -176,7 +176,7 @@ def parse_species_constants() -> dict:
         numeric[name] = int(value)
     egg = re.search(r"^#define\s+SPECIES_EGG\s+(\d+)\s*$", text, re.M)
     num = re.search(r"^#define\s+NUM_SPECIES\s+(SPECIES_[A-Z0-9_]+|\d+)\s*$", text, re.M)
-    unown = re.findall(r"^#define\\s+(SPECIES_UNOWN_(?:[B-Z]|EMARK|QMARK))\\s+(.+)$", text, re.M)
+    unown = re.findall(r"^#define\s+(SPECIES_UNOWN_(?:[B-Z]|EMARK|QMARK))\s+(.+)$", text, re.M)
     ordinary = [value for name, value in numeric.items() if name not in {"SPECIES_NONE", "SPECIES_EGG"} and not name.startswith("SPECIES_OLD_UNOWN_")]
     return {
         "numeric_species_constants": len(numeric),
