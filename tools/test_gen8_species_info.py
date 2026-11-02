@@ -473,6 +473,51 @@ def check_existing_species_namespace_has_no_numeric_collisions():
     assert "SPECIES_UNOWN_QMARK (SPECIES_UNOWN_B + 26)" in header
 
 
+
+def check_source_completeness_is_independent_of_target_mapping():
+    # Source values can be complete and canonically identified while Emerald
+    # still lacks a compatible compact/runtime representation for the row.
+    expansion = {
+        "source_complete": True,
+        "source_missing_fields": [],
+        "source_unresolved_fields": [],
+        "source_fields_resolved": True,
+        "source_national_dex_matches_selected": True,
+        "source_fields_present": ["baseHP", "natDexNum"],
+        "target_mapping_compatible": False,
+        "runtime_gaps": ["third_ability_slot_requires_runtime_support"],
+    }
+    source_complete = module.is_species_info_source_complete(
+        canonical_rows=[expansion],
+        native_rows=[],
+        expansion_rows=[expansion],
+        missing_species_info=[],
+        identity_conflicts=[],
+        expected_total=1,
+        expected_native=0,
+        expected_expansion=1,
+    )
+    assert source_complete is True
+    assert module.is_species_info_compact_compatible(
+        source_complete,
+        native_rows=[],
+        expansion_rows=[expansion],
+        expected_native=0,
+        expected_expansion=1,
+    ) is False
+
+    # Closing the target mapping alone is insufficient while a runtime gap
+    # remains; both gates must pass before compact compatibility is true.
+    expansion["target_mapping_compatible"] = True
+    assert module.is_species_info_compact_compatible(
+        source_complete, [], [expansion], expected_native=0, expected_expansion=1
+    ) is False
+    expansion["runtime_gaps"] = []
+    assert module.is_species_info_compact_compatible(
+        source_complete, [], [expansion], expected_native=0, expected_expansion=1
+    ) is True
+
+
 def main():
     check_enum_implicit_and_explicit_values()
     check_nested_designated_initializers()
@@ -490,6 +535,7 @@ def main():
     check_all_generation_source_files_present()
     check_canonical_species_record_selection_contract()
     check_source_completeness_requires_resolved_national_dex()
+    check_source_completeness_is_independent_of_target_mapping()
     check_per_species_stellar_runtime_gap()
     check_vanilla_speciesinfo_indexes_by_designator()
     check_expansion_natdex_domain_and_form_alias_selection()
