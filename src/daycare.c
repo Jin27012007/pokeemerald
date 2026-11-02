@@ -382,6 +382,7 @@ static u16 GetEggSpecies(u16 species)
 {
     int i, j, k;
     bool8 found;
+    const struct Evolution *evolutions;
 
     // Working backwards up to 5 times seems arbitrary, since the maximum number
     // of times would only be 3 for 3-stage evolutions.
@@ -390,9 +391,10 @@ static u16 GetEggSpecies(u16 species)
         found = FALSE;
         for (j = 1; j < NUM_SPECIES; j++)
         {
+            evolutions = GetEvolutionTableSafe(j);
             for (k = 0; k < EVOS_PER_MON; k++)
             {
-                if (gEvolutionTable[j][k].targetSpecies == species)
+                if (evolutions[k].targetSpecies == species)
                 {
                     species = j;
                     found = TRUE;
