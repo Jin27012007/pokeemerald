@@ -1084,7 +1084,11 @@ def generate(check: bool = False) -> dict:
         "emerald_item_slot_width_bits": 16,
         "all_source_item_ids_fit_emerald_slot": max(info_result["source_enum_domains"]["items"].values(), default=0) <= 65535,
         "fairy_type_supported_in_emerald": "FAIRY" in {x["symbol"] for x in symbols(type_text, "TYPE_")},
-        "source_only_fields_require_runtime_work": ["third_ability_slot", "new_abilities", "new_items", "fairy_type"],
+        "stellar_type_supported_in_emerald": "STELLAR" in {x["symbol"] for x in symbols(type_text, "TYPE_")},
+        "unsupported_canonical_types": sorted(
+            {"FAIRY", "STELLAR"} - {x["symbol"] for x in symbols(type_text, "TYPE_")}
+        ),
+        "source_only_fields_require_runtime_work": ["third_ability_slot", "new_abilities", "new_items", "fairy_type", "stellar_type"],
     }
     counts = {
         "canonical_dex_entries": len(species_map), "existing_species": existing_count,
