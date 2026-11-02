@@ -19,24 +19,20 @@ SPEC.loader.exec_module(module)
 def check_species_mapping_api_generation():
     header = module.emit_species_header()
     source = module.emit_species_c([
-        {
-            "national_dex": 1,
-            "source_symbol": "BULBASAUR",
-            "emerald_internal_id": 1,
-        },
-        {
-            "national_dex": 387,
-            "source_symbol": "TURTWIG",
-            "emerald_internal_id": None,
-        },
+        {"national_dex": 1, "source_symbol": "BULBASAUR", "emerald_internal_id": 1},
+        {"national_dex": 252, "source_symbol": "TREECKO", "emerald_internal_id": 277},
+        {"national_dex": 387, "source_symbol": "TURTWIG", "emerald_internal_id": None},
     ])
     assert "Gen8SpeciesMap_GetEmeraldId(u16 nationalDex)" in header
-    assert "Gen8SpeciesMap_IsAssigned(u16 nationalDex)" in header
+    assert "Gen8SpeciesMap_IsValidInternalId(u16 emeraldSpecies)" in header
+    assert "Gen8SpeciesMap_GetNationalDex(u16 emeraldSpecies)" in header
     assert "nationalDex == 0 || nationalDex > GEN8_NATIONAL_DEX_COUNT" in source
-    assert "return gGen8SpeciesMap[nationalDex].emeraldSpecies;" in source
-    assert "[1] = { .nationalDex = 1, .emeraldSpecies = 1 }" in source
+    assert "if (emeraldSpecies >= SPECIES_UNOWN_B)" in source
+    assert "case SPECIES_EGG:" in source
+    assert "case 277:" in source
+    assert "return FALSE;" in source
     assert "[387] = { .nationalDex = 387, .emeraldSpecies = SPECIES_NONE }" in source
-    assert "return Gen8SpeciesMap_GetEmeraldId(nationalDex) != SPECIES_NONE;" in source
+    assert "Duplicate Emerald internal ID" in module.emit_species_c.__code__.co_consts
 
 
 def check_enum_implicit_and_explicit_values():
