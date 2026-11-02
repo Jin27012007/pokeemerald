@@ -99,7 +99,7 @@ def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
 
 def balanced_species_records(text: str) -> list[dict]:
     """Read C designated initializers while respecting strings and comments."""
-    start_re = re.compile(r"^\\s*\\[SPECIES_([A-Z0-9_]+)\\]\\s*=\\s*", re.M)
+    start_re = re.compile(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=\s*", re.M)
     records = []
     for match in start_re.finditer(text):
         start = match.end()
@@ -115,7 +115,7 @@ def balanced_species_records(text: str) -> list[dict]:
             ch = text[i]
             nxt = text[i + 1] if i + 1 < len(text) else ""
             if in_line_comment:
-                if ch == "\\n":
+                if ch == "\n":
                     in_line_comment = False
             elif in_block_comment:
                 if ch == "*" and nxt == "/":
@@ -124,7 +124,7 @@ def balanced_species_records(text: str) -> list[dict]:
             elif in_string:
                 if escaped:
                     escaped = False
-                elif ch == "\\\\":
+                elif ch == "\\":
                     escaped = True
                 elif ch == '"':
                     in_string = False
