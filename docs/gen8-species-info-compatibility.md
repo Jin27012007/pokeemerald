@@ -95,3 +95,65 @@ The canonical audit now tags each row as either `existing_emerald_runtime_record
 The 898-row canonical coverage count is intentionally split into 386 native Emerald rows and 512 Expansion-source rows. The `source_fields_resolved` counter applies only to the 512 Expansion rows; native rows are audited as preserved existing runtime records. Compact compatibility is evaluated in both groups using their respective provenance evidence. CI must verify the 386 + 512 split, 512 resolved Expansion records, and that the compact-stage readiness flag agrees with the combined compatible-row count. None of these checks alone makes runtime/save migration ready.
 
 The existing namespace audit currently finds unique explicit numeric IDs, ordinary species through 411, the Egg sentinel at 412, 25 numeric `SPECIES_OLD_UNOWN_*` constants, and 26 additional Unown constants expressed relative to `NUM_SPECIES`. This inventory is now covered by a parser-level regression test. It is not an approved allocation range: the Egg sentinel position and all consumers of the relative Unown constants still require a dedicated design and bounds audit.
+
+
+## Sentinela, formas e contrato dos consumidores de IDs
+
+Este documento estabelece uma política de identidade e indexação para a etapa pré-alocação. É uma decisão de arquitetura, não uma reserva de números. Nenhuma alteração de `NUM_SPECIES`, de constantes de produção, de tabelas indexadas ou de layout de save é autorizada por esta seção.
+
+### 1. Identidade canônica versus forma
+
+- O índice do National Dex identifica a espécie canônica (1–898). Ele não é, por si só, um ID interno de espécie.
+- Uma forma que altera apenas aparência, paleta, sprite, ícone ou nome de apresentação deve permanecer como metadado/estado de forma da espécie-base. Não ganha ID independente apenas por existir em uma tabela de formas.
+- Uma forma só poderá virar espécie interna separada quando houver uma justificativa de compatibilidade documentada: representação persistente necessária, comportamento incompatível com um estado de forma, ou consumidor legado que exija uma entrada de espécie. A exceção precisa declarar os dados independentes, as transições, a conversão de retorno e o comportamento do Pokédex.
+- Formas temporárias de batalha (por exemplo, Mega, Primal, Ultra, Dynamax/Gigantamax ou mudanças de tipo dependentes de item) não podem ser gravadas como identidade permanente do Pokémon sem política explícita de serialização. O estado de batalha deve ser derivado/reconstruído.
+- Formas regionais que constituem identidade biológica/jogável distinta podem ser linhas internas independentes se seus stats, tipos, habilidades, evolução, Pokédex e assets exigirem isso; a política não deve ser aplicada indiscriminadamente a todas as famílias. O vínculo com Dex pode continuar apontando ao número canônico correto conforme o modelo de Pokédex.
+- Unown é exceção já implementada: suas 26 formas estendidas são códigos auxiliares de apresentação derivados do intervalo reservado, não 26 novas espécies canônicas. Devem ser tratadas no adaptador de forma/ícone, não confundidas com novas identidades do National Dex.
+
+### 2. Sentinelas e valores especiais
+
+- `SPECIES_NONE` permanece como valor nulo/slot vazio e nunca indexa tabelas de dados.
+- Egg é um estado/valor sentinela, não uma espécie canônica e não entra na contagem 898. O código atual usa `SPECIES_EGG` como índice especial em tabelas de ícone e como retorno de `MON_DATA_SPECIES_OR_EGG`; por isso, sua futura posição precisa ser definida junto com os limites de arrays e as verificações de faixa. Não basta colocar Egg antes/depois da faixa sem adaptar os consumidores.
+- O futuro contrato deve separar explicitamente `NUM_SPECIES` (quantidade/limite de IDs reais, conforme a convenção escolhida) de `SPECIES_EGG` (sentinela), em vez de manter a ambiguidade atual em que `NUM_SPECIES == SPECIES_EGG`. A convenção final de contagem e limite deve ser fechada com as declarações C e todos os loops antes de editar o header.
+- Todos os sentinelas devem ser rejeitados antes de acessar `gSpeciesInfo`, tabelas de crescimento, learnsets, evoluções, gráficos, paletas, animações, cries, ícones e Pokédex. Acesso a tabelas especiais (como ícone de Egg) deve ocorrer por caminho dedicado e com dimensão validada.
+- Os códigos auxiliares Unown devem ficar fora do intervalo normal indexável de espécies e ser convertidos para forma/ícone antes do acesso a tabelas comuns. Não devem ser usados como índices de `gSpeciesInfo`, evoluções, learnsets ou dados persistentes.
+
+### 3. Contrato obrigatório de consumidores
+
+Cada consumidor deve ser classificado em um dos seguintes grupos e validado individualmente antes da alocação:
+1. **Identidade/persistência:** `BoxPokemon`, `Pokemon`, `MON_DATA_SPECIES`, `MON_DATA_SPECIES_OR_EGG`, checksum, criptografia, troca, link, save e migração. Exige conversão explícita de IDs antigos e round-trip.
+2. **Dados primários indexados:** `gSpeciesInfo`, experiência, crescimento, EV yield, habilidades, tipos, gênero, itens, evoluções e learnsets. Exige limites e entrada válida para cada espécie real; sentinelas nunca entram.
+3. **Dex/identidade pública:** conversões National/Hoenn, seen/owned, ordem, nomes, descrições, formas e flags. Deve mapear espécie interna para Dex sem pressupor identidade 1:1.
+4. **Recursos visuais e áudio:** front/back sprites, palettes, icons, footprints, escala/offset, animações e cries. Formas visuais devem resolver para asset e estado de forma sem ler além da tabela.
+5. **Batalha/evolução/UI:** transformação, formas de batalha, party, PC/storage, resumo, enciclopédia, troca, evolução e scripts. Cada caminho deve tratar NONE/Egg/IDs inválidos antes de indexar.
+6. **Dados auxiliares/formas:** tabelas `FormSpeciesIdTable`, `FormChangeTable`, mapeadores por personalidade, itens de forma e tabelas de forma. Devem declarar se armazenam espécie real, forma, ou sentinel de término; não misturar esses domínios.
+
+Um consumidor só pode ser marcado como auditado quando houver: arquivo/função, domínio de entrada, limite da tabela, tratamento de NONE/Egg/Unown/forma inválida, conversão de forma, e teste que cubra o último ID válido e cada sentinela relevante.
+
+### 4. Evidência do código atual e riscos conhecidos
+
+O header atual define `SPECIES_EGG = 412`, `NUM_SPECIES = SPECIES_EGG` e 26 códigos Unown relativos a `NUM_SPECIES`. Foram observados, entre outros, os seguintes consumidores acoplados a esses limites:
+
+- `src/pokemon.c`: arrays `[NUM_SPECIES - 1]` para ordem de Dex e animações; acessos diretos a `gSpeciesInfo[species]`, `gLevelUpLearnsets[species]`, `gEvolutionTable[species]`; funções de conversão National/Hoenn; condições `species > NUM_SPECIES`; `MON_DATA_SPECIES_OR_EGG`.
+- `src/pokemon_icon.c`: tabela de ícones com entrada explícita de Egg e Unown, cálculo de forma Unown por `SPECIES_UNOWN_B`, e múltiplas verificações `species > NUM_SPECIES`.
+- `src/battle_main.c`: cálculo de forma Unown com `NUM_SPECIES + unownForm` e validação de valores acima do limite.
+- `src/pokemon_storage_system.c`: armazenamento/ícones de Box e caminhos que indexam `gMonFrontPicTable[species]`.
+- `src/pokemon_summary_screen.c`: acessos a `gSpeciesInfo[summary->species]` e sprites por `summary->species2`.
+- `src/evolution_scene.c`: acessos a tabelas de sprites e evoluções usando espécies atuais e destino.
+- `src/pokedex.c`: iteração até `NUM_SPECIES - 1`, conversão Dex→espécie e acesso a `gSpeciesInfo`.
+- `src/battle_script_commands.c` e `src/battle_util.c`: acessos a `gSpeciesInfo` com espécies oriundas de party/batalha e comparações com Egg/NONE.
+
+Esta lista é evidência mínima, não um inventário exaustivo. Os demais arquivos e includes de dados precisam ser varridos automaticamente por referências a `NUM_SPECIES`, `SPECIES_EGG`, `SPECIES_UNOWN_*`, `gSpeciesInfo`, `gEvolutionTable`, learnsets, gráficos, paletas, cries e tabelas de forma. Os arquivos ausentes ou gerados por macros também precisam ser incluídos no inventário.
+
+### 5. Condições para liberar a alocação
+
+A fase de alocação só pode começar depois que:
+- o inventário automatizado de consumidores estiver completo e sem ocorrências não classificadas;
+- a convenção final de quantidade/limite e o valor do sentinela Egg estiverem aprovados por testes de limites;
+- cada forma estiver classificada como metadado/estado ou exceção com ID próprio, com política de save explícita;
+- os 386 IDs internos existentes forem preservados e todos os 512 novos IDs forem provados únicos;
+- os arrays de runtime, assets e índices auxiliares tiverem dimensões e tabelas completas;
+- testes cobrirem NONE, Egg, cada família Unown, primeira e última espécie, forma inválida, transformação temporária e migração de saves;
+- o CI executar extração, auditorias, build completo e testes de save sem falha.
+
+**Estado da decisão:** política arquitetural proposta e registrada; inventário ainda parcial; alocação de IDs bloqueada. `NUM_SPECIES`, `SPECIES_EGG`, Unown, formas, tabelas de produção e save permanecem inalterados.
