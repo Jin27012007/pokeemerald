@@ -121,21 +121,16 @@ def main():
 
 
 
-# Staged SaveBlock1 extension layout. The existing 412-entry arrays remain
-# byte-for-byte compatible; extra entries use a dedicated 244-byte extension
-# area in the 0x180-byte reserved window. The runtime migration is not enabled
-# until all direct consumers are routed through accessors.
+# Runtime SaveBlock1 extension layout. It holds four raw 61-byte mirrors:
+# three seen copies and one owned copy. There is no migration header.
 LEGACY_DEX_COUNT = 412
 LEGACY_FLAG_BYTES = (LEGACY_DEX_COUNT + 7) // 8
 EXTENSION_DEX_COUNT = DEX_COUNT - LEGACY_DEX_COUNT
 EXTENSION_FLAG_BYTES = (EXTENSION_DEX_COUNT + 7) // 8
 EXTENSION_WINDOW_BYTES = 0x100
-EXTENSION_HEADER_BYTES = 16
-EXTENSION_PAYLOAD_BYTES = EXTENSION_WINDOW_BYTES - EXTENSION_HEADER_BYTES
+EXTENSION_HEADER_BYTES = 0
 EXTENSION_COPY_COUNT = 4
 EXTENSION_REQUIRED_BYTES = EXTENSION_COPY_COUNT * EXTENSION_FLAG_BYTES
-EXTENSION_MAGIC = b"DEX8"
-EXTENSION_VERSION = 1
 
 
 def test_extension_layout_and_legacy_compatibility():
@@ -144,78 +139,64 @@ def test_extension_layout_and_legacy_compatibility():
     assert EXTENSION_FLAG_BYTES == 61
     assert EXTENSION_COPY_COUNT == 4
     assert EXTENSION_REQUIRED_BYTES == 244
-    assert EXTENSION_REQUIRED_BYTES <= EXTENSION_PAYLOAD_BYTES
-    assert EXTENSION_PAYLOAD_BYTES - EXTENSION_REQUIRED_BYTES == 108
+    assert EXTENSION_HEADER_BYTES == 0
+    assert EXTENSION_REQUIRED_BYTES <= EXTENSION_WINDOW_BYTES
+    assert EXTENSION_WINDOW_BYTES - EXTENSION_REQUIRED_BYTES == 12
     assert EXTENSION_WINDOW_BYTES == 256
-    # Original Trainer Hill fields remain after the entire reserved window.
+    # Preserve the original 0x180-byte reserved range and Trainer Hill offset.
     assert 0x3598 + 0x180 == 0x3718
     assert EXTENSION_WINDOW_BYTES <= 0x180
 
 
-def test_extension_migration_is_idempotent_and_preserves_legacy():
-    class Extension:
-        def __init__(self, raw=None):
-            self.raw = bytearray(raw if raw is not None else EXTENSION_WINDOW_BYTES)
+def test_extension_read_write_mirrors_and_boundaries():
+    class ExtensionModel:
+        def __init__(self):
+            self.raw = bytearray(EXTENSION_WINDOW_BYTES)
 
-        def migrate(self, legacy_seen, legacy_owned):
-            if self.raw[:4] == EXTENSION_MAGIC and self.raw[4] == EXTENSION_VERSION:
-                return False
-            # Do not overwrite nonzero, unrecognized bytes. This protects
-            # unknown historical data until a version-specific migration exists.
-            if any(self.raw):
-                raise ValueError("unrecognized non-empty dex extension")
-            if len(legacy_seen) != LEGACY_FLAG_BYTES or len(legacy_owned) != LEGACY_FLAG_BYTES:
-                raise ValueError("legacy arrays must retain their 52-byte layout")
-            self.raw[:4] = EXTENSION_MAGIC
-            self.raw[4] = EXTENSION_VERSION
-            self.raw[5] = 0  # reserved flags
-            self.raw[6:8] = (EXTENSION_DEX_COUNT).to_bytes(2, "little")
-            # 8..15 reserved for future checksums / migration markers.
-            return True
+        @staticmethod
+        def locate(dex):
+            if not LEGACY_DEX_COUNT < dex <= DEX_COUNT:
+                raise ValueError(dex)
+            offset = dex - LEGACY_DEX_COUNT - 1
+            return offset // 8, 1 << (offset % 8)
 
-    legacy_seen = bytearray([0xA5] * LEGACY_FLAG_BYTES)
-    legacy_owned = bytearray([0x5A] * LEGACY_FLAG_BYTES)
-    ext = Extension()
-    assert ext.migrate(legacy_seen, legacy_owned) is True
-    snapshot = bytes(ext.raw)
-    assert ext.migrate(legacy_seen, legacy_owned) is False
-    assert bytes(ext.raw) == snapshot
-    assert legacy_seen == bytearray([0xA5] * LEGACY_FLAG_BYTES)
-    assert legacy_owned == bytearray([0x5A] * LEGACY_FLAG_BYTES)
+        def set_flag(self, mirror, dex):
+            byte, mask = self.locate(dex)
+            self.raw[mirror * EXTENSION_FLAG_BYTES + byte] |= mask
 
-    # Unknown non-empty extension data is not silently erased.
-    unknown = Extension(bytes([0x7F]) + bytes(EXTENSION_WINDOW_BYTES - 1))
-    try:
-        unknown.migrate(legacy_seen, legacy_owned)
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("unknown non-empty extension must not be overwritten")
+        def get_flag(self, mirror, dex):
+            byte, mask = self.locate(dex)
+            return bool(self.raw[mirror * EXTENSION_FLAG_BYTES + byte] & mask)
 
-
-def test_extension_bit_index_boundaries():
-    def locate(dex):
-        if not LEGACY_DEX_COUNT < dex <= DEX_COUNT:
-            raise ValueError(dex)
-        offset = dex - LEGACY_DEX_COUNT - 1
-        return offset // 8, 1 << (offset % 8)
-
-    assert locate(413) == (0, 1)
-    assert locate(420) == (0, 128)
-    assert locate(421) == (1, 1)
-    assert locate(898) == (60, 32)
+    ext = ExtensionModel()
+    # Every Gen 8 entry is kept independently in all four redundant copies.
+    for dex in range(413, 899):
+        for mirror in range(EXTENSION_COPY_COUNT):
+            ext.set_flag(mirror, dex)
+    assert all(ext.get_flag(mirror, dex)
+               for mirror in range(EXTENSION_COPY_COUNT)
+               for dex in range(413, 899))
+    assert ext.raw[0] & 0x01  # Dex 413, first bit.
+    assert ext.raw[60] & 0x20  # Dex 898, final used bit.
+    assert ext.raw[61] & 0x01  # Owned mirror begins at 3 * 61 bytes.
+    assert ext.raw[3 * EXTENSION_FLAG_BYTES + 60] & 0x20
+    assert len(ext.raw) == 256
+    assert sum(1 for x in ext.raw[:EXTENSION_REQUIRED_BYTES] if x) > 0
+    # Invalid National Dex values are rejected, not aliased into the buffer.
     for invalid in (0, 412, 899):
         try:
-            locate(invalid)
+            ext.set_flag(0, invalid)
         except ValueError:
             pass
         else:
             raise AssertionError(f"invalid extension dex accepted: {invalid}")
+    # The last 12 bytes are reserved and untouched by the four mirrors.
+    assert ext.raw[EXTENSION_REQUIRED_BYTES:] == bytearray(12)
 
 
 if __name__ == "__main__":
     main()
     test_extension_layout_and_legacy_compatibility()
-    test_extension_migration_is_idempotent_and_preserves_legacy()
     test_extension_bit_index_boundaries()
-    print("PASS: staged SaveBlock1 extension layout, migration guard and boundary tests.")
+    test_extension_read_write_mirrors_and_boundaries()
+    print("PASS: staged SaveBlock1 extension layout, four mirror read/write boundaries.")
