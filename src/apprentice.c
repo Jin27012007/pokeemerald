@@ -344,7 +344,7 @@ static u16 GetRandomAlternateMove(u8 monId)
     id = APPRENTICE_SPECIES_ID(monId);
     species = gApprentices[PLAYER_APPRENTICE.id].species[id];
     learnset = GetLevelUpLearnsetSafe(species);
-    if (learnset[0] == LEVEL_UP_END)
+    if (species >= NUM_SPECIES)
         return MOVE_NONE;
     j = 0;
 
