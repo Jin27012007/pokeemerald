@@ -914,8 +914,8 @@ u8 AddNewGameBirchObject(s16 x, s16 y, u8 subpriority)
 
 u8 CreateMonSprite_PicBox(u16 species, s16 x, s16 y, u8 subpriority)
 {
-    s32 spriteId = CreateMonPicSprite_HandleDeoxys(species, 0, 0x8000, TRUE, x, y, 0, gMonPaletteTable[species].tag);
-    PreservePaletteInWeather(IndexOfSpritePaletteTag(gMonPaletteTable[species].tag) + 0x10);
+    s32 spriteId = CreateMonPicSprite_HandleDeoxys(species, 0, 0x8000, TRUE, x, y, 0, GetMonPaletteTableEntry(species)->tag);
+    PreservePaletteInWeather(IndexOfSpritePaletteTag(GetMonPaletteTableEntry(species)->tag) + 0x10);
     if (spriteId == 0xFFFF)
         return MAX_SPRITES;
     else
