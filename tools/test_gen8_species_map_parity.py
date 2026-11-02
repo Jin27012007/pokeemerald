@@ -193,6 +193,48 @@ def main() -> int:
     assert "species < SPECIES_EGG" in reverse_body
     assert "sSpeciesToNationalPokedexNum[species - 1]" in reverse_body
 
+    accessor_start = pokemon_source.index("const struct SpeciesInfo *GetSpeciesInfoSafe(u16 species)")
+    accessor_end = pokemon_source.index("u16 NationalPokedexNumToSpecies", accessor_start)
+    accessor_body = pokemon_source[accessor_start:accessor_end]
+    assert "species >= NUM_SPECIES" in accessor_body
+    assert "species = SPECIES_NONE" in accessor_body
+    assert "return &gSpeciesInfo[species];" in accessor_body
+    pokemon_header = (ROOT / "include/pokemon.h").read_text(encoding="utf-8")
+    assert "GetSpeciesInfoSafe(u16 species);" in pokemon_header
+
+    raw_species_info_indexes = []
+    accessor_calls = 0
+    accessor_files = set()
+    for source_path in (ROOT / "src").rglob("*.c"):
+        source_text = source_path.read_text(encoding="utf-8")
+        accessor_calls += source_text.count("GetSpeciesInfoSafe(")
+        if "GetSpeciesInfoSafe(" in source_text:
+            accessor_files.add(str(source_path.relative_to(ROOT)))
+        for line_number, line in enumerate(source_text.splitlines(), 1):
+            if "gSpeciesInfo[" in line:
+                if source_path == ROOT / "src/pokemon.c" and "return &gSpeciesInfo[species];" in line:
+                    continue
+                raw_species_info_indexes.append({
+                    "path": str(source_path.relative_to(ROOT)),
+                    "line": line_number,
+                    "source": line.strip(),
+                })
+    assert not raw_species_info_indexes, (
+        f"Unbounded SpeciesInfo indexes remain: {raw_species_info_indexes[:10]}"
+    )
+    assert accessor_calls >= 150, f"Expected migrated call sites, got {accessor_calls}"
+    access_report = {
+        "accessor_call_sites": accessor_calls,
+        "files_using_accessor": len(accessor_files),
+        "unbounded_direct_indexes": 0,
+        "guarded_table_index_sites": 1,
+        "sentinel_fallback": "SPECIES_NONE",
+        "bounds_guard": "species >= NUM_SPECIES",
+    }
+    (ROOT / "reports/gen8-conversion/species_info_access_audit.json").write_text(
+        json.dumps(access_report, indent=2) + "\\n", encoding="utf-8"
+    )
+
     makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
     assert "src/data/gen8/species_map.c" in makefile
     assert "gen8_species_map:" in makefile
@@ -210,6 +252,7 @@ def main() -> int:
         "legacy_unown_lookup_fallback_preserved": True,
         "reverse_lookup_uses_generated_map": True,
         "legacy_unown_reverse_fallback_preserved": True,
+        "species_info_reads_bounds_checked": True,
         "legacy_unown_pseudo_dex_slots": expected_collision_dex,
         "canonical_gen8_dex_conflicts_with_legacy_unown_slots": False,
         "legacy_lookup_replacement_allowed": False,
