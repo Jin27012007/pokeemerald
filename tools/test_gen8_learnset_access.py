@@ -105,8 +105,8 @@ def main() -> int:
 
     random_alternate = section(
         apprentice,
-        "static u16 GetRandomAlternateMove(u8 monId)",
-        "static bool8 TrySetMove(u8 monId, u16 move)",
+        "static u16 GetRandomAlternateMove(u8 monId)\\n{",
+        "static bool8 TrySetMove(u8 monId, u16 move)\\n{",
     )
     assert "GetLevelUpLearnsetSafe(species)" in random_alternate
     assert "if (species >= NUM_SPECIES)" in random_alternate
