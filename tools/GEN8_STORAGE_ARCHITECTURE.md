@@ -20,7 +20,7 @@ Status: investigation only. No production species IDs, save structs, storage str
 
 ## SpeciesInfo conversion gate
 
-The source file currently consumed by the extractor is only `tools/vendor/pokeemerald-expansion/src/data/pokemon/species_info/gen_8_families.h`. The latest extractor run reported 123 parsed records, and 0 fully resolved compact records. This is not a complete 512-species data source and cannot be treated as a finished SpeciesInfo migration.
+The converter consumes the pinned Generation 4–8 family sources, not only `gen_8_families.h`. It maps canonical National Dex entries 1–898 using those sources plus the existing Emerald records for the 386 species already present. The CI report distinguishes (1) canonical identity coverage, (2) source-field completeness, (3) compact-field resolution and (4) runtime compatibility. A count of 898 canonical rows proves only that a source record was associated with each National Dex identity; it does not prove every source field is resolved or safely representable in Emerald. The workflow must retain the separate missing-field, unresolved-record and runtime-gap counts.
 
 Emerald's compact `struct SpeciesInfo` requires base stats, types, catch rate, experience yield, EV yields, held items, gender ratio, egg cycles, friendship, growth rate, egg groups, two ability slots, Safari Zone flee rate, body color and no-flip behavior. Expansion data also has a third (hidden) ability and extensive presentation/dex fields. These must be explicitly mapped or deliberately represented outside the legacy struct; truncating the hidden ability or copying source enum numbers is not acceptable.
 
@@ -37,7 +37,7 @@ The next SpeciesInfo phase must:
 - Save extension placement, versioning, flash write ordering, migration and recovery are not validated.
 - The storage capacity calculation does not audit all species-indexed consumers (graphics tables, cries, evolutions, learnsets, battle/contest tables, scripts, dex ordering and UI indices).
 - The current staged converter imports Gen 4–8 source families and covers all 898 canonical entries. Source coverage is complete, but compact/runtime compatibility remains blocked by type, ability, item, source-only field, and runtime table gaps.
-- The staging workflow's SaveBlock2 assertion was corrected to expect 4006 bytes and -38 bytes of headroom after in-place Pokédex expansion. The full CI result for the multi-generation extractor is still pending; individual commits triggered overlapping workflow runs.
+- The staging workflow checks SaveBlock2 at 4006 bytes and -38 bytes of headroom after in-place Pokédex expansion. The CI job must pass both the storage audit and the later source-table assertions before a ROM build is considered verified.
 
 ## Release gate
 
