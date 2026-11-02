@@ -74,6 +74,8 @@ jobs:
 
       - name: Test Gen 8 SpeciesInfo parsers and source mappings
         run: python3 tools/test_gen8_species_info.py
+      - name: Verify existing species ID namespace reservations
+        run: python3 -c "from pathlib import Path; import runpy; ns=runpy.run_path('tools/test_gen8_species_info.py'); ns['check_existing_species_namespace_has_no_numeric_collisions']()"
 
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
