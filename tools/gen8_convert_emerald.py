@@ -921,6 +921,21 @@ def index_species_info_by_national_dex(records: list[dict],
         indexed[dex_id] = record
     return indexed
 
+def filter_canonical_species_info_candidates(candidates: list[dict],
+                                             canonical_symbol: str,
+                                             preferred_symbol: str) -> list[dict]:
+    """Keep only the initializer(s) explicitly named for one canonical Dex row.
+
+    Candidates are already grouped by numeric source National Dex ID. Do not
+    compare the source .natDexNum token text with the species designator: form
+    families legitimately use the base species' NATIONAL_DEX_* token.
+    """
+    allowed_symbols = {canonical_symbol, preferred_symbol}
+    return [
+        candidate for candidate in candidates
+        if candidate.get("species_symbol") in allowed_symbols
+    ]
+
 def generate(check: bool = False) -> dict:
     source_species = symbols(read(SRC_SPECIES), "SPECIES_", enum=True)
     target_species = symbols(read(DST_SPECIES), "SPECIES_")
@@ -1033,13 +1048,20 @@ def generate(check: bool = False) -> dict:
     if existing_count != 386 or len(new_species) != 512:
         raise RuntimeError(f"Unexpected species split: existing={existing_count}, new={len(new_species)}")
 
-    # Coverage uses the canonical National Dex identity. A record is accepted
-    # only when its source symbol or its explicit .natDexNum identifies the Dex.
-    natdex_values = {x["symbol"]: x["id"] for x in symbols(read(DST_POKEDEX), "NATIONAL_DEX_", enum=True)}
+    # Expansion .natDexNum values belong to Expansion's National Dex enum.
+    # Emerald's enum is not interchangeable: it diverges for some Gen 8 names
+    # and orders (for example Dedenne/Carbink and Archeops/Archaeops).
+    source_natdex_values = {
+        row["symbol"]: row["id"]
+        for row in symbols(
+            read(VENDOR / "include/constants/pokedex.h"),
+            "NATIONAL_DEX_", enum=True
+        )
+    }
     info_candidates_by_dex = {}
     for row in info_result["compact_records"] + info_result["unresolved_records"]:
         dex_symbol = row.get("national_dex_symbol")
-        dex_id = natdex_values.get(dex_symbol) if dex_symbol else None
+        dex_id = source_natdex_values.get(dex_symbol) if dex_symbol else None
         if dex_id is not None and 1 <= dex_id <= 898:
             info_candidates_by_dex.setdefault(dex_id, []).append(row)
     canonical_species_info = []
@@ -1060,11 +1082,9 @@ def generate(check: bool = False) -> dict:
         # natDexNum resolves to this exact National Dex number and whose
         # source designator is the exact canonical symbol or explicit alias.
         if row is None:
-            exact_candidates = [
-                candidate for candidate in candidates
-                if candidate.get("national_dex_symbol") == national_symbol
-                and candidate.get("species_symbol") in {national_symbol, preferred_symbol}
-            ]
+            exact_candidates = filter_canonical_species_info_candidates(
+                candidates, national_symbol, preferred_symbol
+            )
             if len(exact_candidates) == 1:
                 row = exact_candidates[0]
             elif len(exact_candidates) > 1:
