@@ -75,6 +75,7 @@ int main(void)
 typedef uint8_t u8;
 typedef uint16_t u16;
 typedef int32_t bool32;
+#include "constants/species.h"
 #endif
 """,
             encoding="utf-8",
