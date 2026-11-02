@@ -758,11 +758,17 @@ def source_table_inventory() -> dict:
     for row in move_rows:
         if row["emerald_move_id"] is None:
             continue
-        previous = target_id_owners.get(row["emerald_move_id"])
-        if previous is not None and previous != row["source_move_symbol"]:
-            move_id_conflicts.setdefault(row["emerald_move_id"], [previous]).append(row["source_move_symbol"])
+        target_id = row["emerald_move_id"]
+        canonical_target_symbol = row["emerald_move_symbol"]
+        previous = target_id_owners.get(target_id)
+        if previous is not None and previous != canonical_target_symbol:
+            move_id_conflicts.setdefault(target_id, [previous]).append(canonical_target_symbol)
         else:
-            target_id_owners[row["emerald_move_id"]] = row["source_move_symbol"]
+            target_id_owners[target_id] = canonical_target_symbol
+    move_id_conflicts = {
+        target_id: sorted(set(symbols))
+        for target_id, symbols in move_id_conflicts.items()
+    }
 
     # Ability/item dependency closure for the selected 898 canonical rows.
     # The per-species compact file is a list; enum domains are stored in
