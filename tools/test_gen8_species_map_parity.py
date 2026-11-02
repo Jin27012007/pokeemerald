@@ -177,6 +177,19 @@ def main() -> int:
         "Legacy auxiliary National Dex values overlap canonical Gen 8 Dex rows"
     )
 
+    pokemon_source = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
+    lookup_start = pokemon_source.index("u16 NationalPokedexNumToSpecies(u16 nationalNum)")
+    lookup_end = pokemon_source.index("\\nu16 NationalToHoennOrder", lookup_start)
+    lookup_body = pokemon_source[lookup_start:lookup_end]
+    assert "nationalNum <= GEN8_NATIONAL_DEX_COUNT" in lookup_body
+    assert "Gen8SpeciesMap_GetEmeraldId(nationalNum)" in lookup_body
+    assert "sSpeciesToNationalPokedexNum[species] != nationalNum" in lookup_body
+    assert "return SPECIES_NONE;" in lookup_body
+
+    makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
+    assert "src/data/gen8/species_map.c" in makefile
+    assert "gen8_species_map:" in makefile
+
     compile_and_execute_real_map(rows)
 
     result = {
@@ -186,6 +199,8 @@ def main() -> int:
         "legacy_mapping_mismatches": len(mismatches),
         "legacy_unown_pseudo_dex_collisions": unown_collisions,
         "generated_c_map_executed": True,
+        "canonical_lookup_uses_generated_map": True,
+        "legacy_unown_lookup_fallback_preserved": True,
         "legacy_unown_pseudo_dex_slots": expected_collision_dex,
         "canonical_gen8_dex_conflicts_with_legacy_unown_slots": False,
         "legacy_lookup_replacement_allowed": False,
