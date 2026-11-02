@@ -27,7 +27,7 @@ The structures must never be copied, cast, or serialized as if they shared a lay
 | Expansion source field | Emerald target / treatment | Compatibility |
 |---|---|---|
 | `baseHP`, `baseAttack`, `baseDefense`, `baseSpeed`, `baseSpAttack`, `baseSpDefense` | Same six `u8` stats | Direct |
-| `types[2]` | Two `u8` type IDs; target battle type tables must contain every mapped type | Conditional; Fairy is not supported by the current vanilla target |
+| `types[2]` | Two `u8` type IDs; target battle type tables must contain every mapped type | Conditional; Fairy and Stellar are not supported by the current vanilla target |
 | `catchRate` | `u8` | Direct |
 | `expYield` | Target is `u8`, source is `u16` | Lossy for values above 255; never truncate silently |
 | Six `evYield_*` fields | Six 2-bit yields | Width-compatible; omitted source yields mean zero only when confirmed by source initializer semantics |
@@ -65,6 +65,6 @@ These fields may be represented in separate Emerald tables or asset systems. The
 
 SpeciesInfo source coverage is complete only when all 898 canonical National Dex entries have exactly one selected source record, every required source field is resolved or explicitly documented as an intentional source default, and all source-field provenance is available.
 
-Emerald runtime compatibility is a separate gate. It remains blocked until the 16-bit experience yield, Fairy type, ability width/slot count, item definitions/effects, and every separate graphics, cry, evolution, learnset, Pokédex and form dependency have an explicit target implementation.
+Emerald runtime compatibility is a separate gate. It remains blocked until the 16-bit experience yield, Fairy/Stellar types, ability width/slot count, item definitions/effects, and every separate graphics, cry, evolution, learnset, Pokédex and form dependency have an explicit target implementation.
 
 Passing source coverage does not authorize species-ID allocation or a `NUM_SPECIES` change. Save-block and Pokédex storage validation must also pass independently.
