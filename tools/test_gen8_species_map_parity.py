@@ -152,21 +152,22 @@ def main() -> int:
     # Unown B-Z auxiliary IDs. Those collide with canonical Gen 4 species
     # Dex numbers beyond the canonical 1-898 range, so the legacy lookup must retain this auxiliary mapping.
     unown_collisions = []
-    for row in new:
-        dex = int(row["national_dex"])
-        legacy_id = legacy_by_dex.get(dex)
-        if legacy_id is not None:
+    for dex, legacy_id in sorted(legacy_by_dex.items()):
+        if dex > 898:
             unown_collisions.append({
                 "national_dex": dex,
-                "canonical_species": row["source_symbol"],
                 "legacy_internal_id": legacy_id,
             })
             assert 252 <= legacy_id <= 276, (
-                f"Unexpected legacy collision at Dex {dex}: {legacy_id}"
+                f"Unexpected legacy auxiliary entry at Dex {dex}: {legacy_id}"
             )
     expected_collision_dex = list(range(899, 925))
     assert [row["national_dex"] for row in unown_collisions] == expected_collision_dex, (
         unown_collisions
+    )
+    canonical_dexes = {int(row["national_dex"]) for row in rows}
+    assert not (canonical_dexes & set(legacy_by_dex)), (
+        "Legacy auxiliary National Dex values overlap canonical Gen 8 Dex rows"
     )
 
     compile_and_execute_real_map(rows)
