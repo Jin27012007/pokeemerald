@@ -1021,6 +1021,7 @@ def generate(check: bool = False) -> dict:
             info_candidates_by_dex.setdefault(dex_id, []).append(row)
     canonical_species_info = []
     missing_species_info = []
+    species_info_identity_conflicts = []
     for dex in range(1, 899):
         national_symbol = by_dex[dex]
         preferred_symbol = BASE_ALIASES.get(national_symbol, national_symbol)
@@ -1050,6 +1051,18 @@ def generate(check: bool = False) -> dict:
                 "status": "source_record_missing",
             })
         else:
+            if row.get("record_provenance") == "expansion_source_initializer" and not row.get("source_national_dex_matches_selected", False):
+                species_info_identity_conflicts.append({
+                    "national_dex": dex,
+                    "canonical_symbol": national_symbol,
+                    "expected_source_alias": preferred_symbol,
+                    "selected_source_symbol": row["species_symbol"],
+                    "selected_source_natdex_symbol": row.get("national_dex_symbol"),
+                    "candidate_symbols_for_same_dex": sorted(
+                        candidate["species_symbol"] for candidate in candidates
+                    ),
+                    "status": "identity_conflict_requires_explicit_resolution",
+                })
             canonical_species_info.append({
                 "national_dex": dex,
                 "national_symbol": national_symbol,
@@ -1143,6 +1156,7 @@ def generate(check: bool = False) -> dict:
             and not row.get("source_national_dex_matches_selected", False)
         ),
         "canonical_species_info_missing": len(missing_species_info),
+        "canonical_species_info_identity_conflicts": len(species_info_identity_conflicts),
         "canonical_species_info_raw_field_coverage": field_coverage,
         "canonical_species_info_source_complete_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer" and row.get("source_complete", False)),
         "canonical_species_info_compact_compatible_rows": sum(1 for row in canonical_species_info if row.get("compact_compatible", False)),
@@ -1220,6 +1234,7 @@ def generate(check: bool = False) -> dict:
         "species_info_by_national_dex": canonical_species_info,
         "species_info_source_fields_complete": species_info_source_complete,
         "missing_species_info_by_national_dex": missing_species_info,
+        "species_info_identity_conflicts": species_info_identity_conflicts,
         "species_info_field_coverage": field_coverage,
         "emerald_compatibility": emerald_compatibility,
         "missing_learnset_move_symbols": missing_moves,
@@ -1240,6 +1255,7 @@ def generate(check: bool = False) -> dict:
         write_json(OUT / "species_info_field_coverage.json", field_coverage)
         write_json(OUT / "emerald_species_info_compatibility.json", emerald_compatibility)
         write_json(OUT / "missing_species_info_for_new_dex_species.json", missing_species_info)
+        write_json(OUT / "species_info_identity_conflicts.json", species_info_identity_conflicts)
         with (OUT / "move_dependencies.csv").open("w", newline="", encoding="utf-8") as fp:
             writer = csv.DictWriter(fp, fieldnames=list(move_dependencies[0].keys()))
             writer.writeheader()
