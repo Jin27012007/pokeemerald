@@ -80,6 +80,21 @@ def main() -> int:
     reserved_save1_bytes = int(reserved.group(1), 16) if reserved else 0
     if reserved_save1_bytes != 0x180:
         raise RuntimeError(f"Unexpected SaveBlock1 reserved area: {reserved_save1_bytes:#x}")
+    # Staged National Dex expansion plan: keep the legacy 52-byte arrays and
+    # store the additional 486 entries in a versioned SaveBlock1 reserved area.
+    legacy_dex_count = 412
+    extension_dex_count = dex_count - legacy_dex_count
+    extension_flag_bytes = (extension_dex_count + 7) // 8
+    extension_header_bytes = 16
+    extension_required_bytes = 2 * extension_flag_bytes
+    extension_payload_bytes = reserved_save1_bytes - extension_header_bytes
+    extension_layout_valid = (
+        extension_dex_count == 486
+        and extension_flag_bytes == 61
+        and extension_required_bytes == 122
+        and extension_required_bytes <= extension_payload_bytes
+        and 0x3598 + reserved_save1_bytes == 0x3718
+    )
 
     source_info_blocks = len(re.findall(r"^\s*\[SPECIES_[A-Z0-9_]+\]\s*=", source_info, re.M))
     source_info_symbols = re.findall(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=", source_info, re.M)
@@ -142,6 +157,13 @@ def main() -> int:
             "single_sector_extension_payload_bytes": sector_bytes - 16,
             "double_buffer_extension_bytes": 2 * (required_total_flag_bytes + 16),
             "saveblock1_candidate_extension_capacity_bytes": reserved_save1_bytes,
+            "legacy_dex_flag_count": legacy_dex_count,
+            "extension_dex_flag_count": extension_dex_count,
+            "extension_flag_bytes_per_copy": extension_flag_bytes,
+            "extension_seen_owned_required_bytes": extension_required_bytes,
+            "extension_header_bytes": extension_header_bytes,
+            "extension_payload_capacity_bytes": extension_payload_bytes,
+            "extension_layout_valid": extension_layout_valid,
             "pokedex_struct_bytes": current_pokedex_bytes,
             "expanded_pokedex_struct_bytes": expanded_pokedex_bytes,
             "note": (
@@ -173,7 +195,8 @@ def main() -> int:
             "unmatched_cry_ids": sorted(source_cries - target_cries),
         },
         "readiness": {
-            "save_extension_sector_plan_validated": False,
+            "save_extension_sector_plan_validated": extension_layout_valid,
+            "save_extension_runtime_migration_validated": False,
             "saveblock2_fits_after_dex_expansion": save2_expanded_bytes <= sector_bytes,
             "save_extension_read_write_tests": False,
             "species_info_complete": False,
