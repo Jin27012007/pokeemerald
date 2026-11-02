@@ -1041,6 +1041,8 @@ def generate(check: bool = False) -> dict:
         if row is None:
             row = info_by_symbol.get(preferred_symbol)
         if row is None:
+            row = target_species_by_dex.get(dex)
+        if row is None:
             missing_species_info.append({
                 "national_dex": dex,
                 "national_symbol": national_symbol,
