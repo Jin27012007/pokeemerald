@@ -56,6 +56,8 @@ def test_scans_core_consumers():
     assert any(path == "src/pokemon_icon.c" and table == "icon" for path, table in refs)
     assert summary["scanned_source_files"] > 100
     assert summary["finding_count"] > 0
+
+
 def test_scan_does_not_miss_multiline_species_table_index():
     source = """
     value = gSpeciesInfo[
