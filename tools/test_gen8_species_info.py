@@ -386,6 +386,15 @@ def check_canonical_species_row_preserves_expected_dex_symbol_key():
     assert canonical_row["national_symbol"] == "BULBASAUR"
 
 
+def check_prefixed_natdex_symbol_resolves_enum_member():
+    values = {"BULBASAUR": 1, "MR_MIME": 122, "ARCEUS": 493}
+    assert module.resolve_source_national_dex_id("NATIONAL_DEX_BULBASAUR", values) == 1
+    assert module.resolve_source_national_dex_id("NATIONAL_DEX_MR_MIME", values) == 122
+    assert module.resolve_source_national_dex_id("NATIONAL_DEX_ARCEUS", values) == 493
+    assert module.resolve_source_national_dex_id("NATIONAL_DEX_MISSING", values) is None
+    assert module.resolve_source_national_dex_id(None, values) is None
+
+
 def check_natdex_symbol_normalization_after_macro_expansion():
     # Macro expansion can turn NATIONAL_DEX_BULBASAUR into the bare enum
     # token BULBASAUR. Both forms must normalize to the same source symbol.
