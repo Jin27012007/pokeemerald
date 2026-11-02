@@ -94,11 +94,12 @@ def main() -> int:
     if reserved_save1_bytes != 0x100:
         raise RuntimeError(f"Unexpected SaveBlock1 dex extension area: {reserved_save1_bytes:#x}")
     # Staged National Dex expansion plan: keep the legacy 52-byte arrays and
-    # store the additional 486 entries in a versioned SaveBlock1 reserved area.
+    # store the additional 486 entries as four raw 61-byte mirrors in SaveBlock1.
     legacy_dex_count = 412
     extension_dex_count = dex_count - legacy_dex_count
     extension_flag_bytes = (extension_dex_count + 7) // 8
-    extension_header_bytes = 16
+    # The runtime uses the full extension window directly; there is no header.
+    extension_header_bytes = 0
     extension_copy_count = 4
     extension_required_bytes = extension_copy_count * extension_flag_bytes
     extension_window_bytes = 0x100
