@@ -327,6 +327,20 @@ def check_full_canonical_coverage_gate():
     assert required <= sample
 
 
+def check_per_species_stellar_runtime_gap():
+    type_names = set(module.re.findall(
+        r"TYPE_([A-Z0-9_]+)",
+        "MON_TYPES(TYPE_STELLAR, TYPE_NORMAL)",
+    ))
+    runtime_gaps = []
+    if "FAIRY" in type_names:
+        runtime_gaps.append("fairy_type_not_in_emerald_enum")
+    if "STELLAR" in type_names:
+        runtime_gaps.append("stellar_type_not_in_emerald_enum")
+    assert "stellar_type_not_in_emerald_enum" in runtime_gaps
+    assert "fairy_type_not_in_emerald_enum" not in runtime_gaps
+
+
 def main():
     check_enum_implicit_and_explicit_values()
     check_nested_designated_initializers()
@@ -343,6 +357,7 @@ def main():
     check_generic_gen8_conditional_values()
     check_all_generation_source_files_present()
     check_full_canonical_coverage_gate()
+    check_per_species_stellar_runtime_gap()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
     print("PASS: canonical SpeciesInfo acceptance gate defined for National Dex 1-898.")
 
