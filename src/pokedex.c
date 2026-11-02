@@ -4137,7 +4137,7 @@ static void PrintMonInfo(u32 num, u32 value, u32 owned, u32 newEntry)
     PrintInfoScreenText(name, 0x84, 0x19);
     if (owned)
     {
-        CopyMonCategoryText(num, str2);
+        StringCopy(str2, GetPokedexEntryByDexNum(num)->categoryName);
         category = str2;
     }
     else
