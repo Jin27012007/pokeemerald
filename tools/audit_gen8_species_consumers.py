@@ -179,14 +179,6 @@ def scan_source() -> tuple[list[dict], dict]:
             continue
         rel = path.relative_to(ROOT).as_posix()
         full_source = "\n".join(lines)
-        full_table_refs = {
-            table_name: extract_multiline_table_refs(full_source, table_name)
-            for table_name in ("species_info", "evolution", "front_pic")
-        }
-        multiline_by_line = defaultdict(list)
-        for table_name, rows in full_table_refs.items():
-            for row in rows:
-                multiline_by_line[(table_name, row["line"])].append(row["expression"])
         for line_no, line in enumerate(lines, 1):
             stripped = line.strip()
             if not stripped or stripped.startswith("//") or stripped.startswith("*"):
@@ -226,8 +218,8 @@ def scan_source() -> tuple[list[dict], dict]:
                     "risk_reasons": risks,
                     "source": stripped[:500],
                 })
-    # Emit multiline references exactly once with the line where each
-    # table access begins. This also catches expressions split over lines.
+    # Emit multiline indexes with the exact source line only when the
+    # same access was not already captured by the line-based scanner.
     for path in files:
         try:
             full_source = path.read_text(encoding="utf-8")
@@ -237,8 +229,11 @@ def scan_source() -> tuple[list[dict], dict]:
         for table_name in ("species_info", "evolution", "front_pic"):
             for row in extract_multiline_table_refs(full_source, table_name):
                 line_no = row["line"]
-                line = full_source.splitlines()[line_no - 1] if line_no <= len(full_source.splitlines()) else ""
+                line = full_source.splitlines()[line_no - 1]
                 expression = row["expression"]
+                already_found = any(f["path"] == rel and f["line"] == line_no and f["table"] == table_name and f["index_expression"] == expression for f in findings)
+                if already_found:
+                    continue
                 special = {name for name, pattern in SPECIAL_PATTERNS.items() if pattern.search(line)}
                 level, risks = risk_for(line, expression, table_name, special)
                 findings.append({
