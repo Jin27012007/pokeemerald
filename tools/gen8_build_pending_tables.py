@@ -504,14 +504,16 @@ def source_table_inventory() -> dict:
         row = {
             "national_dex": dex,
             "species_symbol": mapping["source_symbol"],
+            "record_provenance": canonical_row.get("record_provenance"),
+            "cry_source_status": "import_pending" if source is not None else "retained_from_emerald",
             "cry_symbol": cry_symbol,
             "source_cry_table_match": source_matched,
             "emerald_cry_table_match": target_matched,
             "audio_asset_imported": False,
         }
-        if not source_matched:
+        if source is not None and not source_matched:
             missing_cries.append(row)
-        if not target_matched:
+        if source is not None and not target_matched:
             missing_target_cries.append(row)
         cry_rows.append(row)
 
