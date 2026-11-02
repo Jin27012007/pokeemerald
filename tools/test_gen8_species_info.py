@@ -22,7 +22,7 @@ def check_species_mapping_api_generation():
         {"national_dex": 1, "source_symbol": "BULBASAUR", "emerald_internal_id": 1},
         {"national_dex": 252, "source_symbol": "TREECKO", "emerald_internal_id": 277},
         {"national_dex": 387, "source_symbol": "TURTWIG", "emerald_internal_id": None},
-    ])
+    ], expected_existing_count=2)
     assert "Gen8SpeciesMap_GetEmeraldId(u16 nationalDex)" in header
     assert "Gen8SpeciesMap_IsValidInternalId(u16 emeraldSpecies)" in header
     assert "Gen8SpeciesMap_GetNationalDex(u16 emeraldSpecies)" in header
@@ -36,7 +36,7 @@ def check_species_mapping_api_generation():
         module.emit_species_c([
             {"national_dex": 1, "source_symbol": "A", "emerald_internal_id": 1},
             {"national_dex": 2, "source_symbol": "B", "emerald_internal_id": 1},
-        ])
+        ], expected_existing_count=2)
     except RuntimeError as error:
         assert "Duplicate Emerald internal ID" in str(error)
     else:
