@@ -176,6 +176,38 @@ def named_arrays(text: str, declaration: str) -> dict[str, str]:
     return result
 
 
+
+def enum_symbol_catalog(text: str, prefix: str) -> dict[str, int | None]:
+    """Collect enum symbols, including aliases whose expressions are symbolic.
+
+    Numeric values are resolved only for literal integer initializers. An
+    alias or computed expression remains present with value None so coverage
+    checks cannot silently drop it.
+    """
+    result: dict[str, int | None] = {}
+    enum_blocks = re.finditer(r"enum(?:\\s+__attribute__\\s*\\(\\([^)]*\\)\\))?[^{}]*\\{([^}]*)\\}", text, re.S)
+    member_re = re.compile(
+        rf"^\\s*{re.escape(prefix)}([A-Z0-9_]+)\\s*(?:=\\s*([^,]+))?\\s*,?\\s*(?://.*)?$",
+        re.M,
+    )
+    for block in enum_blocks:
+        next_value: int | None = 0
+        for match in member_re.finditer(block.group(1)):
+            symbol, raw = match.group(1), match.group(2)
+            if raw is not None:
+                raw = raw.strip()
+                if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\\d+)", raw):
+                    next_value = int(raw, 0)
+                else:
+                    result[symbol] = None
+                    next_value = None
+                    continue
+            result[symbol] = next_value
+            if next_value is not None:
+                next_value += 1
+    return result
+
+
 def numeric_define_catalog(text: str, prefix: str) -> dict[str, int]:
     """Read integer #define catalogs while allowing trailing C comments."""
     pattern = re.compile(
@@ -680,7 +712,7 @@ def source_table_inventory() -> dict:
     target_item_records = indexed_records(read(ROOT / "src/data/items.h"), "ITEM_")
     source_pokemon_text = read(SOURCE_POKEMON)
     target_pokemon_text = read(ROOT / "include/constants/pokemon.h")
-    source_type_ids = {row["symbol"]: row["id"] for row in conv.symbols(source_pokemon_text, "TYPE_", enum=True)}
+    source_type_ids = enum_symbol_catalog(source_pokemon_text, "TYPE_")
     target_type_ids = {row["symbol"]: row["id"] for row in conv.symbols(target_pokemon_text, "TYPE_")}
     source_egg_ids = {row["symbol"]: row["id"] for row in conv.symbols(source_pokemon_text, "EGG_GROUP_", enum=True)}
     target_egg_ids = {row["symbol"]: row["id"] for row in conv.symbols(target_pokemon_text, "EGG_GROUP_")}
@@ -908,6 +940,7 @@ def source_table_inventory() -> dict:
         "canonical_held_items_without_source_data_record": sum(not row["source_item_data_record_present"] for row in item_rows),
         "canonical_types_used": len(used_types),
         "canonical_types_without_emerald_definition": len(missing_types),
+        "canonical_types_missing_emerald_definition_symbols": missing_types,
         "canonical_egg_groups_used": len(used_egg_groups),
         "canonical_egg_groups_without_emerald_definition": len(missing_egg_groups),
         "canonical_growth_rates_used": len(growth_use),
