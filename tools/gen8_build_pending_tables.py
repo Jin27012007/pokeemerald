@@ -88,6 +88,117 @@ def write_json(path: Path, value) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def c_string_literal(value: str) -> str:
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    escaped = escaped.replace("\r", "\\r").replace("\n", "\\n")
+    return '"' + escaped + '"'
+
+
+def emit_gen8_pokedex_runtime(pokedex_rows: list[dict], order_rows: dict) -> tuple[str, str]:
+    """Emit runtime National Dex text/metadata and complete canonical sort orders."""
+    expansion_rows = [
+        row for row in pokedex_rows
+        if row.get("record_provenance") == "expansion_source_initializer"
+    ]
+    if len(expansion_rows) != 512:
+        raise RuntimeError(f"Expected 512 Gen 8 Pokédex rows, found {len(expansion_rows)}")
+
+    target_dex_rows = conv.symbols(read(ROOT / "include/constants/pokedex.h"), "NATIONAL_DEX_", enum=True)
+    dex_symbol_by_number: dict[int, str] = {}
+    for row in target_dex_rows:
+        dex_symbol_by_number.setdefault(int(row["id"]), row["symbol"])
+    missing_symbols = sorted(set(range(1, 899)) - set(dex_symbol_by_number))
+    if missing_symbols:
+        raise RuntimeError(f"Target National Dex constants missing: {missing_symbols[:12]}")
+
+    c_lines = [
+        '#include "global.h"',
+        '#include "pokedex.h"',
+        '#include "gen8_pokedex_data.h"',
+        "",
+    ]
+    entries = []
+    seen_dex = set()
+    for row in expansion_rows:
+        dex = int(row["national_dex"])
+        if dex < 387 or dex > 898 or dex in seen_dex:
+            raise RuntimeError(f"Invalid or duplicate Expansion National Dex row: {dex}")
+        seen_dex.add(dex)
+        category = "".join(row["category_fragments"])
+        name = "".join(row["species_name_fragments"]).upper()
+        description = row["description_fragments"]
+        if not category or not name or not description:
+            raise RuntimeError(f"Incomplete runtime Pokédex text at National Dex {dex}")
+        if len(category.encode("utf-8")) >= 16:
+            raise RuntimeError(f"Pokédex category exceeds runtime field at National Dex {dex}: {category}")
+        try:
+            height = int(str(row["height_dm"]).strip(), 10)
+            weight = int(str(row["weight_hg"]).strip(), 10)
+        except (TypeError, ValueError) as exc:
+            raise RuntimeError(f"Unresolved Pokédex dimensions at National Dex {dex}") from exc
+
+        text_symbol = f"sGen8PokedexDescription_{dex}"
+        c_lines.append(f"static const u8 {text_symbol}[] = _(")
+        for fragment in description:
+            c_lines.append(f"    {c_string_literal(fragment)}")
+        c_lines.extend([");", ""])
+        dex_symbol = dex_symbol_by_number[dex]
+        entries.extend([
+            f"    [{dex_symbol}] =",
+            "    {",
+            "        .entry =",
+            "        {",
+            f"            .categoryName = _({c_string_literal(category)}),",
+            f"            .height = {height},",
+            f"            .weight = {weight},",
+            f"            .description = {text_symbol},",
+            "            .pokemonScale = 256,",
+            "            .pokemonOffset = 0,",
+            "            .trainerScale = 256,",
+            "            .trainerOffset = 0,",
+            "        },",
+            f"        .speciesName = _({c_string_literal(name)}),",
+            "    },",
+            "",
+        ])
+    if seen_dex != set(range(387, 899)):
+        missing = sorted(set(range(387, 899)) - seen_dex)
+        raise RuntimeError(f"Expansion Pokédex runtime rows incomplete: {missing[:12]}")
+
+    c_lines.append("const struct Gen8PokedexData gGen8PokedexData[GEN8_DEX_COUNT + 1] =")
+    c_lines.append("{")
+    c_lines.extend(entries)
+    c_lines.extend(["};", ""])
+    runtime_source = "\n".join(c_lines)
+
+    # The legacy National Dex has 25 auxiliary Unown entries (B-Z) outside
+    # canonical 1-898. Keep them first in alphabetical order, as Emerald did.
+    old_unown = [f"NATIONAL_DEX_OLD_UNOWN_{letter}" for letter in "BCDEFGHIJKLMNOPQRSTUVWXYZ"]
+    order_lines = []
+    expected_orders = (
+        "gPokedexOrder_Alphabetical",
+        "gPokedexOrder_Weight",
+        "gPokedexOrder_Height",
+    )
+    for order_name in expected_orders:
+        row = order_rows.get(order_name)
+        if row is None or not row.get("complete_for_gen8"):
+            raise RuntimeError(f"Gen 8 Pokédex order is incomplete: {order_name}")
+        values = [int(x) for x in row["national_dex_order"]]
+        if len(values) != 898 or set(values) != set(range(1, 899)):
+            raise RuntimeError(f"Gen 8 Pokédex order failed one-to-one validation: {order_name}")
+        symbols = [dex_symbol_by_number[dex] for dex in values]
+        if order_name == "gPokedexOrder_Alphabetical":
+            symbols = old_unown + symbols
+        order_lines.append(f"const u16 {order_name}[] =")
+        order_lines.append("{")
+        for offset in range(0, len(symbols), 8):
+            order_lines.append("    " + ", ".join(symbols[offset:offset + 8]) + ",")
+        order_lines.extend(["};", ""])
+    order_header = "\n".join(order_lines)
+    return runtime_source, order_header
+
+
 def scan_initializer(text: str, start: int) -> tuple[str, int]:
     """Read a C initializer/expression from start, respecting nesting and strings."""
     i = start
@@ -1135,6 +1246,16 @@ def source_table_inventory() -> dict:
         "evolution_condition_dependencies": evolution_condition_rows,
         "conditional_evolution_edges": conditional_evolution_rows,
     }
+
+
+    runtime_pokedex_source, runtime_pokedex_orders = emit_gen8_pokedex_runtime(
+        pokedex_rows, order_rows
+    )
+    runtime_pokedex_path = ROOT / "src/data/gen8/pokedex_data.c"
+    runtime_pokedex_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_pokedex_path.write_text(runtime_pokedex_source, encoding="utf-8")
+    runtime_pokedex_orders_path = ROOT / "src/data/gen8/pokedex_orders.h"
+    runtime_pokedex_orders_path.write_text(runtime_pokedex_orders, encoding="utf-8")
 
     outputs = {
         DATA / "gen8_species_evolutions.json": evolution_rows,
