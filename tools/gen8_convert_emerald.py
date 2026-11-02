@@ -1053,6 +1053,7 @@ def generate(check: bool = False) -> dict:
                 "compact_status": row["status"],
                 "source_complete": row.get("source_complete", False),
                 "source_missing_fields": row.get("source_missing_fields", []),
+                "source_unresolved_fields": row.get("source_unresolved_fields", []),
                 "compact_compatible": row.get("compact_compatible", row["status"] == "compact_fields_resolved"),
                 "runtime_gaps": row.get("runtime_gaps", []),
                 "unresolved_fields": row["unresolved"],
@@ -1122,6 +1123,7 @@ def generate(check: bool = False) -> dict:
         "canonical_species_info_compact_compatible_rows": sum(1 for row in canonical_species_info if row.get("compact_compatible", False)),
         "canonical_species_info_runtime_gap_records": sum(1 for row in canonical_species_info if row.get("runtime_gaps")),
         "canonical_species_info_source_missing_fields": sum(1 for row in canonical_species_info if row.get("source_missing_fields")),
+        "canonical_species_info_source_unresolved_fields": sum(1 for row in canonical_species_info if row.get("source_unresolved_fields")),
         "missing_species_info_for_new_dex_species": len(missing_species_info),
     }
     species_info_source_complete = (
@@ -1129,6 +1131,7 @@ def generate(check: bool = False) -> dict:
         and not missing_species_info
         and all(row.get("source_complete", False) for row in canonical_species_info)
         and all(not row.get("source_missing_fields") for row in canonical_species_info)
+        and all(not row.get("source_unresolved_fields") for row in canonical_species_info)
         and all("baseHP" in row["source_fields_present"] for row in canonical_species_info)
         and all("natDexNum" in row["source_fields_present"] for row in canonical_species_info)
     )
