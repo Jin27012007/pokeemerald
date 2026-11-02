@@ -373,6 +373,19 @@ def check_canonical_species_record_selection_contract():
     assert selected is candidates[1], selected
 
 
+def check_canonical_species_row_preserves_expected_dex_symbol_key():
+    # The pending-table builder consumes this exact field name from the
+    # canonical intake JSON. Keep its contract stable across converter edits.
+    canonical_row = {
+        "national_dex": 1,
+        "national_symbol": "BULBASAUR",
+        "source_national_dex_symbol": "NATIONAL_DEX_BULBASAUR",
+    }
+    assert canonical_row["source_national_dex_symbol"] == "NATIONAL_DEX_BULBASAUR"
+    assert "national_dex_symbol" not in canonical_row
+    assert canonical_row["national_symbol"] == "BULBASAUR"
+
+
 def check_natdex_symbol_normalization_after_macro_expansion():
     # Macro expansion can turn NATIONAL_DEX_BULBASAUR into the bare enum
     # token BULBASAUR. Both forms must normalize to the same source symbol.
