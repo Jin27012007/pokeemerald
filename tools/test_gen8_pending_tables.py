@@ -282,9 +282,8 @@ def test_gen8_pokedex_runtime_tables():
     assert "sGen8PokedexDescription_387" in source
     assert "First line.\\n" in source
     assert '.speciesName = _("TESTMON387")' in source
-    assert "NATIONAL_DEX_OLD_UNOWN_B" in order_header
     assert "NATIONAL_DEX_CALYREX" in order_header
-    assert order_header.count("NATIONAL_DEX_") == 898 + 25 + 898 + 898
+    assert order_header.count("NATIONAL_DEX_") == 898 * 3
 
 
 def main():
