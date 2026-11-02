@@ -78,6 +78,9 @@ jobs:
       - name: Audit all Expansion SpeciesInfo candidates by National Dex
         run: python3 tools/audit_gen8_species_info_candidates.py
 
+      - name: Verify candidate audit output
+        run: test -s reports/gen8-conversion/species_info_candidates_by_dex.json
+
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
