@@ -197,8 +197,10 @@ jobs:
           assert report["readiness"]["new_species_ids_allocated"] is False
           assert report["readiness"]["runtime_ready"] is False
           assert report["readiness"]["species_info_source_fields_complete"] == (
-              report["counts"]["canonical_species_info_source_missing_fields"] == 0
-              and report["counts"]["canonical_species_info_covered"] == 898
+              report["counts"]["canonical_species_info_covered"] == 898
+              and report["counts"]["canonical_species_info_missing"] == 0
+              and report["counts"]["canonical_species_info_source_complete_rows"] == 898
+              and report["counts"]["canonical_species_info_source_missing_fields"] == 0
           )
           print("PASS: 898 canonical identities covered; source-field and runtime gaps remain explicitly audited.")
           PY
