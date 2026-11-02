@@ -31,3 +31,14 @@ The current Emerald `struct SpeciesInfo` is 26 bytes and stores six stats, two t
 ## Current audit evidence
 
 The successful CI run 41468255573 scanned 716 C/header files and recorded 1,115 findings: 249 high-risk, 603 medium-risk, 263 low-risk, and 453 unclassified. The highest-risk direct-index groups are SpeciesInfo (145), evolution (32), learnsets (27), front pictures (25), back pictures (11), and palettes (7). Static findings require manual source review and are not proof of a runtime defect in every case.
+
+
+## Validated mapping API extension
+
+The generated staging API exposes explicit domain-specific functions:
+
+- `Gen8SpeciesMap_GetEmeraldId(nationalDex)` maps a National Dex number to an assigned internal ID, returning `SPECIES_NONE` for unassigned/invalid Dex values.
+- `Gen8SpeciesMap_IsValidInternalId(emeraldSpecies)` accepts only the 386 currently assigned native ordinary IDs and rejects `SPECIES_NONE`, `SPECIES_EGG`, Unown auxiliary IDs, and holes.
+- `Gen8SpeciesMap_GetNationalDex(emeraldSpecies)` performs the reverse lookup and returns 0 for sentinels, auxiliary IDs, holes, and unknown IDs.
+
+The generated reverse lookup is deliberately not a direct identity conversion. All 386 assigned internal IDs are emitted as an explicit membership set; uniqueness is checked during generation. These helpers do not modify party/box storage, species constants, production tables, or `NUM_SPECIES`.
