@@ -381,6 +381,7 @@ extern const u8 gFacilityClassToPicIndex[];
 extern const u8 gFacilityClassToTrainerClass[];
 extern const struct SpeciesInfo gSpeciesInfo[];
 const struct SpeciesInfo *GetSpeciesInfoSafe(u16 species);
+const struct Evolution *GetEvolutionTableSafe(u16 species);
 extern const u8 *const gItemEffectTable[];
 extern const u32 gExperienceTables[][MAX_LEVEL + 1];
 extern const u16 *const gLevelUpLearnsets[];
