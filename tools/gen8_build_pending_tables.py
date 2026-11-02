@@ -393,10 +393,11 @@ def source_table_inventory() -> dict:
     }
     canonical_learnsets = []
     missing_learnsets = []
+    native_preserved_learnset_rows = []
     used_move_symbols = set()
     for dex, mapping, _, source, fields in source_rows:
         if source is None:
-            missing_learnsets.append({"national_dex": dex, "species": mapping["source_symbol"], "pointer": None, "status": "native_emerald_learnset_retained"})
+            native_preserved_learnset_rows.append({"national_dex": dex, "species": mapping["source_symbol"], "status": "native_emerald_learnset_retained"})
             continue
         pointer = fields.get("levelUpLearnset")
         block = gen8_blocks.get(pointer)
