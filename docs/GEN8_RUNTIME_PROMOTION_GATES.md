@@ -39,6 +39,8 @@ The compatibility audit confirms Expansion SpeciesInfo is not a drop-in replacem
 
 The SpeciesInfo read migration is now covered by a CI audit: 158 `GetSpeciesInfoSafe` call sites across 22 C files and zero remaining direct `gSpeciesInfo[...]` indexes outside the accessor. The evolution-table migration adds `GetEvolutionTableSafe`, which returns an empty zero-method row for species values at or beyond `NUM_SPECIES`. `GetEvolutionTargetSpecies`, the Shedinja creation path, and the daycare egg-species reverse traversal use the bounded accessor; the Shedinja target is also checked before indexing the species-name table. CI asserts that the only remaining direct `gEvolutionTable[...]` access is the guarded read inside the accessor. This is an index-safety migration only: it does not import Gen 8 evolution rows or add species IDs.
 
+Level-up learnsets now use `GetLevelUpLearnsetSafe` in the initial moveset, level-up move learning, move relearner, and Apprentice paths. An invalid species receives a one-entry `LEVEL_UP_END` list; the Apprentice alternate-move path returns `MOVE_NONE` for an empty list rather than entering a TM-selection loop. TM/HM checks use `GetTMHMLearnsetWordsSafe`, whose invalid-species fallback is a zeroed word array; word indexes are bounded by the actual `TMHMLearnset` size. CI checks seven level-up accessor call sites and two TM/HM call sites, with the only remaining raw indexes inside the accessors. This is an index-safety change, not a Gen 8 move-data import: 311 distinct canonical Gen 8 learnset moves still lack Emerald battle and contest records, so runtime move-table readiness remains false.
+
 ## Save and Pokédex storage
 
 - The vanilla `struct Pokedex` uses 52-byte owned and seen arrays.
