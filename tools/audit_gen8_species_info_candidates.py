@@ -58,11 +58,11 @@ def main() -> int:
                 "national_dex_symbol": symbol,
                 "generation": row["generation"],
                 "status": row["status"],
-                "source_complete": row["source_complete"],
-                "source_fields_resolved": row["source_fields_resolved"],
-                "compact_compatible": row["compact_compatible"],
-                "runtime_gaps": row["runtime_gaps"],
-                "unresolved": row["unresolved"],
+                "source_complete": row.get("source_complete", False),
+                "source_fields_resolved": row.get("source_fields_resolved", False),
+                "compact_compatible": row.get("compact_compatible", False),
+                "runtime_gaps": row.get("runtime_gaps", []),
+                "unresolved": row.get("unresolved", []),
             })
     result = {
         "source": "pinned pokeemerald-expansion SpeciesInfo families",
