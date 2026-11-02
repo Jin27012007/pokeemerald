@@ -43,12 +43,6 @@ jobs:
 
       - name: Test Gen 8 Pokédex flag redundancy model
         run: python3 tools/test_gen8_pokedex_flag_model.py
-      - name: Test staged Pokédex extension accessors and boundaries
-        run: python3 tools/test_gen8_pokedex_flag_model.py
-
-      - name: Test staged Pokédex extension model
-        run: python3 tools/test_gen8_pokedex_flag_model.py
-
       - name: Verify Gen 8 storage calculations
         run: |
           python3 - <<'PY'
@@ -69,9 +63,9 @@ jobs:
           assert save["extension_flag_bytes_per_copy"] == 61
           assert save["extension_flag_copy_count"] == 4
           assert save["extension_seen_owned_required_bytes"] == 244
-          assert save["extension_header_bytes"] == 16
+          assert save["extension_header_bytes"] == 0
           assert save["extension_window_bytes"] == 0x100
-          assert save["extension_payload_capacity_bytes"] == 0xF0
+          assert save["extension_payload_capacity_bytes"] == 0x100
           assert save["extension_layout_valid"] is True
           assert save["runtime_extension_bytes"] == 0x100
           assert save["runtime_extension_required_bytes"] == 244
