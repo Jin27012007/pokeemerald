@@ -936,6 +936,63 @@ def filter_canonical_species_info_candidates(candidates: list[dict],
         if candidate.get("species_symbol") in allowed_symbols
     ]
 
+def is_species_info_source_complete(
+    canonical_rows: list[dict],
+    native_rows: list[dict],
+    expansion_rows: list[dict],
+    missing_species_info: list[dict],
+    identity_conflicts: list[dict],
+    expected_total: int = 898,
+    expected_native: int = 386,
+    expected_expansion: int = 512,
+) -> bool:
+    """Validate source completeness without conflating target compatibility."""
+    return (
+        len(canonical_rows) == expected_total
+        and not missing_species_info
+        and not identity_conflicts
+        and len(native_rows) == expected_native
+        and len(expansion_rows) == expected_expansion
+        and all(row.get("source_complete", False) for row in expansion_rows)
+        and all(
+            not row.get("source_missing_fields") and not row.get("source_unresolved_fields")
+            for row in expansion_rows
+        )
+        and all(
+            row.get("source_fields_resolved", False)
+            and row.get("source_national_dex_matches_selected", False)
+            for row in expansion_rows
+        )
+        and all(
+            "baseHP" in row.get("source_fields_present", [])
+            and "natDexNum" in row.get("source_fields_present", [])
+            for row in expansion_rows
+        )
+    )
+
+
+def is_species_info_compact_compatible(
+    source_complete: bool,
+    native_rows: list[dict],
+    expansion_rows: list[dict],
+    expected_native: int = 386,
+    expected_expansion: int = 512,
+) -> bool:
+    """Require target mappings and runtime gaps to be closed for compact use."""
+    return (
+        source_complete
+        and len(native_rows) == expected_native
+        and all(row.get("compact_compatible", False) for row in native_rows)
+        and len(expansion_rows) == expected_expansion
+        and all(
+            row.get("source_fields_resolved", False)
+            and row.get("target_mapping_compatible", False)
+            and not row.get("runtime_gaps")
+            for row in expansion_rows
+        )
+    )
+
+
 def generate(check: bool = False) -> dict:
     source_species = symbols(read(SRC_SPECIES), "SPECIES_", enum=True)
     target_species = symbols(read(DST_SPECIES), "SPECIES_")
@@ -1236,36 +1293,17 @@ def generate(check: bool = False) -> dict:
         row for row in canonical_species_info
         if row.get("record_provenance") == "expansion_source_initializer"
     ]
-    species_info_source_complete = (
-        len(canonical_species_info) == 898
-        and not missing_species_info
-        and not species_info_identity_conflicts
-        and len(native_rows) == 386
-        and len(expansion_rows) == 512
-        and all(row.get("source_complete", False) for row in expansion_rows)
-        and all(
-            not row.get("source_missing_fields") and not row.get("source_unresolved_fields")
-            for row in expansion_rows
-        )
-        and all(
-            row.get("source_fields_resolved", False)
-            and row.get("source_national_dex_matches_selected", False)
-            for row in expansion_rows
-        )
-        and all(
-            "baseHP" in row["source_fields_present"] and "natDexNum" in row["source_fields_present"]
-            for row in expansion_rows
-        )
+    species_info_source_complete = is_species_info_source_complete(
+        canonical_species_info,
+        native_rows,
+        expansion_rows,
+        missing_species_info,
+        species_info_identity_conflicts,
     )
-    species_info_compact_compatible = (
-        species_info_source_complete
-        and len(native_rows) == 386
-        and all(row.get("compact_compatible", False) for row in native_rows)
-        and len(expansion_rows) == 512
-        and all(row.get("source_fields_resolved", False)
-                and row.get("target_mapping_compatible", False)
-                and not row.get("runtime_gaps")
-                for row in expansion_rows)
+    species_info_compact_compatible = is_species_info_compact_compatible(
+        species_info_source_complete,
+        native_rows,
+        expansion_rows,
     )
     report = {
         "source": "pinned pokeemerald-expansion source snapshot (Gen 4-9 family data)",
