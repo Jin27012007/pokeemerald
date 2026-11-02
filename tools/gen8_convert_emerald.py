@@ -893,6 +893,8 @@ def parse_species_info(source_text: str, target_info_text: str,
             "item_rare": item_values.get(rare_name),
             "body_color": body_color,
             "source_complete": source_complete,
+            # Source-level resolution is independent of Emerald target compatibility.
+            "source_fields_resolved": source_complete,
             "source_missing_fields": source_missing_fields,
             "source_unresolved_fields": source_unresolved_fields,
             "compact_compatible": not problems,
