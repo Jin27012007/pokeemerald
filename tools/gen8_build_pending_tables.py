@@ -178,26 +178,31 @@ def named_arrays(text: str, declaration: str) -> dict[str, str]:
 
 
 def enum_symbol_catalog(text: str, prefix: str) -> dict[str, int | None]:
-    """Collect enum symbols, including aliases whose expressions are symbolic.
+    """Collect enum symbols, including aliases with symbolic expressions.
 
-    Numeric values are resolved only for literal integer initializers. An
-    alias or computed expression remains present with value None so coverage
-    checks cannot silently drop it.
+    Only literal integer initializers receive numeric IDs. Unsupported
+    expressions are retained as symbols with value None so coverage checks
+    do not silently omit them.
     """
     result: dict[str, int | None] = {}
-    enum_blocks = re.finditer(r"enum(?:\s+__attribute__\s*\(\([^)]*\)\))?[^{}]*\{([^}]*)\}", text, re.S)
+    enum_blocks = re.finditer(r"enum[^{}]*\{([^}]*)\}", text, re.S)
     member_re = re.compile(
-        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*(?:=\s*([^,]+))?\s*,?\s*(?://.*)?$",
-        re.M,
+        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*(?:=\s*([^,]+))?\s*,?\s*(?://.*)?$"
     )
     for block in enum_blocks:
         next_value: int | None = 0
-        for match in member_re.finditer(block.group(1)):
-            symbol, raw = match.group(1), match.group(2)
-            if raw is not None:
-                raw = raw.strip()
-                if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
-                    next_value = int(raw, 0)
+        for raw_line in block.group(1).splitlines():
+            line = raw_line.split("//", 1)[0].strip()
+            if not line or line.startswith("/*") or line == "}":
+                continue
+            match = member_re.match(line)
+            if not match:
+                continue
+            symbol, expression = match.group(1), match.group(2)
+            if expression is not None:
+                expression = expression.strip()
+                if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", expression):
+                    next_value = int(expression, 0)
                 else:
                     result[symbol] = None
                     next_value = None
