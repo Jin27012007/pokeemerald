@@ -218,8 +218,8 @@ struct Pokedex
     /*0x04*/ u32 unownPersonality; // set when you first see Unown
     /*0x08*/ u32 spindaPersonality; // set when you first see Spinda
     /*0x0C*/ u32 unknown3;
-    /*0x10*/ u8 owned[NUM_DEX_FLAG_BYTES];
-    /*0x44*/ u8 seen[NUM_DEX_FLAG_BYTES];
+    /*0x10*/ u8 owned[GEN8_DEX_LEGACY_FLAG_BYTES];
+    /*0x44*/ u8 seen[GEN8_DEX_LEGACY_FLAG_BYTES];
 };
 
 struct PokemonJumpRecords
@@ -1015,7 +1015,7 @@ struct SaveBlock1
     /*0x690*/ struct ItemSlot bagPocket_TMHM[BAG_TMHM_COUNT];
     /*0x790*/ struct ItemSlot bagPocket_Berries[BAG_BERRIES_COUNT];
     /*0x848*/ struct Pokeblock pokeblocks[POKEBLOCKS_COUNT];
-    /*0x988*/ u8 seen1[NUM_DEX_FLAG_BYTES];
+    /*0x988*/ u8 seen1[GEN8_DEX_LEGACY_FLAG_BYTES];
     /*0x9BC*/ u16 berryBlenderRecords[3];
     /*0x9C2*/ u8 unused_9C2[6];
     /*0x9C8*/ u16 trainerRematchStepCounter;
@@ -1070,12 +1070,12 @@ struct SaveBlock1
     /*0x31DC*/ struct Roamer roamer;
     /*0x31F8*/ struct EnigmaBerry enigmaBerry;
     /*0x322C*/ struct MysteryGiftSave mysteryGift;
-    /*0x3598*/ u8 dexFlagExtension[0x100]; // Four 61-byte mirrors plus header/padding for staged Gen 8 Dex.
+    /*0x3598*/ u8 dexFlagExtension[0x100]; // Four 61-byte mirrors (three seen, one owned); 12 bytes remain reserved.
     /*0x3698*/ u8 unused_3698[0x080]; // Preserve trainerHillTimes at 0x3718.
     /*0x3718*/ u32 trainerHillTimes[NUM_TRAINER_HILL_MODES];
     /*0x3728*/ struct RamScript ramScript;
     /*0x3B14*/ struct RecordMixingGift recordMixingGift;
-    /*0x3B24*/ u8 seen2[NUM_DEX_FLAG_BYTES];
+    /*0x3B24*/ u8 seen2[GEN8_DEX_LEGACY_FLAG_BYTES];
     /*0x3B58*/ LilycoveLady lilycoveLady;
     /*0x3B98*/ struct TrainerNameRecord trainerNameRecords[20];
     /*0x3C88*/ u8 registeredTexts[UNION_ROOM_KB_ROW_COUNT][21];
