@@ -75,6 +75,9 @@ jobs:
       - name: Test Gen 8 SpeciesInfo parsers and source mappings
         run: python3 tools/test_gen8_species_info.py
 
+      - name: Audit all Expansion SpeciesInfo candidates by National Dex
+        run: python3 tools/audit_gen8_species_info_candidates.py
+
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
@@ -109,6 +112,7 @@ jobs:
           test -s data/pokemon/gen8_species_info_unresolved.json
           test -s data/pokemon/gen8_species_info_by_national_dex.json
           test -s reports/gen8-conversion/species_info_by_national_dex.json
+          test -s reports/gen8-conversion/species_info_candidates_by_dex.json
           test -s reports/gen8-conversion/species_info_field_coverage.json
           test -s reports/gen8-conversion/emerald_species_info_compatibility.json
           test -s reports/gen8-conversion/species_info_identity_conflicts.json
@@ -143,6 +147,7 @@ jobs:
               "data/pokemon/gen8_species_info_unresolved.json",
               "data/pokemon/gen8_species_info_by_national_dex.json",
               "reports/gen8-conversion/species_info_by_national_dex.json",
+              "reports/gen8-conversion/species_info_candidates_by_dex.json",
               "reports/gen8-conversion/species_info_field_coverage.json",
               "reports/gen8-conversion/emerald_species_info_compatibility.json",
               "reports/gen8-conversion/species_info_identity_conflicts.json",
