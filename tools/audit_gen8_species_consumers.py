@@ -212,13 +212,16 @@ def test_index_safety_helpers() -> None:
     assert valid(egg, 898)  # numeric shape alone does not make Egg a valid species
     assert valid(unown_aux, 898)  # the same applies to Unown auxiliary IDs
     # An actual table-access contract must reject NONE as data even if index 0 exists.
-    def species_data_index(value: int, first: int, count: int) -> bool:
-        return first <= value < first + count
-    assert not species_data_index(none, 1, 898)
-    assert not species_data_index(egg, 1, 898)
-    assert not species_data_index(unown_aux, 1, 898)
-    assert species_data_index(1, 1, 898)
-    assert species_data_index(898, 1, 898)
+    def species_data_index(value: int, first: int, count: int, sentinels: set[int] = frozenset()) -> bool:
+        return first <= value < first + count and value not in sentinels
+    # A numeric range alone includes the in-range Egg sentinel (412).
+    # A real species-table contract must exclude every non-species token.
+    invalid_species_ids = {none, egg, unown_aux}
+    assert not species_data_index(none, 1, 898, invalid_species_ids)
+    assert not species_data_index(egg, 1, 898, invalid_species_ids)
+    assert not species_data_index(unown_aux, 1, 898, invalid_species_ids)
+    assert species_data_index(1, 1, 898, invalid_species_ids)
+    assert species_data_index(898, 1, 898, invalid_species_ids)
 
 
 def main() -> None:
