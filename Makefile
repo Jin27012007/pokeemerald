@@ -202,7 +202,7 @@ C_OBJS := $(patsubst $(C_SUBDIR)/%.c,$(C_BUILDDIR)/%.o,$(C_SRCS))
 # Generate the canonical National Dex bridge on demand for clean local builds.
 .PHONY: gen8_species_map
 gen8_species_map:
-	@if [ ! -s include/gen8_species_map.h ] || [ ! -s src/data/gen8/species_map.c ] || [ tools/gen8_convert_emerald.py -nt include/gen8_species_map.h ]; then python3 tools/gen8_convert_emerald.py; fi
+	@if [ ! -s include/gen8_species_map.h ] || [ ! -s src/data/gen8/species_map.c ] || [ ! -s reports/gen8-conversion/species_info_by_national_dex.json ] || [ tools/gen8_convert_emerald.py -nt include/gen8_species_map.h ]; then python3 tools/gen8_convert_emerald.py; fi
 
 src/data/gen8/species_map.c include/gen8_species_map.h: | gen8_species_map
 	@test -s $@
