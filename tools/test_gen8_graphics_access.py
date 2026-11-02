@@ -58,7 +58,7 @@ def main() -> int:
         relative = path.relative_to(ROOT).as_posix()
         for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             for table in TABLES:
-                if re.search(re.escape(table) + r"\\s*\\[[^\\]\\n]+\\]", line):
+                if re.search(re.escape(table) + r"\s*\[[^\]\n]+\]", line):
                     direct_indexes.append({
                         "path": relative,
                         "line": line_number,
