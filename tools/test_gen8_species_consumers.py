@@ -31,7 +31,8 @@ def test_namespace_inventory():
         "extra": sorted(actual_unown - expected_unown),
         "count": len(actual_unown),
     }
-    assert namespace["unown_calculated_count"] == 26
+    # Emerald defines 25 letter forms (B-Z) plus ! and ? = 27 calculated forms.
+    assert namespace["unown_calculated_count"] == 27
     assert namespace["numeric_collisions"] == {}
     assert namespace["max_explicit_ordinary_id"] == 411
 
