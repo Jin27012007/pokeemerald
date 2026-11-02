@@ -166,6 +166,10 @@ def scan_source() -> tuple[list[dict], dict]:
                     if base.startswith(("gSpecies", "gEvolution", "gLevelUp", "gMon", "sSpeciesTo")):
                         generic_indexes.append((base, expr))
             form_tags = {name for name, pattern in FORM_PATTERNS.items() if pattern.search(line)}
+            multiline_refs = extract_multiline_table_refs(path.read_text(encoding="utf-8"), "species_info")
+            for expression in multiline_refs:
+                if not any(table == "species_info" and expr == expression for table, expr in table_matches):
+                    table_matches.append(("species_info", expression))
             if not (special or table_matches or generic_indexes or form_tags):
                 continue
             if table_matches:
