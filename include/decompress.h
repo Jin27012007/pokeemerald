@@ -18,6 +18,9 @@ bool8 LoadCompressedSpritePaletteUsingHeap(const struct CompressedSpritePalette 
 
 const struct CompressedSpriteSheet *GetMonFrontPicTableEntry(s32 species);
 const struct CompressedSpriteSheet *GetMonBackPicTableEntry(s32 species);
+struct MonCoords;
+const struct MonCoords *GetMonFrontPicCoordsEntry(s32 species);
+const struct MonCoords *GetMonBackPicCoordsEntry(s32 species);
 const struct CompressedSpritePalette *GetMonPaletteTableEntry(s32 species);
 const struct CompressedSpritePalette *GetMonShinyPaletteTableEntry(s32 species);
 
