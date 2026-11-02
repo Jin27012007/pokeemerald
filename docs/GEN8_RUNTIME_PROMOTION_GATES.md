@@ -14,7 +14,7 @@ This document records the minimum gates before the National Dex 1-898 dataset ma
 
 ## Confirmed runtime gaps from the conversion audit
 
-- 313 distinct learnset moves lack target Emerald battle/contest move records.
+- 311 canonical Gen 8 learnset moves lack target Emerald battle/contest move records.
 - 165 abilities lack target Emerald constants.
 - 57 held items lack target Emerald constants; 23 lack target item data records.
 - Fairy type lacks an Emerald type definition.
@@ -29,9 +29,11 @@ The static audit scanned 714 C/header files and found 1,115 species-related refe
 
 A source inventory is not a proof of runtime safety. Before ID allocation, all remaining unclassified references must be reviewed and all direct-index consumers either expanded or routed through a validated mapping API.
 
-The approved CI artifact (`gen8-conversion-report`, run `41468255573`) measured 716 C/header files, 1,115 references, 249 high-risk findings, 603 medium-risk findings, 263 low-risk findings, and 453 unclassified findings. High-risk groups include 145 `gSpeciesInfo` accesses, 32 evolution-table accesses, 27 learnset accesses, 25 front-pic accesses, 11 back-pic accesses, and 7 palette accesses. This report is generated as a CI artifact, not a tracked runtime source file.
+The approved CI artifact (`gen8-conversion-report`, run `41484963638`) measured 716 C/header files, 1,115 references, 249 high-risk findings, 603 medium-risk findings, 263 low-risk findings, and 453 unclassified findings. High-risk groups include 145 `gSpeciesInfo` accesses, 32 evolution-table accesses, 27 learnset accesses, 25 front-pic accesses, 11 back-pic accesses, and 7 palette accesses. This report is generated as a CI artifact, not a tracked runtime source file.
 
 The native namespace currently has 413 numeric species constants, maximum explicit ordinary ID 411, Egg sentinel 412, `NUM_SPECIES == SPECIES_EGG`, and 27 calculated Unown auxiliary values. The canonical map covers 898 National Dex entries: 386 already have Emerald internal IDs and 512 still require IDs. National Dex numbers must not be substituted directly for internal IDs; for example, Treecko is National Dex 252 but Emerald internal ID 277.
+
+The generated National Dex map now has a full host-C execution and parity gate. The test covers all 898 canonical entries, confirms zero mismatches for the 386 existing Emerald IDs, confirms all 512 new entries remain unassigned, and exercises forward/reverse lookup plus invalid IDs and sentinels. The legacy table also contains 22 auxiliary Unown pseudo-Dex entries at 899-920 (internal IDs 255-276); these are outside canonical Dex 1-898. This validates the generated map data, but does not yet replace or modify the runtime National Dex lookup. The parity report is included in CI artifact run `41484963638`.
 
 The compatibility audit confirms Expansion SpeciesInfo is not a drop-in replacement: Expansion has three ability slots while Emerald has two, source ability values are wider, and Fairy/Stellar types are absent from Emerald. The report records 414 runtime-gap records. Direct-index consumers must be migrated or routed through bounded translation wrappers before canonical IDs are promoted.
 
@@ -41,7 +43,7 @@ The compatibility audit confirms Expansion SpeciesInfo is not a drop-in replacem
 - National Dex 898 needs 113 bytes per array; the four legacy+extension copies need 244 bytes beyond the current arrays.
 - The candidate SaveBlock1 reserved window is 384 bytes; the proposed isolated extension envelope is 256 bytes and leaves 128 bytes unused in that window.
 - SaveBlock2 does not fit an inline Pokédex expansion: projected overflow is 38 bytes beyond its sector capacity.
-- The 256-byte candidate envelope has a 16-byte header and 244 bytes of flag payload: four 61-byte copies for seen, owned, and backups.
+- The 256-byte candidate envelope has a 12-byte header and 244 bytes of flag payload: four 61-byte copies for seen, owned, and backups.
 - This capacity calculation is not a save migration approval.
 
 The current implementation adds a typed, versioned envelope and independent checksum/flag helpers. It is not embedded in a live save block, is not referenced by save IO, and must not be used to mutate user saves.
@@ -59,7 +61,7 @@ The current implementation adds a typed, versioned envelope and independent chec
 ## Required gates before species IDs / NUM_SPECIES
 
 1. Resolve every species-index consumer, including the 453 unclassified references, special values, forms, Unown auxiliary values, and egg.
-2. Publish one validated species mapping API with explicit accepted domains and sentinel behavior; no implicit indexing of a canonical National Dex ID into a legacy Emerald array.
+2. The generated mapping API now has a full 898-entry C execution/parity test; integrate it into runtime consumers only with explicit domain and sentinel handling, retaining the legacy Unown auxiliary range.
 3. Migrate the 313 missing move records, ability/item/type domains, evolution handlers, cries, graphics, Pokédex text, and form behavior.
 4. Test party, PC storage, daycare, battle, trade, link, save/load, summary, Pokédex, sprite/audio, evolution, and game-corner consumers.
 5. Only then propose numeric IDs and update `NUM_SPECIES` in a separate, reviewable commit with a full migration plan.
