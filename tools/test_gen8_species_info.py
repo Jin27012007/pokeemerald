@@ -433,7 +433,6 @@ def main():
     check_source_completeness_requires_resolved_national_dex()
     check_per_species_stellar_runtime_gap()
     check_existing_species_namespace_has_no_numeric_collisions()
-    check_existing_species_namespace_has_no_numeric_collisions()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
     print("PASS: canonical SpeciesInfo acceptance gate defined for National Dex 1-898.")
 
