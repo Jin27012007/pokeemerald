@@ -88,13 +88,15 @@ def main() -> int:
     extension_header_bytes = 16
     extension_copy_count = 4
     extension_required_bytes = extension_copy_count * extension_flag_bytes
-    extension_payload_bytes = reserved_save1_bytes - extension_header_bytes
+    extension_window_bytes = 0x100
+    extension_payload_bytes = extension_window_bytes - extension_header_bytes
     extension_layout_valid = (
         extension_dex_count == 486
         and extension_flag_bytes == 61
         and extension_copy_count == 4
         and extension_required_bytes == 244
         and extension_required_bytes <= extension_payload_bytes
+        and extension_window_bytes <= reserved_save1_bytes
         and 0x3598 + reserved_save1_bytes == 0x3718
     )
 
@@ -164,6 +166,7 @@ def main() -> int:
             "extension_flag_bytes_per_copy": extension_flag_bytes,
             "extension_flag_copy_count": extension_copy_count,
             "extension_seen_owned_required_bytes": extension_required_bytes,
+            "extension_window_bytes": extension_window_bytes,
             "extension_header_bytes": extension_header_bytes,
             "extension_payload_capacity_bytes": extension_payload_bytes,
             "extension_layout_valid": extension_layout_valid,
