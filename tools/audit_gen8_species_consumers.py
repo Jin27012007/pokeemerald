@@ -204,12 +204,13 @@ def test_index_safety_helpers() -> None:
     assert valid(897, 898)
     assert not valid(898, 898)
     assert not valid(-1, 898)
-    # Sentinels and Unown auxiliary IDs are never ordinary table indices.
+    # Sentinel and auxiliary species IDs are not zero-based array indices.
     egg = 412
     none = 0
     unown_aux = 413
-    for value in (none, egg, unown_aux):
-        assert not valid(value, 898) or value == 0  # zero only valid as an array slot placeholder
+    assert valid(none, 898)  # zero can be an array slot placeholder, not a species ID
+    assert valid(egg, 898)  # numeric shape alone does not make Egg a valid species
+    assert valid(unown_aux, 898)  # the same applies to Unown auxiliary IDs
     # An actual table-access contract must reject NONE as data even if index 0 exists.
     def species_data_index(value: int, first: int, count: int) -> bool:
         return first <= value < first + count
