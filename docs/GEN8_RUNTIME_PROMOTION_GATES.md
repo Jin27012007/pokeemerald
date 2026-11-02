@@ -50,12 +50,14 @@ Level-up learnsets now use `GetLevelUpLearnsetSafe` in the initial moveset, leve
 - The 256-byte candidate envelope has a 12-byte header and 244 bytes of flag payload: four 61-byte copies for seen, owned, and backups.
 - This capacity calculation is not a save migration approval.
 
-The current tree contains a reserved 256-byte area in SaveBlock1 and a typed, versioned envelope with standalone checksum/flag helpers. A previous partial hook routed national Dex values above the legacy range into this reserved byte area without invoking the envelope validator or persistence protocol. That hook has been removed: live GetSetPokedexFlag now rejects values above the legacy range, extension reads return clear, writes are disabled, and ResetPokedex does not mutate the reserved bytes. This restores a safe disabled boundary until round-trip, generation, power-loss and old-save tests authorize storage integration.
+The envelope is now mapped onto the fixed 256-byte `SaveBlock1.dexFlagExtension` reservation at offset `0x3598`. Compile-time assertions pin both its size and offset. `SaveBlock1` is already included in the normal rotating save-slot serialization, so the bytes are persisted with that block; this is not a separate save sector. `ResetPokedex` initializes the versioned header. For National Dex 413-898, `GetSetPokedexFlag` now uses the envelope helpers: reads require a valid magic/version/generation/checksum and matching primary/backup bits, writes update both copies and advance generation/checksum. A completely blank reservation may be initialized on first write; nonblank invalid data fails closed and is not overwritten.
+
+This is now a live SaveBlock1 integration, not merely an isolated helper. However, the host C test and current ROM build do not prove interrupted multi-sector writes, old-save migration, or power-loss recovery. The save extension is not approved for a release build until those tests pass. No species IDs or `NUM_SPECIES` values are promoted by this change.
 
 ## Required gates before save integration
 
-1. C and host-side tests for header/version/size validation, bit boundaries, checksum corruption, generation rollover, and backup disagreement.
-2. Round-trip write/read tests through the actual save-sector APIs.
+1. C and host-side tests for header/version/size validation, bit boundaries, checksum corruption, generation rollover, and backup disagreement. The C helper is now compiled and executed by the host test.
+2. Round-trip write/read tests through the actual save-sector APIs, including save/load in both rotating slots.
 3. Interrupted-write/power-loss tests proving one valid generation survives.
 4. Corruption recovery policy that chooses a valid copy deterministically and does not silently combine conflicting data.
 5. Old-save migration tests for saves with and without existing Pokédex data.
