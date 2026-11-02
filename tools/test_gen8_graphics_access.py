@@ -40,7 +40,7 @@ def compile_accessor_harness(decompress: str) -> None:
     for accessor in ACCESSORS.values():
         match = re.search(rf"\b{accessor}\s*\([^)]*\)\s*\{{", decompress)
         assert match, f"Missing function {accessor}"
-        start = match.start()
+        start = decompress.rfind("\\n", 0, match.start()) + 1
         brace = decompress.index("{", start)
         depth = 0
         for pos in range(brace, len(decompress)):
