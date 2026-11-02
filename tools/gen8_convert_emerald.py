@@ -1004,6 +1004,20 @@ def is_species_info_source_complete(
     )
 
 
+def is_species_info_compact_row_compatible(row: dict) -> bool:
+    """Check whether one canonical row is safe for Emerald's compact runtime."""
+    provenance = row.get("record_provenance")
+    if provenance == "existing_emerald_runtime_record":
+        return bool(row.get("compact_compatible", False))
+    if provenance == "expansion_source_initializer":
+        return (
+            row.get("source_fields_resolved", False)
+            and row.get("target_mapping_compatible", False)
+            and not row.get("runtime_gaps")
+        )
+    return False
+
+
 def is_species_info_compact_compatible(
     source_complete: bool,
     native_rows: list[dict],
@@ -1015,13 +1029,10 @@ def is_species_info_compact_compatible(
     return (
         source_complete
         and len(native_rows) == expected_native
-        and all(row.get("compact_compatible", False) for row in native_rows)
         and len(expansion_rows) == expected_expansion
         and all(
-            row.get("source_fields_resolved", False)
-            and row.get("target_mapping_compatible", False)
-            and not row.get("runtime_gaps")
-            for row in expansion_rows
+            is_species_info_compact_row_compatible(row)
+            for row in native_rows + expansion_rows
         )
     )
 
@@ -1329,7 +1340,13 @@ def generate(check: bool = False) -> dict:
         "canonical_species_info_identity_conflicts": len(species_info_identity_conflicts),
         "canonical_species_info_raw_field_coverage": field_coverage,
         "canonical_species_info_source_complete_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer" and row.get("source_complete", False)),
-        "canonical_species_info_compact_compatible_rows": sum(1 for row in canonical_species_info if row.get("compact_compatible", False)),
+        "canonical_species_info_source_parse_compatible_rows": sum(
+            1 for row in canonical_species_info if row.get("compact_compatible", False)
+        ),
+        "canonical_species_info_compact_compatible_rows": sum(
+            1 for row in canonical_species_info
+            if is_species_info_compact_row_compatible(row)
+        ),
         "canonical_species_info_source_fields_resolved_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer" and row.get("source_fields_resolved", False)),
         "canonical_species_info_target_mapping_compatible_rows": sum(1 for row in canonical_species_info if row.get("target_mapping_compatible", False)),
         "canonical_species_info_compatibility_issue_records": sum(1 for row in canonical_species_info if row.get("compatibility_issues")),
