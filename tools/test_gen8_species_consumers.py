@@ -20,12 +20,18 @@ def test_namespace_inventory():
     namespace = module.parse_species_constants()
     assert namespace["egg_sentinel"] == 412
     assert namespace["num_species_expression"] == "SPECIES_EGG"
-    assert namespace["unown_calculated_count"] == 26
-    assert {row["symbol"] for row in namespace["unown_calculated_constants"]} == {
+    expected_unown = {
         *(f"SPECIES_UNOWN_{letter}" for letter in "BCDEFGHIJKLMNOPQRSTUVWXYZ"),
         "SPECIES_UNOWN_EMARK",
         "SPECIES_UNOWN_QMARK",
     }
+    actual_unown = {row["symbol"] for row in namespace["unown_calculated_constants"]}
+    assert actual_unown == expected_unown, {
+        "missing": sorted(expected_unown - actual_unown),
+        "extra": sorted(actual_unown - expected_unown),
+        "count": len(actual_unown),
+    }
+    assert namespace["unown_calculated_count"] == 26
     assert namespace["numeric_collisions"] == {}
     assert namespace["max_explicit_ordinary_id"] == 411
 
