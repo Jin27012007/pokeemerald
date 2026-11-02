@@ -209,9 +209,9 @@ struct Time
     /*0x04*/ s8 seconds;
 };
 
-// Versioned, staging-only storage for Gen 8 National Dex flags.
-// This is deliberately NOT embedded in SaveBlock1/SaveBlock2 and is not
-// wired to save IO until migration and power-loss tests are implemented.
+// Versioned storage for Gen 8 National Dex extension flags.
+// The envelope occupies the reserved SaveBlock1 dexFlagExtension window.
+// Two copies each of seen and owned flags are covered by a generation and checksum.
 #define GEN8_DEX_EXT_MAGIC_VALUE 0x38445847 // "GXD8"
 #define GEN8_DEX_EXT_FORMAT_VERSION 1
 #define GEN8_DEX_EXT_FLAG_BYTES 61
@@ -1092,7 +1092,7 @@ struct SaveBlock1
     /*0x31DC*/ struct Roamer roamer;
     /*0x31F8*/ struct EnigmaBerry enigmaBerry;
     /*0x322C*/ struct MysteryGiftSave mysteryGift;
-    /*0x3598*/ u8 dexFlagExtension[0x100]; // Four 61-byte mirrors (three seen, one owned); 12 bytes remain reserved.
+    /*0x3598*/ u8 dexFlagExtension[0x100]; // Versioned Gen 8 Dex envelope (256 bytes).
     /*0x3698*/ u8 unused_3698[0x080]; // Preserve trainerHillTimes at 0x3718.
     /*0x3718*/ u32 trainerHillTimes[NUM_TRAINER_HILL_MODES];
     /*0x3728*/ struct RamScript ramScript;
@@ -1106,6 +1106,9 @@ struct SaveBlock1
     /*0x3D70*/ struct WaldaPhrase waldaPhrase;
     // sizeof: 0x3D88
 };
+
+STATIC_ASSERT(sizeof(((struct SaveBlock1 *)0)->dexFlagExtension) == sizeof(struct Gen8DexExtension), Gen8DexExtension_must_match_reserved_save_window);
+STATIC_ASSERT(__builtin_offsetof(struct SaveBlock1, dexFlagExtension) == 0x3598, Gen8DexExtension_reserved_save_offset_must_not_move);
 
 extern struct SaveBlock1 *gSaveBlock1Ptr;
 
