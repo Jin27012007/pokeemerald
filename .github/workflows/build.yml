@@ -99,6 +99,9 @@ jobs:
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
+      - name: Verify canonical map against legacy Emerald Dex lookup
+        run: python3 tools/test_gen8_species_map_parity.py
+
       # Compile the current runtime before the separate canonical data-coverage gate.
       - name: Correct Route 121 vertical fence tiles
         run: python3 tools/fix_route121_fence.py
@@ -145,6 +148,7 @@ jobs:
           test -s include/gen8_species_map.h
           test -s src/data/gen8/species_map.c
           test -s include/gen8_conversion_status.h
+          test -s reports/gen8-conversion/species_map_parity.json
           test -s data/pokemon/gen8_species_evolutions.json
           test -s data/pokemon/gen8_species_pokedex_entries.json
           test -s data/pokemon/gen8_species_cry_map.json
