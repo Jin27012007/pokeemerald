@@ -702,6 +702,7 @@ def parse_species_info(source_text: str, target_info_text: str,
                 if resolved_scalar is not None:
                     fields[field] = str(resolved_scalar)
         problems = []
+        compatibility_issues = []
         values = {}
         for field in scalar_fields:
             raw = fields.get(field)
@@ -791,7 +792,7 @@ def parse_species_info(source_text: str, target_info_text: str,
         else:
             ability_names = (ability_names + ["NONE", "NONE", "NONE"])[:3]
             if any(name not in ability_values for name in ability_names):
-                problems.extend(f"unknown_ability:{name}" for name in ability_names if name not in ability_values)
+                compatibility_issues.extend(f"unknown_ability:{name}" for name in ability_names if name not in ability_values)
             else:
                 ability_pair = [ability_values[name] for name in ability_names[:2]]
                 hidden_ability = ability_values[ability_names[2]]
@@ -804,10 +805,10 @@ def parse_species_info(source_text: str, target_info_text: str,
         common_name = common_match.group(1) if common_match else "NONE"
         item_compatibility = {"common": "mapped", "rare": "mapped"}
         if rare_name not in item_values:
-            problems.append(f"unknown_item:{rare_name}")
+            compatibility_issues.append(f"unknown_item:{rare_name}")
             item_compatibility["rare"] = "source_only"
         if common_name not in item_values:
-            problems.append(f"unknown_item:{common_name}")
+            compatibility_issues.append(f"unknown_item:{common_name}")
             item_compatibility["common"] = "source_only"
 
         color_match = re.fullmatch(r"BODY_COLOR_([A-Z0-9_]+)", fields.get("bodyColor", ""))
@@ -848,9 +849,9 @@ def parse_species_info(source_text: str, target_info_text: str,
             runtime_gaps.append("fairy_type_not_in_emerald_enum")
         if "STELLAR" in species_type_names:
             runtime_gaps.append("stellar_type_not_in_emerald_enum")
-        if any(problem.startswith(("unknown_ability:", "unknown_hidden_ability:")) for problem in problems):
+        if any(problem.startswith(("unknown_ability:", "unknown_hidden_ability:")) for problem in compatibility_issues):
             runtime_gaps.append("source_ability_missing_from_emerald_target")
-        if any(problem.startswith("unknown_item:") for problem in problems):
+        if any(problem.startswith("unknown_item:") for problem in compatibility_issues):
             runtime_gaps.append("source_held_item_missing_from_emerald_target")
         record_data = {
             "species_symbol": record["symbol"],
