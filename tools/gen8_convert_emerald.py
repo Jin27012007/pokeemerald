@@ -1217,7 +1217,7 @@ def generate(check: bool = False) -> dict:
             ),
             "source_national_dex_symbol": row.get("national_dex_symbol"),
             "source_national_dex_matches_selected": (
-                row.get("national_dex_symbol") == national_symbol if not is_native else True
+                row.get("national_dex_symbol") == f"NATIONAL_DEX_{national_symbol}" if not is_native else True
             ),
             "source_generation": row["generation"],
             "record_provenance": row.get("record_provenance", "expansion_source_initializer"),
