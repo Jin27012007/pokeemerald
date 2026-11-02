@@ -173,6 +173,9 @@ jobs:
           test -s data/pokemon/gen8_species_graphics_references.json
           test -s data/pokemon/gen8_species_form_references.json
           test -s data/pokemon/gen8_species_level_up_learnsets.json
+          test -s src/data/gen8/pokedex_data.c
+          test -s src/data/gen8/pokedex_orders.h
+          test -s include/gen8_pokedex_data.h
           test -s data/pokemon/gen8_move_source_catalog.json
           test -s data/pokemon/gen8_move_alias_map.json
           test -s data/pokemon/gen8_move_id_conflicts.json
