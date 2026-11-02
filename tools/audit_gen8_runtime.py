@@ -89,7 +89,7 @@ def main() -> int:
     required_seen_owned_bytes = 2 * dex_bytes_per_set
     required_total_flag_bytes = 4 * dex_bytes_per_set
     current_species_bytes = 4 * ((412 + 7) // 8)
-    reserved = re.search(r"unused_3598\[(0x[0-9A-Fa-f]+)\]", save1)
+    reserved = re.search(r"(?:unused_3598|dexFlagExtension)\[(0x[0-9A-Fa-f]+)\]", save1)
     reserved_save1_bytes = int(reserved.group(1), 16) if reserved else 0
     if reserved_save1_bytes != 0x180:
         raise RuntimeError(f"Unexpected SaveBlock1 reserved area: {reserved_save1_bytes:#x}")
