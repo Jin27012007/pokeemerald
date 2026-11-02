@@ -982,13 +982,21 @@ def source_table_inventory() -> dict:
         "unknown_evolution_target_symbols": len(unknown_evolution_targets),
     }
 
+    new_species_count = sum(
+        1 for _dex, mapping, _canonical, _source, _fields in source_rows
+        if mapping.get("emerald_internal_id") is None
+    )
+    imported_source_rows = sum(1 for _dex, _mapping, _canonical, source, _fields in source_rows if source is not None)
+    native_preserved_rows = len(source_rows) - imported_source_rows
     readiness = {
         "898_canonical_species_rows": counts["canonical_species"] == 898,
-        "898_gen8_level_up_learnsets": counts["canonical_gen8_level_up_learnsets"] == 898 and not missing_learnsets,
+        "512_new_species_source_rows": imported_source_rows == new_species_count == 512,
+        "386_native_emerald_rows_preserved": native_preserved_rows == 386,
+        "512_gen8_level_up_learnsets": counts["canonical_gen8_level_up_learnsets"] == 512 and not missing_learnsets,
         "all_present_evolution_expressions_parsed": not unresolved_evolutions,
         "898_pokedex_text_rows": len(pokedex_rows) == 898 and not unresolved_text,
-        "898_cry_identifiers_mapped_to_source_table": len(cry_rows) == 898 and not missing_cries,
-        "898_graphics_reference_rows": len(graphics_rows) == 898 and not missing_graphics_refs,
+        "512_new_species_cry_identifiers_mapped_to_source_table": len(cry_rows) == 898 and not missing_cries,
+        "512_new_species_graphics_reference_rows": len(graphics_rows) == 898 and not missing_graphics_refs,
         "all_referenced_form_tables_found": not missing_form_tables,
         "all_three_pokedex_orders_cover_gen8": len(order_rows) >= 3 and not order_failures,
         "all_source_move_info_rows_found": not missing_move_definitions,
@@ -1075,11 +1083,13 @@ def main() -> int:
         # false until Emerald implementations and assets are ported.
         source_keys = (
             "898_canonical_species_rows",
-            "898_gen8_level_up_learnsets",
+            "512_new_species_source_rows",
+            "386_native_emerald_rows_preserved",
+            "512_gen8_level_up_learnsets",
             "all_present_evolution_expressions_parsed",
             "898_pokedex_text_rows",
-            "898_cry_identifiers_mapped_to_source_table",
-            "898_graphics_reference_rows",
+            "512_new_species_cry_identifiers_mapped_to_source_table",
+            "512_new_species_graphics_reference_rows",
             "all_referenced_form_tables_found",
             "all_three_pokedex_orders_cover_gen8",
             "all_source_move_info_rows_found",
