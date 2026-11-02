@@ -82,7 +82,7 @@ def main() -> int:
         }
     ]
     assert direct_indexes == expected_direct_indexes, direct_indexes
-    assert accessor_calls == 2, accessor_calls
+    assert accessor_calls == 3, accessor_calls
     assert accessor_files == {"src/pokemon.c", "src/evolution_scene.c"}
 
     REPORT.parent.mkdir(parents=True, exist_ok=True)
