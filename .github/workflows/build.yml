@@ -99,6 +99,24 @@ jobs:
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
+      # Compile the current runtime before the separate canonical data-coverage gate.
+      - name: Correct Route 121 vertical fence tiles
+        run: python3 tools/fix_route121_fence.py
+
+      - name: Compile modern ROM
+        run: make -j2 modern
+
+      - name: Verify output exists
+        run: test -s pokeemerald_modern.gba
+
+      - name: Upload ROM for testing
+        uses: actions/upload-artifact@v4
+        with:
+          name: pokeemerald-modern-rom
+          path: pokeemerald_modern.gba
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Test Gen 8 pending table parsers
         run: python3 tools/test_gen8_pending_tables.py
 
@@ -258,23 +276,6 @@ jobs:
           print("PASS: 898 canonical identities covered; source-field and runtime gaps remain explicitly audited.")
           PY
 
-
-      - name: Correct Route 121 vertical fence tiles
-        run: python3 tools/fix_route121_fence.py
-
-      - name: Compile
-        run: make -j2 modern
-
-      - name: Verify output exists
-        run: test -s pokeemerald_modern.gba
-
-      - name: Upload ROM for testing
-        uses: actions/upload-artifact@v4
-        with:
-          name: pokeemerald-modern-rom
-          path: pokeemerald_modern.gba
-          if-no-files-found: error
-          retention-days: 90
 
       - name: Upload Gen 8 conversion reports
         uses: actions/upload-artifact@v4
