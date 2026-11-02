@@ -61,3 +61,16 @@ Growing the two Pokédex arrays in SaveBlock2 from 52 to 113 bytes adds 122 byte
 ## Multi-generation source import (staging)
 
 The conversion snapshot now includes `species_info/gen_4_families.h` through `gen_8_families.h` and `level_up_learnsets/gen_4.h` through `gen_8.h`. These are source inputs only. The converter tags learnset blocks with their generation, combines the five SpeciesInfo sources using real newlines, and emits a list of missing SpeciesInfo designators among new National Dex entries. It still does not link any generated SpeciesInfo into the runtime table. Duplicate designators are rejected. The canonical-data coverage audit is a separate gate from compact-field resolution: a source record can exist and still be unresolved because Emerald lacks the identifier or metadata support needed to represent it safely.
+
+## Internal species ID namespace inventory for the preparation phase
+
+The current vanilla header has explicit numeric species constants through 411, with `SPECIES_EGG = 412` and `NUM_SPECIES = SPECIES_EGG`. It also defines 26 Unown letter/punctuation constants relative to `NUM_SPECIES` (`SPECIES_UNOWN_B` through `SPECIES_UNOWN_QMARK`). These are calculated constants, not ordinary canonical National Dex slots.
+
+Consequently, a proposed 512-ID range cannot be approved merely by choosing 413–924. Before a proposal is accepted, the ID plan must decide and test:
+- where the Egg sentinel moves relative to the expanded canonical species range;
+- whether the Unown extended constants remain relative to the new `NUM_SPECIES`, and whether every consumer expects that;
+- whether any code persists or serializes those calculated constants;
+- whether form/alternate species receive separate IDs or remain form metadata;
+- whether every numeric literal, table bound, array dimension and range comparison that assumes 412 species or the current Unown range is updated atomically.
+
+Current measured facts: maximum explicit ordinary species ID is 411; Egg sentinel is 412; Unown extended constants are expressions relative to NUM_SPECIES and therefore cannot be collision-checked as fixed IDs until the new sentinel value is approved. No 512-ID proposal has been generated or committed. This is intentional.
