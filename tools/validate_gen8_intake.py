@@ -44,10 +44,11 @@ def main() -> int:
         if not row["national_symbol"] or not row["source_record_symbol"]:
             fail(f"Dex {dex}: empty identity symbol")
         if row["record_provenance"] == "expansion_source_initializer":
-            if row.get("source_national_dex_symbol") != row["national_symbol"]:
+            expected_natdex_symbol = f"NATIONAL_DEX_{row['national_symbol']}"
+            if row.get("source_national_dex_symbol") != expected_natdex_symbol:
                 fail(
                     f"Dex {dex}: Expansion natDexNum mismatch "
-                    f"({row.get('source_national_dex_symbol')!r} != {row['national_symbol']!r})"
+                    f"({row.get('source_national_dex_symbol')!r} != {expected_natdex_symbol!r})"
                 )
             if row.get("source_national_dex_matches_selected") is not True:
                 fail(f"Dex {dex}: Expansion record lacks verified canonical Dex identity")
