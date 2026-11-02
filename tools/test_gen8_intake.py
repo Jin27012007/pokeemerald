@@ -44,14 +44,20 @@ def test_promotability_is_separate_from_structural_coverage():
         and not row["runtime_gaps"] and not row["unresolved_fields"]
     )
 
-def test_special_values_are_not_canonical_dex_keys():
-    for value in (0, 412, 413, 438):
-        assert not isinstance(value, bool) and not (1 <= value <= 898)
+def test_national_dex_domain_is_separate_from_internal_sentinels():
+    # National Dex keys are explicitly 1..898; internal constants are a
+    # different namespace and must never be copied into national_dex.
+    for value in (0, 412, 413):
+        assert not (1 <= value <= 898) or value == 0
+    assert 438 in range(1, 899)  # valid Dex key; never infer its internal ID
+    row = envelope(438)
+    assert row["national_dex"] == 438
+    assert row["national_symbol"] == "NATIONAL_DEX_TEST_438"
 
 def main():
     test_envelope_contract()
     test_promotability_is_separate_from_structural_coverage()
-    test_special_values_are_not_canonical_dex_keys()
+    test_national_dex_domain_is_separate_from_internal_sentinels()
     print("PASS: canonical intake envelope, structural-vs-runtime gate, and special-domain tests.")
 
 if __name__ == "__main__":
