@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#define GEN8_DEX_EXT_COPY_COUNT 4
+#define GEN8_DEX_EXT_COPY_COUNT GEN8_DEX_EXT_COPY_COUNT
 
 STATIC_ASSERT(sizeof(struct Gen8DexExtension) == 256, Gen8DexExtension_must_fit_reserved_window);
 STATIC_ASSERT(GEN8_DEX_EXT_BYTES * GEN8_DEX_EXT_COPY_COUNT == 244, Gen8DexExtension_flag_payload_must_be_244_bytes);
