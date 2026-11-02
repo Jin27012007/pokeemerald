@@ -44,6 +44,7 @@ typedef uint16_t u16;
 typedef int32_t bool32;
 #define TRUE 1
 #define FALSE 0
+#include "constants/species.h"
 #endif
 """,
             encoding="utf-8",
