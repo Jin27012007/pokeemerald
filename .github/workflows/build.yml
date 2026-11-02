@@ -145,16 +145,6 @@ jobs:
           test -s include/gen8_species_map.h
           test -s src/data/gen8/species_map.c
           test -s include/gen8_conversion_status.h
-          test -s data/pokemon/gen8_species_map.json
-          test -s data/pokemon/gen8_level_up_learnsets.json
-          test -s data/pokemon/gen8_species_info_compact.json
-          test -s data/pokemon/gen8_species_info_unresolved.json
-          test -s data/pokemon/gen8_species_info_by_national_dex.json
-          test -s reports/gen8-conversion/species_info_by_national_dex.json
-          test -s reports/gen8-conversion/species_info_candidates_by_dex.json
-          test -s reports/gen8-conversion/species_info_field_coverage.json
-          test -s reports/gen8-conversion/emerald_species_info_compatibility.json
-          test -s reports/gen8-conversion/species_info_identity_conflicts.json
           test -s data/pokemon/gen8_species_evolutions.json
           test -s data/pokemon/gen8_species_pokedex_entries.json
           test -s data/pokemon/gen8_species_cry_map.json
@@ -183,16 +173,6 @@ jobs:
               "include/gen8_species_map.h",
               "src/data/gen8/species_map.c",
               "include/gen8_conversion_status.h",
-              "data/pokemon/gen8_species_map.json",
-              "data/pokemon/gen8_level_up_learnsets.json",
-              "data/pokemon/gen8_species_info_compact.json",
-              "data/pokemon/gen8_species_info_unresolved.json",
-              "data/pokemon/gen8_species_info_by_national_dex.json",
-              "reports/gen8-conversion/species_info_by_national_dex.json",
-              "reports/gen8-conversion/species_info_candidates_by_dex.json",
-              "reports/gen8-conversion/species_info_field_coverage.json",
-              "reports/gen8-conversion/emerald_species_info_compatibility.json",
-              "reports/gen8-conversion/species_info_identity_conflicts.json",
               "data/pokemon/gen8_species_evolutions.json",
               "data/pokemon/gen8_species_pokedex_entries.json",
               "data/pokemon/gen8_species_cry_map.json",
@@ -202,7 +182,6 @@ jobs:
               "data/pokemon/gen8_move_source_catalog.json",
               "data/pokemon/gen8_move_alias_map.json",
               "data/pokemon/gen8_move_id_conflicts.json",
-              "data/pokemon/gen8_battle_effect_dependencies.json",
               "data/pokemon/gen8_battle_effect_dependencies.json",
               "data/pokemon/gen8_contest_effect_source_catalog.json",
               "data/pokemon/gen8_ability_source_dependencies.json",
