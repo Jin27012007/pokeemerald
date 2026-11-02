@@ -5679,10 +5679,17 @@ u16 NationalToHoennOrder(u16 nationalNum)
 
 u16 SpeciesToNationalPokedexNum(u16 species)
 {
-    if (!species)
-        return 0;
+    u16 nationalNum;
 
-    return sSpeciesToNationalPokedexNum[species - 1];
+    nationalNum = Gen8SpeciesMap_GetNationalDex(species);
+    if (nationalNum)
+        return nationalNum;
+
+    // Preserve legacy Unown auxiliary entries and safely reject sentinels.
+    if (species && species < SPECIES_EGG)
+        return sSpeciesToNationalPokedexNum[species - 1];
+
+    return SPECIES_NONE;
 }
 
 u16 SpeciesToHoennPokedexNum(u16 species)
