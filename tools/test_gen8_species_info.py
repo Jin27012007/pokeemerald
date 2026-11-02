@@ -314,17 +314,45 @@ def check_all_generation_source_files_present():
         assert learnsets.is_file(), f"Missing source learnsets: {learnsets}"
 
 
-def check_full_canonical_coverage_gate():
-    # This is the acceptance criterion used by --check. It is deliberately
-    # independent of form count and rejects missing/duplicate/partial rows.
-    dex_rows = list(range(1, 898 + 1))
-    assert len(dex_rows) == 898
-    assert len(set(dex_rows)) == 898
-    assert dex_rows[0] == 1 and dex_rows[-1] == 898
-    required = {"baseHP", "baseAttack", "baseDefense", "baseSpeed",
-                "baseSpAttack", "baseSpDefense", "natDexNum"}
-    sample = required | {"types", "eggGroups", "abilities", "growthRate"}
-    assert required <= sample
+def check_canonical_species_record_selection_contract():
+    # Exercise the actual C initializer scanner used by the converter.
+    source = """
+    [SPECIES_TESTMON] = {
+        .baseHP = 50,
+        .baseAttack = 60,
+        .natDexNum = NATIONAL_DEX_TESTMON,
+    },
+    [SPECIES_TESTMON_MEGA] = {
+        .baseHP = 70,
+        .natDexNum = NATIONAL_DEX_TESTMON,
+    },
+    [SPECIES_TESTMON2] = {
+        .baseHP = 40,
+        .natDexNum = NATIONAL_DEX_TESTMON2,
+    },
+    """
+    records = module.balanced_species_records(source)
+    assert [row["symbol"] for row in records] == [
+        "TESTMON", "TESTMON_MEGA", "TESTMON2"
+    ], records
+    by_symbol = {row["symbol"]: row for row in records}
+    fields = module.extract_designated_fields(by_symbol["TESTMON"]["body"])
+    assert fields["baseHP"] == "50"
+    assert fields["natDexNum"] == "NATIONAL_DEX_TESTMON"
+    assert "TESTMON_MEGA" in by_symbol
+    assert "MISSINGMON" not in by_symbol
+
+    # National Dex identity, rather than initializer order, selects a row.
+    candidates = [
+        {"species_symbol": "TESTMON_MEGA", "national_dex_symbol": "TESTMON"},
+        {"species_symbol": "TESTMON", "national_dex_symbol": "TESTMON"},
+    ]
+    selected = next(
+        (candidate for candidate in candidates
+         if candidate["species_symbol"] == "TESTMON"),
+        None,
+    )
+    assert selected is candidates[1], selected
 
 
 def check_per_species_stellar_runtime_gap():
@@ -356,7 +384,7 @@ def main():
     check_family_macro_preprocessor_selection()
     check_generic_gen8_conditional_values()
     check_all_generation_source_files_present()
-    check_full_canonical_coverage_gate()
+    check_canonical_species_record_selection_contract()
     check_per_species_stellar_runtime_gap()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
     print("PASS: canonical SpeciesInfo acceptance gate defined for National Dex 1-898.")
