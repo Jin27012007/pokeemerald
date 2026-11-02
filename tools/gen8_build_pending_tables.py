@@ -444,7 +444,7 @@ def source_table_inventory() -> dict:
     pokedex_rows = []
     unresolved_text = []
     for dex, mapping, _, source, fields in source_rows:
-        description_expression = fields.get("description")
+        description_expression = fields.get("description") if source is not None else None
         description_pointer = resolve_shared_text_pointer(
             description_expression, shared_dex_text_values
         )
@@ -456,16 +456,16 @@ def source_table_inventory() -> dict:
             "species_symbol": mapping["source_symbol"],
             "source_generation": source["generation"] if source is not None else canonical_row.get("source_generation"),
             "record_provenance": canonical_row.get("record_provenance"),
-            "species_name_expression": fields.get("speciesName"),
-            "species_name_fragments": string_fragments(fields.get("speciesName", "")),
-            "category_expression": fields.get("categoryName"),
-            "category_fragments": string_fragments(fields.get("categoryName", "")),
+            "species_name_expression": fields.get("speciesName") if source is not None else None,
+            "species_name_fragments": string_fragments(fields.get("speciesName", "")) if source is not None else [],
+            "category_expression": fields.get("categoryName") if source is not None else None,
+            "category_fragments": string_fragments(fields.get("categoryName", "")) if source is not None else [],
             "description_expression": description_expression,
             "description_pointer_symbol": description_pointer,
             "description_fragments": description_values,
-            "height_dm": fields.get("height"),
-            "weight_hg": fields.get("weight"),
-            "national_dex_symbol": fields.get("natDexNum"),
+            "height_dm": fields.get("height") if source is not None else None,
+            "weight_hg": fields.get("weight") if source is not None else None,
+            "national_dex_symbol": fields.get("natDexNum") if source is not None else None,
             "source_fields_present": sorted(fields.keys()),
         }
         if not row["species_name_fragments"] or not row["category_fragments"] or not row["description_fragments"]:
@@ -519,7 +519,7 @@ def source_table_inventory() -> dict:
     missing_graphics_refs = []
     missing_target_graphics_assets = []
     for dex, mapping, _, source, fields in source_rows:
-        refs = {field: fields.get(field) for field in GRAPHICS_FIELDS}
+        refs = {field: fields.get(field) for field in GRAPHICS_FIELDS} if source is not None else {}
         required = ("frontPic", "backPic", "palette", "shinyPalette", "iconSprite")
         missing = [field for field in required if not refs.get(field)]
         if missing:
@@ -532,7 +532,7 @@ def source_table_inventory() -> dict:
             asset: (asset_folder / asset).is_file()
             for asset in REQUIRED_GRAPHIC_ASSETS
         }
-        missing_assets = [asset for asset, present in asset_presence.items() if not present]
+        missing_assets = [asset for asset, present in asset_presence.items() if not present] if source is not None else []
         if missing_assets:
             missing_target_graphics_assets.append({
                 "national_dex": dex,
