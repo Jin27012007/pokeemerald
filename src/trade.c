@@ -3804,7 +3804,7 @@ static bool8 DoTradeAnim_Cable(void)
     case STATE_POKEBALL_ARRIVE_WAIT:
         if (gSprites[sTradeAnim->bouncingPokeballSpriteId].callback == SpriteCallbackDummy)
         {
-            HandleLoadSpecialPokePic_2(GetMonFrontPicTableEntry(sTradeAnim->monSpecies[TRADE_PARTNER)],
+            HandleLoadSpecialPokePic_2(GetMonFrontPicTableEntry(sTradeAnim->monSpecies[TRADE_PARTNER]),
                                         gMonSpritesGfxPtr->sprites.ptr[B_POSITION_OPPONENT_RIGHT],
                                         sTradeAnim->monSpecies[TRADE_PARTNER],
                                         sTradeAnim->monPersonalities[TRADE_PARTNER]);
@@ -4301,7 +4301,7 @@ static bool8 DoTradeAnim_Wireless(void)
     case STATE_POKEBALL_ARRIVE_WAIT:
         if (gSprites[sTradeAnim->bouncingPokeballSpriteId].callback == SpriteCallbackDummy)
         {
-            HandleLoadSpecialPokePic_2(GetMonFrontPicTableEntry(sTradeAnim->monSpecies[TRADE_PARTNER)],
+            HandleLoadSpecialPokePic_2(GetMonFrontPicTableEntry(sTradeAnim->monSpecies[TRADE_PARTNER]),
                                         gMonSpritesGfxPtr->sprites.ptr[B_POSITION_OPPONENT_RIGHT],
                                         sTradeAnim->monSpecies[TRADE_PARTNER],
                                         sTradeAnim->monPersonalities[TRADE_PARTNER]);
