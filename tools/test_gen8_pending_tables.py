@@ -120,6 +120,33 @@ def test_numeric_define_catalog_with_comments():
     assert values == {"LEVEL": 4, "ITEM": 7, "SPIN": 8}, values
 
 
+def test_move_alias_catalog_and_conflict_detection():
+    target_symbols = {"VICE_GRIP", "FAINT_ATTACK"}
+    source_symbols = ["VISE_GRIP", "VICEGRIP", "FEINT_ATTACK", "SPECTRAL_THIEF"]
+    resolved = {
+        symbol: module.resolve_target_move_symbol(symbol, target_symbols)
+        for symbol in source_symbols
+    }
+    assert resolved == {
+        "VISE_GRIP": "VICE_GRIP",
+        "VICEGRIP": "VICE_GRIP",
+        "FEINT_ATTACK": "FAINT_ATTACK",
+        "SPECTRAL_THIEF": None,
+    }
+
+    # Several source spellings can be aliases of one canonical move, but
+    # their shared target ID is not a target-ID collision.
+    source_owner = {}
+    for source_symbol, target_symbol in resolved.items():
+        if target_symbol is None:
+            continue
+        target_id = {"VICE_GRIP": 11, "FAINT_ATTACK": 185}[target_symbol]
+        previous = source_owner.get(target_id)
+        if previous is not None:
+            assert previous != source_symbol
+        source_owner[target_id] = source_symbol
+
+
 def test_cry_table_labels():
     source = """gCryTable::
     cry Cry_Bulbasaur
@@ -157,6 +184,7 @@ def main():
     test_numeric_define_catalog_with_comments()
     test_enum_symbol_catalog_keeps_symbolic_aliases()
     test_explicit_target_move_alias_resolution()
+    test_move_alias_catalog_and_conflict_detection()
     test_cry_table_labels()
     test_named_array_inventory()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
