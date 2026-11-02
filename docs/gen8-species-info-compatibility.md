@@ -89,3 +89,7 @@ ID allocation is **blocked**. Canonical source-row coverage is not equivalent to
 ### Provenance of the 898 canonical rows
 
 The canonical audit now tags each row as either `existing_emerald_runtime_record` or `expansion_source_initializer`. CI expects exactly 386 preserved native Emerald rows and 512 Expansion-source rows, totaling 898. The preserved native rows prove that existing runtime records were found and retained; they do not claim that those rows were imported from Expansion. The 512 Expansion-source rows must independently pass the source-field and target-mapping audits above.
+
+### Provenance-aware readiness
+
+The 898-row canonical coverage count is intentionally split into 386 native Emerald rows and 512 Expansion-source rows. The `source_fields_resolved` counter applies only to the 512 Expansion rows; native rows are audited as preserved existing runtime records. Compact compatibility is evaluated in both groups using their respective provenance evidence. CI must verify the 386 + 512 split, 512 resolved Expansion records, and that the compact-stage readiness flag agrees with the combined compatible-row count. None of these checks alone makes runtime/save migration ready.
