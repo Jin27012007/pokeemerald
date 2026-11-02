@@ -148,6 +148,7 @@
 #define GEN8_DEX_COUNT 898
 #define GEN8_DEX_FLAG_BYTES ROUND_BITS_TO_BYTES(GEN8_DEX_COUNT)
 #define GEN8_DEX_LEGACY_COUNT 412
+#define GEN8_DEX_LEGACY_FLAG_BYTES ROUND_BITS_TO_BYTES(GEN8_DEX_LEGACY_COUNT)
 #define GEN8_DEX_EXTENSION_COUNT (GEN8_DEX_COUNT - GEN8_DEX_LEGACY_COUNT)
 #define GEN8_DEX_EXTENSION_FLAG_BYTES ROUND_BITS_TO_BYTES(GEN8_DEX_EXTENSION_COUNT)
 #define NUM_FLAG_BYTES ROUND_BITS_TO_BYTES(FLAGS_COUNT)
@@ -1069,7 +1070,7 @@ struct SaveBlock1
     /*0x31DC*/ struct Roamer roamer;
     /*0x31F8*/ struct EnigmaBerry enigmaBerry;
     /*0x322C*/ struct MysteryGiftSave mysteryGift;
-    /*0x3598*/ u8 dexFlagExtension[0x100]; // Four 61-byte mirrors plus version/header for staged Gen 8 Dex.
+    /*0x3598*/ u8 dexFlagExtension[0x100]; // Four 61-byte mirrors plus header/padding for staged Gen 8 Dex.
     /*0x3698*/ u8 unused_3698[0x080]; // Preserve trainerHillTimes at 0x3718.
     /*0x3718*/ u32 trainerHillTimes[NUM_TRAINER_HILL_MODES];
     /*0x3728*/ struct RamScript ramScript;
