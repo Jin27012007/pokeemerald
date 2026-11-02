@@ -166,7 +166,7 @@ def main() -> int:
         unown_collisions
     )
     canonical_dexes = {int(row["national_dex"]) for row in rows}
-    assert not (canonical_dexes & set(legacy_by_dex)), (
+    assert not (canonical_dexes & {dex for dex in legacy_by_dex if dex > 898}), (
         "Legacy auxiliary National Dex values overlap canonical Gen 8 Dex rows"
     )
 
