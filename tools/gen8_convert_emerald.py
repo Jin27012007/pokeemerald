@@ -1052,6 +1052,12 @@ def generate(check: bool = False) -> dict:
                 "national_dex": dex,
                 "national_symbol": national_symbol,
                 "source_record_symbol": row["species_symbol"],
+                "source_national_dex_symbol": row.get("national_dex_symbol"),
+                "source_national_dex_matches_selected": (
+                    row.get("national_dex_symbol") == national_symbol
+                    if row.get("record_provenance") != "existing_emerald_runtime_record"
+                    else True
+                ),
                 "source_generation": row["generation"],
                 "record_provenance": row.get("record_provenance", "expansion_source_initializer"),
                 "source_fields_present": sorted(
@@ -1129,6 +1135,11 @@ def generate(check: bool = False) -> dict:
         "canonical_species_info_covered": len(canonical_species_info),
         "canonical_species_info_native_emerald_preserved_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "existing_emerald_runtime_record"),
         "canonical_species_info_expansion_source_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer"),
+        "canonical_species_info_source_dex_mismatches": sum(
+            1 for row in canonical_species_info
+            if row.get("record_provenance") == "expansion_source_initializer"
+            and not row.get("source_national_dex_matches_selected", False)
+        ),
         "canonical_species_info_missing": len(missing_species_info),
         "canonical_species_info_raw_field_coverage": field_coverage,
         "canonical_species_info_source_complete_rows": sum(1 for row in canonical_species_info if row.get("source_complete", False)),
@@ -1156,6 +1167,7 @@ def generate(check: bool = False) -> dict:
         )
         and all(
             row.get("source_fields_resolved", False)
+            and row.get("source_national_dex_matches_selected", False)
             for row in canonical_species_info
             if row.get("record_provenance") == "expansion_source_initializer"
         )
