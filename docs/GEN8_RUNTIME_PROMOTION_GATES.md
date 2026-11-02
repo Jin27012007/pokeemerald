@@ -29,6 +29,12 @@ The static audit scanned 714 C/header files and found 1,115 species-related refe
 
 A source inventory is not a proof of runtime safety. Before ID allocation, all remaining unclassified references must be reviewed and all direct-index consumers either expanded or routed through a validated mapping API.
 
+The approved CI artifact (`gen8-conversion-report`, run `41468255573`) measured 716 C/header files, 1,115 references, 249 high-risk findings, 603 medium-risk findings, 263 low-risk findings, and 453 unclassified findings. High-risk groups include 145 `gSpeciesInfo` accesses, 32 evolution-table accesses, 27 learnset accesses, 25 front-pic accesses, 11 back-pic accesses, and 7 palette accesses. This report is generated as a CI artifact, not a tracked runtime source file.
+
+The native namespace currently has 413 numeric species constants, maximum explicit ordinary ID 411, Egg sentinel 412, `NUM_SPECIES == SPECIES_EGG`, and 27 calculated Unown auxiliary values. The canonical map covers 898 National Dex entries: 386 already have Emerald internal IDs and 512 still require IDs. National Dex numbers must not be substituted directly for internal IDs; for example, Treecko is National Dex 252 but Emerald internal ID 277.
+
+The compatibility audit confirms Expansion SpeciesInfo is not a drop-in replacement: Expansion has three ability slots while Emerald has two, source ability values are wider, and Fairy/Stellar types are absent from Emerald. The report records 414 runtime-gap records. Direct-index consumers must be migrated or routed through bounded translation wrappers before canonical IDs are promoted.
+
 ## Save and Pokédex storage
 
 - The vanilla `struct Pokedex` uses 52-byte owned and seen arrays.
