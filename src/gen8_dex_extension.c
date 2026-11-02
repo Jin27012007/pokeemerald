@@ -127,8 +127,9 @@ bool32 Gen8DexExtensionReadFlag(const struct Gen8DexExtension *extension, u16 na
         backup = ReadFlagFromCopy(extension, nationalDex, GEN8_DEX_COPY_SEEN_BACKUP);
     }
 
-    // A disagreement is not silently resolved. Until a transactional
-    // migration/recovery policy is tested, report true only if both copies do.
+    // A disagreement is not silently resolved. The caller gets false
+    // unless both copies agree that the bit is set. Save recovery remains
+    // outside this staging-only helper.
     return primary && backup;
 }
 
