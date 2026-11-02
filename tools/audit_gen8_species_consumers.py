@@ -164,15 +164,17 @@ def scan_source() -> tuple[list[dict], dict]:
             for table, pattern in TABLE_PATTERNS.items():
                 for match in pattern.finditer(line):
                     table_matches.append((table, match.group(1).strip()))
-            # Attach multiline references to their starting source line.
-            for table_name, expressions in full_table_refs.items():
-                for expression in expressions:
-                    if table_name == "species_info" and "gSpeciesInfo" in line and expression not in [x[1] for x in table_matches]:
-                        table_matches.append((table_name, expression))
-                    elif table_name == "evolution" and "gEvolutionTable" in line and expression not in [x[1] for x in table_matches]:
-                        table_matches.append((table_name, expression))
-                    elif table_name == "front_pic" and "gMonFrontPicTable" in line and expression not in [x[1] for x in table_matches]:
-                        table_matches.append((table_name, expression))
+            # Attach multiline references only to the physical line where
+            # the table expression begins; do not duplicate every table use.
+            for table_name, token in (
+                ("species_info", "gSpeciesInfo"),
+                ("evolution", "gEvolutionTable"),
+                ("front_pic", "gMonFrontPicTable"),
+            ):
+                if token in line:
+                    for expression in full_table_refs[table_name]:
+                        if not any(name == table_name and expr == expression for name, expr in table_matches):
+                            table_matches.append((table_name, expression))
             generic_indexes = []
             for pattern in INDEX_PATTERNS:
                 for match in pattern.finditer(line):
