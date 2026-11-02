@@ -203,6 +203,7 @@ jobs:
               "data/pokemon/gen8_move_alias_map.json",
               "data/pokemon/gen8_move_id_conflicts.json",
               "data/pokemon/gen8_battle_effect_dependencies.json",
+              "data/pokemon/gen8_battle_effect_dependencies.json",
               "data/pokemon/gen8_contest_effect_source_catalog.json",
               "data/pokemon/gen8_ability_source_dependencies.json",
               "data/pokemon/gen8_item_source_dependencies.json",
