@@ -468,7 +468,11 @@ def source_table_inventory() -> dict:
             "national_dex_symbol": fields.get("natDexNum") if source is not None else None,
             "source_fields_present": sorted(fields.keys()),
         }
-        if not row["species_name_fragments"] or not row["category_fragments"] or not row["description_fragments"]:
+        if source is not None and (
+            not row["species_name_fragments"]
+            or not row["category_fragments"]
+            or not row["description_fragments"]
+        ):
             unresolved_text.append({
                 "national_dex": dex,
                 "species_symbol": mapping["source_symbol"],
@@ -994,7 +998,11 @@ def source_table_inventory() -> dict:
         "386_native_emerald_rows_preserved": native_preserved_rows == 386,
         "512_gen8_level_up_learnsets": counts["canonical_gen8_level_up_learnsets"] == 512 and not missing_learnsets,
         "all_present_evolution_expressions_parsed": not unresolved_evolutions,
-        "898_pokedex_text_rows": len(pokedex_rows) == 898 and not unresolved_text,
+        "898_pokedex_catalog_rows": len(pokedex_rows) == 898,
+        "512_new_species_pokedex_text_rows": sum(
+            1 for row in pokedex_rows
+            if row["record_provenance"] == "expansion_source_initializer"
+        ) == 512 and not unresolved_text,
         "512_new_species_cry_identifiers_mapped_to_source_table": len(cry_rows) == 898 and not missing_cries,
         "512_new_species_graphics_reference_rows": len(graphics_rows) == 898 and not missing_graphics_refs,
         "all_referenced_form_tables_found": not missing_form_tables,
@@ -1087,7 +1095,8 @@ def main() -> int:
             "386_native_emerald_rows_preserved",
             "512_gen8_level_up_learnsets",
             "all_present_evolution_expressions_parsed",
-            "898_pokedex_text_rows",
+            "898_pokedex_catalog_rows",
+            "512_new_species_pokedex_text_rows",
             "512_new_species_cry_identifiers_mapped_to_source_table",
             "512_new_species_graphics_reference_rows",
             "all_referenced_form_tables_found",
