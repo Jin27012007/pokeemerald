@@ -83,6 +83,24 @@ def test_conditional_shared_pokedex_text_pointer():
     assert module.resolve_shared_text_pointer(ambiguous, shared) is None
 
 
+
+def test_enum_symbol_catalog_keeps_symbolic_aliases():
+    source = """
+enum Type {
+    TYPE_NONE = 0,
+    TYPE_NORMAL = 1,
+    TYPE_FAIRY = 19,
+    TYPE_STELLAR = TYPE_FAIRY + 1,
+    NUMBER_OF_MON_TYPES
+};
+"""
+    values = module.enum_symbol_catalog(source, "TYPE_")
+    assert values["NORMAL"] == 1
+    assert values["FAIRY"] == 19
+    assert "STELLAR" in values
+    assert values["STELLAR"] is None
+
+
 def test_numeric_define_catalog_with_comments():
     source = """
 #define EVO_LEVEL 4 // level-up evolution
@@ -128,6 +146,7 @@ def main():
     test_text_fragments()
     test_conditional_shared_pokedex_text_pointer()
     test_numeric_define_catalog_with_comments()
+    test_enum_symbol_catalog_keeps_symbolic_aliases()
     test_cry_table_labels()
     test_named_array_inventory()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
