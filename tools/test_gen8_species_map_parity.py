@@ -179,7 +179,7 @@ def main() -> int:
 
     pokemon_source = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
     lookup_start = pokemon_source.index("u16 NationalPokedexNumToSpecies(u16 nationalNum)")
-    lookup_end = pokemon_source.index("\\nu16 NationalToHoennOrder", lookup_start)
+    lookup_end = pokemon_source.index("u16 NationalToHoennOrder", lookup_start)
     lookup_body = pokemon_source[lookup_start:lookup_end]
     assert "nationalNum <= GEN8_NATIONAL_DEX_COUNT" in lookup_body
     assert "Gen8SpeciesMap_GetEmeraldId(nationalNum)" in lookup_body
