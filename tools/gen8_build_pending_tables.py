@@ -366,17 +366,24 @@ def source_table_inventory() -> dict:
     for dex in range(1, 899):
         mapping = map_by_dex[dex]
         canonical_row = canonical_by_dex[dex]
-        symbol = mapping["source_symbol"]
+        symbol = canonical_row.get("source_record_symbol") or mapping["source_symbol"]
+        provenance = canonical_row.get("record_provenance")
         source = info_by_symbol.get(symbol)
+        if source is None and provenance == "existing_emerald_runtime_record":
+            # Existing Emerald species are already represented in the target
+            # runtime. Their Gen 8 source alternatives remain in the vendor
+            # catalog but are not required to synthesize a replacement row.
+            source_rows.append((dex, mapping, canonical_row, None, {}))
+            continue
         if source is None:
-            raise RuntimeError(f"No pinned Expansion SpeciesInfo record for Dex {dex}: {symbol}")
+            raise RuntimeError(f"No selected Expansion SpeciesInfo record for new Dex {dex}: {symbol}")
         fields = source.get("source_expanded_fields", source.get("resolved_source_fields", {}))
-        if not fields or fields.get("natDexNum") != f"NATIONAL_DEX_{symbol}":
-            # Some aliases use a different NATIONAL_DEX_* token; validate the
-            # resolved number using the canonical manifest rather than guessing.
-            nat = fields.get("natDexNum", "")
-            if not nat.startswith("NATIONAL_DEX_"):
-                raise RuntimeError(f"Missing canonical natDexNum source field for Dex {dex}: {symbol}")
+        nat = source.get("national_dex_symbol") or fields.get("natDexNum", "")
+        if not nat.startswith("NATIONAL_DEX_") or nat != canonical_row.get("source_national_dex_symbol"):
+            raise RuntimeError(
+                f"Selected source natDexNum mismatch for Dex {dex}: "
+                f"record={symbol}, field={nat}, canonical={canonical_row.get('source_national_dex_symbol')}"
+            )
         source_rows.append((dex, mapping, canonical_row, source, fields))
 
     # Exact Gen 8 level-up learnsets referenced by the canonical species rows.
