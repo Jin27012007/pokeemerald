@@ -244,17 +244,20 @@ int main(void)
                 encoding="utf-8",
             )
             executable = temp / "gen8-dex-test"
-            subprocess.run(
-                [
-                    compiler, "-std=c11", "-Wall", "-Wextra", "-Werror",
-                    "-I", str(temp), str(ROOT / "src/gen8_dex_extension.c"),
-                    str(temp / "test.c"), "-o", str(executable),
-                ],
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+            try:
+                subprocess.run(
+                    [
+                        compiler, "-std=c11", "-Wall", "-Wextra", "-Werror",
+                        "-I", str(temp), str(ROOT / "src/gen8_dex_extension.c"),
+                        str(temp / "test.c"), "-o", str(executable),
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+            except subprocess.CalledProcessError as error:
+                raise AssertionError(error.stderr or error.stdout or str(error)) from error
 
 
 
