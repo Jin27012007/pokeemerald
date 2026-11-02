@@ -1026,73 +1026,90 @@ def generate(check: bool = False) -> dict:
         national_symbol = by_dex[dex]
         preferred_symbol = BASE_ALIASES.get(national_symbol, national_symbol)
         candidates = info_candidates_by_dex.get(dex, [])
-        row = target_species_by_dex.get(dex)
+        has_existing_internal_id = species_map[dex - 1]["emerald_internal_id"] is not None
+
+        # The existing Emerald SpeciesInfo record is authoritative for its
+        # 386 already-assigned species. Expansion alternatives are still
+        # retained separately in the source inventory.
+        row = target_species_by_dex.get(dex) if has_existing_internal_id else None
+
+        # New canonical species require an Expansion initializer whose own
+        # natDexNum resolves to this exact National Dex number and whose
+        # source designator is the exact canonical symbol or explicit alias.
         if row is None:
-            # Preserve the exact canonical source symbol first. Several Dex
-            # base forms are explicitly named *_NORMAL, *_PLANT, *_HERO, etc.
-            # BASE_ALIASES is for mapping those forms to Emerald's base ID;
-            # it must not be used to erase the source initializer identity.
-            row = info_by_symbol.get(national_symbol)
-        if row is None:
-            row = next((candidate for candidate in candidates
-                        if candidate["species_symbol"] == national_symbol), None)
-        if row is None:
-            row = next((candidate for candidate in candidates
-                        if candidate["species_symbol"] == preferred_symbol), None)
-        if row is None:
-            row = info_by_symbol.get(preferred_symbol)
-        if row is None and species_map[dex - 1]["emerald_internal_id"] is not None:
-            row = target_species_by_dex.get(dex)
+            exact_candidates = [
+                candidate for candidate in candidates
+                if candidate.get("national_dex_symbol") == national_symbol
+                and candidate.get("species_symbol") in {national_symbol, preferred_symbol}
+            ]
+            if len(exact_candidates) == 1:
+                row = exact_candidates[0]
+            elif len(exact_candidates) > 1:
+                species_info_identity_conflicts.append({
+                    "national_dex": dex,
+                    "canonical_symbol": national_symbol,
+                    "candidate_symbols": sorted(x["species_symbol"] for x in exact_candidates),
+                    "status": "multiple_exact_canonical_candidates",
+                })
+        if row is None and not has_existing_internal_id:
+            # Preserve every plausible source record as evidence, but do not
+            # silently select a mismatched initializer by array/source order.
+            if candidates:
+                species_info_identity_conflicts.append({
+                    "national_dex": dex,
+                    "canonical_symbol": national_symbol,
+                    "expected_source_alias": preferred_symbol,
+                    "candidate_symbols": sorted(x["species_symbol"] for x in candidates),
+                    "candidate_natdex_symbols": sorted({
+                        str(x.get("national_dex_symbol")) for x in candidates
+                    }),
+                    "status": "no_exact_canonical_candidate",
+                })
+            missing_species_info.append({
+                "national_dex": dex,
+                "national_symbol": national_symbol,
+                "expected_source_alias": preferred_symbol,
+                "status": "canonical_source_record_unresolved",
+            })
+            continue
         if row is None:
             missing_species_info.append({
                 "national_dex": dex,
                 "national_symbol": national_symbol,
                 "expected_source_alias": preferred_symbol,
-                "status": "source_record_missing",
+                "status": "native_emerald_record_missing",
             })
-        else:
-            if row.get("record_provenance") == "expansion_source_initializer" and not row.get("source_national_dex_matches_selected", False):
-                species_info_identity_conflicts.append({
-                    "national_dex": dex,
-                    "canonical_symbol": national_symbol,
-                    "expected_source_alias": preferred_symbol,
-                    "selected_source_symbol": row["species_symbol"],
-                    "selected_source_natdex_symbol": row.get("national_dex_symbol"),
-                    "candidate_symbols_for_same_dex": sorted(
-                        candidate["species_symbol"] for candidate in candidates
-                    ),
-                    "status": "identity_conflict_requires_explicit_resolution",
-                })
-            canonical_species_info.append({
-                "national_dex": dex,
-                "national_symbol": national_symbol,
-                "source_record_symbol": row["species_symbol"],
-                "source_national_dex_symbol": row.get("national_dex_symbol"),
-                "source_national_dex_matches_selected": (
-                    row.get("national_dex_symbol") == national_symbol
-                    if row.get("record_provenance") != "existing_emerald_runtime_record"
-                    else True
-                ),
-                "source_generation": row["generation"],
-                "record_provenance": row.get("record_provenance", "expansion_source_initializer"),
-                "source_fields_present": sorted(
-                    row.get("source_expanded_fields", row.get("source_raw", {})).keys()
-                ),
-                "compact_status": row["status"],
-                "source_complete": row.get("source_complete", False),
-                "source_missing_fields": row.get("source_missing_fields", []),
-                "source_unresolved_fields": row.get("source_unresolved_fields", []),
-                "source_fields_resolved": row.get("source_fields_resolved", False),
-                "target_mapping_compatible": row.get("target_mapping_compatible", False),
-                "compatibility_issues": row.get("compatibility_issues", []),
-                "compact_compatible": row.get("compact_compatible", row["status"] == "compact_fields_resolved"),
-                "runtime_gaps": row.get("runtime_gaps", []),
-                "unresolved_fields": row["unresolved"],
-                "same_dex_variant_symbols": sorted(
-                    candidate["species_symbol"] for candidate in candidates
-                    if candidate["species_symbol"] != row["species_symbol"]
-                ),
-            })
+            continue
+
+        is_native = row.get("record_provenance") == "existing_emerald_runtime_record"
+        canonical_species_info.append({
+            "national_dex": dex,
+            "national_symbol": national_symbol,
+            "source_record_symbol": row["species_symbol"],
+            "source_national_dex_symbol": row.get("national_dex_symbol"),
+            "source_national_dex_matches_selected": (
+                row.get("national_dex_symbol") == national_symbol if not is_native else True
+            ),
+            "source_generation": row["generation"],
+            "record_provenance": row.get("record_provenance", "expansion_source_initializer"),
+            "source_fields_present": sorted(
+                row.get("source_expanded_fields", row.get("source_raw", {})).keys()
+            ),
+            "compact_status": row["status"],
+            "source_complete": row.get("source_complete", False),
+            "source_missing_fields": row.get("source_missing_fields", []),
+            "source_unresolved_fields": row.get("source_unresolved_fields", []),
+            "source_fields_resolved": row.get("source_fields_resolved", False),
+            "target_mapping_compatible": row.get("target_mapping_compatible", False),
+            "compatibility_issues": row.get("compatibility_issues", []),
+            "compact_compatible": row.get("compact_compatible", row["status"] == "compact_fields_resolved"),
+            "runtime_gaps": row.get("runtime_gaps", []),
+            "unresolved_fields": row["unresolved"],
+            "same_dex_variant_symbols": sorted(
+                candidate["species_symbol"] for candidate in candidates
+                if candidate["species_symbol"] != row["species_symbol"]
+            ),
+        })
     used_moves = sorted({m["move"] for row in learnsets for m in row["moves"]})
     target_move_names = {x["symbol"] for x in target_moves}
     missing_moves = sorted(set(used_moves) - target_move_names)
