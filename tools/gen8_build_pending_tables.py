@@ -378,11 +378,11 @@ def source_table_inventory() -> dict:
         if source is None:
             raise RuntimeError(f"No selected Expansion SpeciesInfo record for new Dex {dex}: {symbol}")
         fields = source.get("source_expanded_fields", source.get("resolved_source_fields", {}))
-        nat = source.get("national_dex_symbol") or fields.get("natDexNum", "")
-        if not nat.startswith("NATIONAL_DEX_") or nat != canonical_row.get("source_national_dex_symbol"):
+        nat = source.get("national_dex_symbol")
+        if not nat or not nat.startswith("NATIONAL_DEX_") or nat != canonical_row.get("source_national_dex_symbol"):
             raise RuntimeError(
                 f"Selected source natDexNum mismatch for Dex {dex}: "
-                f"record={symbol}, field={nat}, canonical={canonical_row.get('source_national_dex_symbol')}"
+                f"record={symbol}, field={nat}, canonical_source={canonical_row.get('source_national_dex_symbol')}"
             )
         source_rows.append((dex, mapping, canonical_row, source, fields))
 
