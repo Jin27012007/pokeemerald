@@ -3020,6 +3020,9 @@ u16 MonTryLearningNewMove(struct Pokemon *mon, bool8 firstMove)
     u8 level = GetMonData(mon, MON_DATA_LEVEL, NULL);
     const u16 *learnset = GetLevelUpLearnsetSafe(species);
 
+    if (learnset[0] == LEVEL_UP_END)
+        return MOVE_NONE;
+
     // since you can learn more than one move per level
     // the game needs to know whether you decided to
     // learn it or keep the old set to avoid asking
@@ -6304,67 +6307,31 @@ u32 CanMonLearnTMHM(struct Pokemon *mon, u8 tm)
 {
     u16 species = GetMonData(mon, MON_DATA_SPECIES_OR_EGG, 0);
     const u32 *learnset = GetTMHMLearnsetWordsSafe(species);
+    u32 index = tm / 32;
+    u32 mask = 1u << (tm % 32);
 
     if (species == SPECIES_EGG)
         return 0;
 
-    // Fewer than 64 moves, use GF's method (for matching).
-    if (sizeof(struct TMHMLearnset) <= 8)
-    {
-        if (tm < 32)
-        {
-            u32 mask = 1 << tm;
-            return learnset[0] & mask;
-        }
-        else
-        {
-            u32 mask = 1 << (tm - 32);
-            return learnset[1] & mask;
-        }
-    }
-    else
-    {
-        u32 index = tm / 32;
-        u32 mask = 1 << (tm % 32);
+    if (index >= sizeof(struct TMHMLearnset) / sizeof(u32))
+        return 0;
 
-        if (index >= sizeof(struct TMHMLearnset) / sizeof(u32))
-            return 0;
-
-        return learnset[index] & mask;
-    }
+    return learnset[index] & mask;
 }
 
 u32 CanSpeciesLearnTMHM(u16 species, u8 tm)
 {
     const u32 *learnset = GetTMHMLearnsetWordsSafe(species);
+    u32 index = tm / 32;
+    u32 mask = 1u << (tm % 32);
 
     if (species == SPECIES_EGG)
         return 0;
 
-    // Fewer than 64 moves, use GF's method (for matching).
-    if (sizeof(struct TMHMLearnset) <= 8)
-    {
-        if (tm < 32)
-        {
-            u32 mask = 1 << tm;
-            return learnset[0] & mask;
-        }
-        else
-        {
-            u32 mask = 1 << (tm - 32);
-            return learnset[1] & mask;
-        }
-    }
-    else
-    {
-        u32 index = tm / 32;
-        u32 mask = 1 << (tm % 32);
+    if (index >= sizeof(struct TMHMLearnset) / sizeof(u32))
+        return 0;
 
-        if (index >= sizeof(struct TMHMLearnset) / sizeof(u32))
-            return 0;
-
-        return learnset[index] & mask;
-    }
+    return learnset[index] & mask;
 }
 
 u8 GetMoveRelearnerMoves(struct Pokemon *mon, u16 *moves)
