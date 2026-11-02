@@ -109,7 +109,7 @@ def main() -> int:
         "static bool8 TrySetMove(u8 monId, u16 move)",
     )
     assert "GetLevelUpLearnsetSafe(species)" in random_alternate
-    assert "if (learnset[0] == LEVEL_UP_END)" in random_alternate
+    assert "if (species >= NUM_SPECIES)" in random_alternate
     assert "return MOVE_NONE;" in random_alternate
     assert "gLevelUpLearnsets[" not in random_alternate
 
