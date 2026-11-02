@@ -81,6 +81,13 @@ jobs:
       - name: Test Gen 8 pending table parsers
         run: python3 tools/test_gen8_pending_tables.py
 
+      - name: Audit species ID consumers, sentinels and forms
+        run: |
+          python3 tools/test_gen8_species_consumers.py
+          python3 tools/audit_gen8_species_consumers.py
+          test -s reports/gen8-conversion/species_id_consumers/species_id_consumers.json
+          test -s reports/gen8-conversion/species_id_consumers/species_id_consumers.csv
+
       - name: Generate comprehensive canonical Gen 8 source tables
         run: python3 tools/gen8_build_pending_tables.py
 
