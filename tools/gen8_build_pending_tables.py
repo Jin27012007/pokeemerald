@@ -337,6 +337,26 @@ def parse_cry_table_labels(text: str) -> set[str]:
     return {normalize_cry(label) for label in labels}
 
 
+def resolve_target_move_symbol(source_symbol: str, target_symbols: set[str]) -> str | None:
+    """Resolve a pinned Expansion move to an existing Emerald constant.
+
+    Only exact symbols and a small explicit alias table are accepted. No
+    semantic/name guessing is allowed because aliases must preserve mechanics.
+    """
+    if source_symbol in target_symbols:
+        return source_symbol
+    aliases = {
+        "VICEGRIP": "VICE_GRIP",
+        "WILL_O_WISP": "WILL_O_WISP",
+        "FEINT_ATTACK": "FAINT_ATTACK",
+        "SMOG": "SMOG",
+        "HI_JUMP_KICK": "HI_JUMP_KICK",
+        "DOUBLE_EDGE": "DOUBLE_EDGE",
+    }
+    candidate = aliases.get(source_symbol)
+    return candidate if candidate in target_symbols else None
+
+
 def source_table_inventory() -> dict:
     """Generate independent, reviewable tables without touching production C."""
     compact = json.loads(read(INFO_COMPACT))
@@ -644,6 +664,7 @@ def source_table_inventory() -> dict:
     source_move_enum = conv.symbols(read(SOURCE_MOVES), "MOVE_", enum=True)
     target_move_enum = conv.symbols(read(ROOT / "include/constants/moves.h"), "MOVE_")
     target_move_ids = {row["symbol"]: row["id"] for row in target_move_enum}
+    target_move_symbols = set(target_move_ids)
     target_battle_move_records = indexed_records(read(ROOT / "src/data/battle_moves.h"), "MOVE_")
     target_contest_move_records = indexed_records(read(ROOT / "src/data/contest_moves.h"), "MOVE_")
     source_move_ids = {}
@@ -658,10 +679,12 @@ def source_table_inventory() -> dict:
         fields = conv.extract_designated_fields(move_records.get("MOVE_" + symbol, ""))
         if not fields:
             missing_move_definitions.append(symbol)
-        target_id = target_move_ids.get(symbol)
+        resolved_target_symbol = resolve_target_move_symbol(symbol, target_move_symbols)
+        target_id = target_move_ids.get(resolved_target_symbol) if resolved_target_symbol else None
         row = {
             "source_move_symbol": symbol,
             "source_move_id": source_id,
+            "emerald_move_symbol": resolved_target_symbol,
             "emerald_move_id": target_id,
             "used_by_canonical_gen8_learnsets": symbol in used_move_symbols,
             "battle_fields": {
@@ -673,11 +696,11 @@ def source_table_inventory() -> dict:
                 for field in ("contestEffect", "contestCategory", "contestComboStarterId", "contestComboMoves")
             },
             "source_fields_present": sorted(fields.keys()),
-            "battle_definition_available_in_emerald": symbol in target_move_ids,
-            "target_battle_record_present": "MOVE_" + symbol in target_battle_move_records,
-            "target_contest_record_present": "MOVE_" + symbol in target_contest_move_records,
-            "target_battle_fields": conv.extract_designated_fields(target_battle_move_records.get("MOVE_" + symbol, "")),
-            "target_contest_fields": conv.extract_designated_fields(target_contest_move_records.get("MOVE_" + symbol, "")),
+            "battle_definition_available_in_emerald": resolved_target_symbol is not None,
+            "target_battle_record_present": bool(resolved_target_symbol and "MOVE_" + resolved_target_symbol in target_battle_move_records),
+            "target_contest_record_present": bool(resolved_target_symbol and "MOVE_" + resolved_target_symbol in target_contest_move_records),
+            "target_battle_fields": conv.extract_designated_fields(target_battle_move_records.get("MOVE_" + resolved_target_symbol, "")) if resolved_target_symbol else {},
+            "target_contest_fields": conv.extract_designated_fields(target_contest_move_records.get("MOVE_" + resolved_target_symbol, "")) if resolved_target_symbol else {},
         }
         move_rows.append(row)
         if row["used_by_canonical_gen8_learnsets"]:
