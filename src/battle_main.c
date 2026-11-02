@@ -2765,7 +2765,7 @@ void SpriteCB_FaintOpponentMon(struct Sprite *sprite)
         else
             unownSpecies = NUM_SPECIES + unownForm;  // Use one of the other Unown letters.
 
-        yOffset = gMonFrontPicCoords[unownSpecies].y_offset;
+        yOffset = GetMonFrontPicCoordsEntry(unownSpecies)->y_offset;
     }
     else if (species == SPECIES_CASTFORM)
     {
@@ -2773,11 +2773,11 @@ void SpriteCB_FaintOpponentMon(struct Sprite *sprite)
     }
     else if (species > NUM_SPECIES)
     {
-        yOffset = gMonFrontPicCoords[SPECIES_NONE].y_offset;
+        yOffset = GetMonFrontPicCoordsEntry(SPECIES_NONE)->y_offset;
     }
     else
     {
-        yOffset = gMonFrontPicCoords[species].y_offset;
+        yOffset = GetMonFrontPicCoordsEntry(species)->y_offset;
     }
 
     sprite->data[3] = 8 - yOffset / 8;
