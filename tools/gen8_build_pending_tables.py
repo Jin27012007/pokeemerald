@@ -733,6 +733,24 @@ def source_table_inventory() -> dict:
         for value in re.findall(r"\bEFFECT_[A-Z0-9_]+\b", row["battle_fields"].get("effect") or "")
     })
     missing_battle_effects = sorted(set(source_effect_symbols) - target_effect_symbols)
+    battle_effect_dependency_rows = []
+    for effect_symbol in source_effect_symbols:
+        affected = [
+            row for row in used_move_rows
+            if effect_symbol in re.findall(
+                r"\\bEFFECT_[A-Z0-9_]+\\b",
+                row["battle_fields"].get("effect") or "",
+            )
+        ]
+        battle_effect_dependency_rows.append({
+            "effect_symbol": effect_symbol,
+            "implemented_in_emerald": effect_symbol in target_effect_symbols,
+            "canonical_move_count": len(affected),
+            "canonical_moves": sorted(row["source_move_symbol"] for row in affected),
+            "missing_move_record_count": sum(
+                1 for row in affected if not row["target_battle_record_present"]
+            ),
+        })
     missing_target_battle_move_records = sorted(
         row["source_move_symbol"] for row in used_move_rows
         if not row["target_battle_record_present"]
@@ -1006,6 +1024,10 @@ def source_table_inventory() -> dict:
         "source_contest_effect_definitions": len(contest_effect_rows),
         "source_contest_effect_callbacks_missing_in_emerald": len(missing_contest_callbacks),
         "source_battle_effect_symbols_missing_in_emerald": len(missing_battle_effects),
+        "source_battle_effect_dependency_rows": len(battle_effect_dependency_rows),
+        "source_battle_effect_dependencies_missing_in_emerald": sum(
+            1 for row in battle_effect_dependency_rows if not row["implemented_in_emerald"]
+        ),
         "canonical_gen8_learnset_moves_missing_target_battle_records": len(missing_target_battle_move_records),
         "canonical_gen8_learnset_moves_missing_target_contest_records": len(missing_target_contest_move_records),
         "canonical_gen8_move_aliases_resolved_to_emerald_ids": sum(1 for row in move_alias_rows if row["used_by_canonical_gen8_learnsets"]),
@@ -1095,6 +1117,7 @@ def source_table_inventory() -> dict:
         "missing_source_move_definitions": missing_move_definitions,
         "missing_contest_callbacks": missing_contest_callbacks,
         "missing_battle_effect_symbols": missing_battle_effects,
+        "battle_effect_dependencies": battle_effect_dependency_rows,
         "missing_target_battle_move_records": missing_target_battle_move_records,
         "missing_target_contest_move_records": missing_target_contest_move_records,
         "move_aliases_resolved_to_emerald_ids": move_alias_rows,
