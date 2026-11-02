@@ -979,6 +979,10 @@ def generate(check: bool = False) -> dict:
                 "compatibility": "native_emerald",
                 "source_complete": True,
                 "source_missing_fields": [],
+                "source_unresolved_fields": [],
+                "source_fields_resolved": True,
+                "target_mapping_compatible": True,
+                "compatibility_issues": [],
                 "compact_compatible": True,
                 "runtime_gaps": [],
                 "unresolved": [],
@@ -1144,7 +1148,7 @@ def generate(check: bool = False) -> dict:
     )
     species_info_compact_compatible = (
         species_info_source_complete
-        and all(row.get("compact_compatible", False) for row in canonical_species_info)
+        and all(row.get("source_fields_resolved", False) and row.get("target_mapping_compatible", False) for row in canonical_species_info)
     )
     report = {
         "source": "pinned pokeemerald-expansion source snapshot (Gen 4-9 family data)",
@@ -1158,6 +1162,8 @@ def generate(check: bool = False) -> dict:
             "species_info_898_canonical_entries": len(canonical_species_info) == 898,
             "species_info_zero_missing_canonical_entries": not missing_species_info,
             "species_info_zero_unresolved_source_records": all(row.get("source_complete", False) for row in canonical_species_info),
+            "species_info_all_source_fields_resolved": all(row.get("source_fields_resolved", False) for row in canonical_species_info),
+            "species_info_all_target_mappings_compatible": all(row.get("target_mapping_compatible", False) for row in canonical_species_info),
             "species_info_zero_unresolved_runtime_gaps": all(not row.get("runtime_gaps") for row in canonical_species_info),
             "species_info_source_fields_complete": species_info_source_complete,
             "species_info_source_complete": species_info_source_complete,
