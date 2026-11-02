@@ -102,10 +102,10 @@ enum Type {
 
 
 def test_explicit_target_move_alias_resolution():
-    targets = {"VICE_GRIP", "FAINT_ATTACK", "WILL_O_WISP"}
+    targets = {"VICE_GRIP", "FAINT_ATTACK"}
+    assert module.resolve_target_move_symbol("VISE_GRIP", targets) == "VICE_GRIP"
     assert module.resolve_target_move_symbol("VICEGRIP", targets) == "VICE_GRIP"
     assert module.resolve_target_move_symbol("FEINT_ATTACK", targets) == "FAINT_ATTACK"
-    assert module.resolve_target_move_symbol("WILL_O_WISP", targets) == "WILL_O_WISP"
     assert module.resolve_target_move_symbol("SPECTRAL_THIEF", targets) is None
     assert module.resolve_target_move_symbol("VICEGRIP", {"VICEGRIP"}) == "VICEGRIP"
 
