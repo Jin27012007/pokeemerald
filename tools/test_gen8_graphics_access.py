@@ -92,9 +92,14 @@ int main(void)
     with tempfile.TemporaryDirectory(prefix="gen8-graphics-access-") as tmp:
         source, binary = Path(tmp) / "test.c", Path(tmp) / "test"
         source.write_text(harness, encoding="utf-8")
-        subprocess.run([compiler, "-std=c11", "-Wall", "-Wextra", "-Werror",
-                        str(source), "-o", str(binary)], check=True,
-                       capture_output=True, text=True)
+        try:
+            subprocess.run([compiler, "-std=c11", "-Wall", "-Wextra", "-Werror",
+                            str(source), "-o", str(binary)], check=True,
+                           capture_output=True, text=True)
+        except subprocess.CalledProcessError as error:
+            raise AssertionError(
+                f"Graphics accessor harness compile failed:\\n{error.stderr}\\n{error.stdout}"
+            ) from error
         subprocess.run([str(binary)], check=True, capture_output=True, text=True)
 
 def main() -> int:
