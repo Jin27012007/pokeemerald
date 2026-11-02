@@ -1103,8 +1103,8 @@ def generate(check: bool = False) -> dict:
         "canonical_species_info_covered": len(canonical_species_info),
         "canonical_species_info_missing": len(missing_species_info),
         "canonical_species_info_raw_field_coverage": field_coverage,
-        "canonical_species_info_source_complete": sum(1 for row in canonical_species_info if row.get("source_complete", False)),
-        "canonical_species_info_compact_compatible": sum(1 for row in canonical_species_info if row.get("compact_compatible", False)),
+        "canonical_species_info_source_complete_rows": sum(1 for row in canonical_species_info if row.get("source_complete", False)),
+        "canonical_species_info_compact_compatible_rows": sum(1 for row in canonical_species_info if row.get("compact_compatible", False)),
         "canonical_species_info_runtime_gap_records": sum(1 for row in canonical_species_info if row.get("runtime_gaps")),
         "canonical_species_info_source_missing_fields": sum(1 for row in canonical_species_info if row.get("source_missing_fields")),
         "missing_species_info_for_new_dex_species": len(missing_species_info),
@@ -1134,9 +1134,9 @@ def generate(check: bool = False) -> dict:
             "species_info_zero_missing_canonical_entries": not missing_species_info,
             "species_info_zero_unresolved_source_records": all(row.get("source_complete", False) for row in canonical_species_info),
             "species_info_zero_unresolved_runtime_gaps": all(not row.get("runtime_gaps") for row in canonical_species_info),
-            "species_info_complete": species_info_source_complete,
+            "species_info_source_fields_complete": species_info_source_complete,
             "species_info_source_complete": species_info_source_complete,
-            "species_info_compact_compatible": species_info_compact_compatible,
+            "species_info_compact_stage_compatible": species_info_compact_compatible,
             "save_extension_validated": False,
             "evolutions_ready": False, "pokedex_text_ready": False, "cries_ready": False,
             "graphics_ready": False, "battle_and_contest_moves_ready": False,
@@ -1144,7 +1144,7 @@ def generate(check: bool = False) -> dict:
         },
         "species_mapping": species_map,
         "species_info_by_national_dex": canonical_species_info,
-        "species_info_complete": species_info_source_complete,
+        "species_info_source_fields_complete": species_info_source_complete,
         "missing_species_info_by_national_dex": missing_species_info,
         "species_info_field_coverage": field_coverage,
         "emerald_compatibility": emerald_compatibility,
@@ -1198,9 +1198,9 @@ def main() -> int:
             assert report["counts"]["canonical_dex_entries"] == 898
             assert report["counts"]["canonical_species_info_covered"] == 898
             assert report["counts"]["canonical_species_info_missing"] == 0
-            assert report["readiness"]["species_info_complete"] is True
-        if report["readiness"]["species_info_complete"]:
-            print("PASS: SpeciesInfo source coverage is complete; production IDs and save layouts untouched.")
+            assert report["readiness"]["species_info_source_fields_complete"] is True
+        if report["readiness"]["species_info_source_fields_complete"]:
+            print("PASS: SpeciesInfo source fields are complete; runtime compatibility remains separately gated.")
         else:
             print("INCOMPLETE: SpeciesInfo coverage or source-field audit has unresolved entries.")
         return 0
