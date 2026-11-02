@@ -80,6 +80,10 @@ typedef int32_t bool32;
 """,
             encoding="utf-8",
         )
+        generated_header = ROOT / "include/gen8_species_map.h"
+        (temp / "gen8_species_map.h").write_text(
+            generated_header.read_text(encoding="utf-8"), encoding="utf-8"
+        )
         (temp / "test.c").write_text(harness, encoding="utf-8")
         executable = temp / "gen8-map-test"
         command = [
