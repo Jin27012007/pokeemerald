@@ -1524,8 +1524,6 @@ void ResetPokedex(void)
     }
     for (i = 0; i < sizeof(gSaveBlock1Ptr->dexFlagExtension); i++)
         gSaveBlock1Ptr->dexFlagExtension[i] = 0;
-    for (i = 0; i < sizeof(gSaveBlock1Ptr->dexFlagExtension); i++)
-        gSaveBlock1Ptr->dexFlagExtension[i] = 0;
 }
 
 void ResetPokedexScrollPositions(void)
