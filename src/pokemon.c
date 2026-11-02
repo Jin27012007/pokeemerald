@@ -1,4 +1,5 @@
 #include "global.h"
+#include "gen8_species_map.h"
 #include "malloc.h"
 #include "apprentice.h"
 #include "battle.h"
@@ -5642,16 +5643,18 @@ u16 NationalPokedexNumToSpecies(u16 nationalNum)
 {
     u16 species;
 
-    if (!nationalNum)
-        return 0;
+    // Canonical National Dex values use the explicit Gen 8 bridge. Unassigned
+    // Dex entries safely return SPECIES_NONE until their internal IDs are promoted.
+    if (nationalNum <= GEN8_NATIONAL_DEX_COUNT)
+        return Gen8SpeciesMap_GetEmeraldId(nationalNum);
 
+    // Preserve Emerald's legacy Unown auxiliary pseudo-Dex entries (899-920).
     species = 0;
-
     while (species < (NUM_SPECIES - 1) && sSpeciesToNationalPokedexNum[species] != nationalNum)
         species++;
 
     if (species == NUM_SPECIES - 1)
-        return 0;
+        return SPECIES_NONE;
 
     return species + 1;
 }
