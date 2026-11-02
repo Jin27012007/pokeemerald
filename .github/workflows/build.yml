@@ -9,6 +9,9 @@ on:
     paths-ignore:
       - "docs/**"
   pull_request:
+  push:
+    branches:
+      - "gen8/**"
   workflow_dispatch:
 
 permissions:
