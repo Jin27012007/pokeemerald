@@ -39,6 +39,20 @@ const struct CompressedSpritePalette *GetMonShinyPaletteTableEntry(s32 species)
     return &gMonShinyPaletteTable[species];
 }
 
+const struct MonCoords *GetMonFrontPicCoordsEntry(s32 species)
+{
+    if (species < 0 || species > MON_GRAPHICS_LAST_SPECIES_ID)
+        species = SPECIES_NONE;
+    return &gMonFrontPicCoords[species];
+}
+
+const struct MonCoords *GetMonBackPicCoordsEntry(s32 species)
+{
+    if (species < 0 || species > MON_GRAPHICS_LAST_SPECIES_ID)
+        species = SPECIES_NONE;
+    return &gMonBackPicCoords[species];
+}
+
 void LZDecompressWram(const u32 *src, void *dest)
 {
     LZ77UnCompWram(src, dest);
