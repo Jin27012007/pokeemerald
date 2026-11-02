@@ -21,6 +21,11 @@ def test_namespace_inventory():
     assert namespace["egg_sentinel"] == 412
     assert namespace["num_species_expression"] == "SPECIES_EGG"
     assert namespace["unown_calculated_count"] == 26
+    assert {row["symbol"] for row in namespace["unown_calculated_constants"]} == {
+        *(f"SPECIES_UNOWN_{letter}" for letter in "BCDEFGHIJKLMNOPQRSTUVWXYZ"),
+        "SPECIES_UNOWN_EMARK",
+        "SPECIES_UNOWN_QMARK",
+    }
     assert namespace["numeric_collisions"] == {}
     assert namespace["max_explicit_ordinary_id"] == 411
 
