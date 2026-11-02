@@ -162,6 +162,8 @@ jobs:
           test -s data/pokemon/gen8_species_form_references.json
           test -s data/pokemon/gen8_species_level_up_learnsets.json
           test -s data/pokemon/gen8_move_source_catalog.json
+          test -s data/pokemon/gen8_move_alias_map.json
+          test -s data/pokemon/gen8_move_id_conflicts.json
           test -s data/pokemon/gen8_contest_effect_source_catalog.json
           test -s data/pokemon/gen8_ability_source_dependencies.json
           test -s data/pokemon/gen8_item_source_dependencies.json
@@ -197,6 +199,8 @@ jobs:
               "data/pokemon/gen8_species_form_references.json",
               "data/pokemon/gen8_species_level_up_learnsets.json",
               "data/pokemon/gen8_move_source_catalog.json",
+              "data/pokemon/gen8_move_alias_map.json",
+              "data/pokemon/gen8_move_id_conflicts.json",
               "data/pokemon/gen8_contest_effect_source_catalog.json",
               "data/pokemon/gen8_ability_source_dependencies.json",
               "data/pokemon/gen8_item_source_dependencies.json",
@@ -299,6 +303,8 @@ jobs:
             data/pokemon/gen8_species_form_references.json
             data/pokemon/gen8_species_level_up_learnsets.json
             data/pokemon/gen8_move_source_catalog.json
+            data/pokemon/gen8_move_alias_map.json
+            data/pokemon/gen8_move_id_conflicts.json
             data/pokemon/gen8_contest_effect_source_catalog.json
             data/pokemon/gen8_ability_source_dependencies.json
             data/pokemon/gen8_item_source_dependencies.json
