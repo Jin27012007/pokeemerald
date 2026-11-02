@@ -1212,7 +1212,9 @@ def generate(check: bool = False) -> dict:
         canonical_species_info.append({
             "national_dex": dex,
             "national_symbol": national_symbol,
-            "source_record_symbol": row["species_symbol"],
+            "source_record_symbol": (
+                f"SPECIES_{row['species_symbol']}" if is_native else row["species_symbol"]
+            ),
             "source_national_dex_symbol": row.get("national_dex_symbol"),
             "source_national_dex_matches_selected": (
                 row.get("national_dex_symbol") == national_symbol if not is_native else True
