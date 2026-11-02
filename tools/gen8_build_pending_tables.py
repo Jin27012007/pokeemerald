@@ -185,9 +185,9 @@ def enum_symbol_catalog(text: str, prefix: str) -> dict[str, int | None]:
     checks cannot silently drop it.
     """
     result: dict[str, int | None] = {}
-    enum_blocks = re.finditer(r"enum(?:\\s+__attribute__\\s*\\(\\([^)]*\\)\\))?[^{}]*\\{([^}]*)\\}", text, re.S)
+    enum_blocks = re.finditer(r"enum(?:\s+__attribute__\s*\(\([^)]*\)\))?[^{}]*\{([^}]*)\}", text, re.S)
     member_re = re.compile(
-        rf"^\\s*{re.escape(prefix)}([A-Z0-9_]+)\\s*(?:=\\s*([^,]+))?\\s*,?\\s*(?://.*)?$",
+        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*(?:=\s*([^,]+))?\s*,?\s*(?://.*)?$",
         re.M,
     )
     for block in enum_blocks:
@@ -196,7 +196,7 @@ def enum_symbol_catalog(text: str, prefix: str) -> dict[str, int | None]:
             symbol, raw = match.group(1), match.group(2)
             if raw is not None:
                 raw = raw.strip()
-                if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\\d+)", raw):
+                if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
                     next_value = int(raw, 0)
                 else:
                     result[symbol] = None
