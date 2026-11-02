@@ -196,11 +196,6 @@ def scan_source() -> tuple[list[dict], dict]:
             for table, pattern in TABLE_PATTERNS.items():
                 for match in pattern.finditer(line):
                     table_matches.append((table, match.group(1).strip()))
-            # Associate every multiline index with its actual starting line.
-            for table_name in ("species_info", "evolution", "front_pic"):
-                for expression in multiline_by_line.get((table_name, line_no), []):
-                    if (table_name, expression) not in table_matches:
-                        table_matches.append((table_name, expression))
             generic_indexes = []
             for pattern in INDEX_PATTERNS:
                 for match in pattern.finditer(line):
@@ -231,6 +226,34 @@ def scan_source() -> tuple[list[dict], dict]:
                     "risk_reasons": risks,
                     "source": stripped[:500],
                 })
+    # Emit multiline references exactly once with the line where each
+    # table access begins. This also catches expressions split over lines.
+    for path in files:
+        try:
+            full_source = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        rel = path.relative_to(ROOT).as_posix()
+        for table_name in ("species_info", "evolution", "front_pic"):
+            for row in extract_multiline_table_refs(full_source, table_name):
+                line_no = row["line"]
+                line = full_source.splitlines()[line_no - 1] if line_no <= len(full_source.splitlines()) else ""
+                expression = row["expression"]
+                special = {name for name, pattern in SPECIAL_PATTERNS.items() if pattern.search(line)}
+                level, risks = risk_for(line, expression, table_name, special)
+                findings.append({
+                    "path": rel,
+                    "line": line_no,
+                    "category": classify(rel, line, expression),
+                    "table": table_name,
+                    "index_expression": expression,
+                    "special_values": sorted(special),
+                    "form_markers": sorted(name for name, pattern in FORM_PATTERNS.items() if pattern.search(line)),
+                    "risk": level,
+                    "risk_reasons": risks,
+                    "source": line.strip()[:500],
+                })
+
     counts = Counter()
     for item in findings:
         counts[f"risk_{item['risk']}"] += 1
