@@ -60,6 +60,8 @@ def main() -> int:
         source = path.read_text(encoding="utf-8")
         relative = path.relative_to(ROOT).as_posix()
         calls = source.count("GetEvolutionTableSafe(")
+        if "const struct Evolution *GetEvolutionTableSafe(u16 species)" in source:
+            calls -= 1  # Exclude the function definition from call-site totals.
         if calls:
             accessor_calls += calls
             accessor_files.add(relative)
@@ -82,7 +84,7 @@ def main() -> int:
         }
     ]
     assert direct_indexes == expected_direct_indexes, direct_indexes
-    assert accessor_calls == 3, accessor_calls
+    assert accessor_calls == 2, accessor_calls
     assert accessor_files == {"src/pokemon.c", "src/evolution_scene.c"}
 
     REPORT.parent.mkdir(parents=True, exist_ok=True)
