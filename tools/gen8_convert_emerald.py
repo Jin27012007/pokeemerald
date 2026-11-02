@@ -1142,7 +1142,7 @@ def generate(check: bool = False) -> dict:
         ),
         "canonical_species_info_missing": len(missing_species_info),
         "canonical_species_info_raw_field_coverage": field_coverage,
-        "canonical_species_info_source_complete_rows": sum(1 for row in canonical_species_info if row.get("source_complete", False)),
+        "canonical_species_info_source_complete_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer" and row.get("source_complete", False)),
         "canonical_species_info_compact_compatible_rows": sum(1 for row in canonical_species_info if row.get("compact_compatible", False)),
         "canonical_species_info_source_fields_resolved_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer" and row.get("source_fields_resolved", False)),
         "canonical_species_info_target_mapping_compatible_rows": sum(1 for row in canonical_species_info if row.get("target_mapping_compatible", False)),
