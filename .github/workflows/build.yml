@@ -110,6 +110,9 @@ jobs:
           test -s src/data/gen8/species_map.c
 
       # Compile the current runtime before the separate canonical data-coverage gate.
+      - name: Test bounded Pokémon graphics table access
+        run: python3 tools/test_gen8_graphics_access.py
+
       - name: Correct Route 121 vertical fence tiles
         run: python3 tools/fix_route121_fence.py
 

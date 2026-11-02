@@ -1,4 +1,5 @@
 #include "global.h"
+#include "decompress.h"
 #include "gen8_species_map.h"
 #include "malloc.h"
 #include "apprentice.h"
@@ -6580,13 +6581,13 @@ const u32 *GetMonSpritePalFromSpeciesAndPersonality(u16 species, u32 otId, u32 p
     u32 shinyValue;
 
     if (species > NUM_SPECIES)
-        return gMonPaletteTable[SPECIES_NONE].data;
+        return GetMonPaletteTableEntry(SPECIES_NONE)->data;
 
     shinyValue = GET_SHINY_VALUE(otId, personality);
     if (shinyValue < SHINY_ODDS)
-        return gMonShinyPaletteTable[species].data;
+        return GetMonShinyPaletteTableEntry(species)->data;
     else
-        return gMonPaletteTable[species].data;
+        return GetMonPaletteTableEntry(species)->data;
 }
 
 const struct CompressedSpritePalette *GetMonSpritePalStruct(struct Pokemon *mon)
@@ -6603,9 +6604,9 @@ const struct CompressedSpritePalette *GetMonSpritePalStructFromOtIdPersonality(u
 
     shinyValue = GET_SHINY_VALUE(otId, personality);
     if (shinyValue < SHINY_ODDS)
-        return &gMonShinyPaletteTable[species];
+        return GetMonShinyPaletteTableEntry(species);
     else
-        return &gMonPaletteTable[species];
+        return GetMonPaletteTableEntry(species);
 }
 
 bool32 IsHMMove2(u16 move)

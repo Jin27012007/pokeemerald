@@ -65,16 +65,16 @@ static bool16 DecompressPic(u16 picId, u32 personality, bool8 isFrontPic, u8 *de
         if (isFrontPic)
         {
             if (!ignoreDeoxys)
-                LoadSpecialPokePic(&gMonFrontPicTable[species], dest, species, personality, isFrontPic);
+                LoadSpecialPokePic(GetMonFrontPicTableEntry(species), dest, species, personality, isFrontPic);
             else
-                LoadSpecialPokePic_DontHandleDeoxys(&gMonFrontPicTable[species], dest, species, personality, isFrontPic);
+                LoadSpecialPokePic_DontHandleDeoxys(GetMonFrontPicTableEntry(species), dest, species, personality, isFrontPic);
         }
         else
         {
             if (!ignoreDeoxys)
-                LoadSpecialPokePic(&gMonBackPicTable[species], dest, species, personality, isFrontPic);
+                LoadSpecialPokePic(GetMonBackPicTableEntry(species), dest, species, personality, isFrontPic);
             else
-                LoadSpecialPokePic_DontHandleDeoxys(&gMonBackPicTable[species], dest, species, personality, isFrontPic);
+                LoadSpecialPokePic_DontHandleDeoxys(GetMonBackPicTableEntry(species), dest, species, personality, isFrontPic);
         }
     }
     else
