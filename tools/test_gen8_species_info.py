@@ -475,9 +475,9 @@ def check_expansion_natdex_domain_and_form_alias_selection():
 
     # Canonical identity comes from NATIONAL_DEX_BURMY, while the
     # representative Expansion species ID/designator is BURMY_PLANT.
-    source_symbols_by_dex = {row["id"]: row["symbol"] for row in source_values and [
-        {"id": dex_id, "symbol": symbol} for symbol, dex_id in source_values.items()
-    ]}
+    source_symbols_by_dex = {
+        dex_id: symbol for symbol, dex_id in source_values.items()
+    }
     assert source_symbols_by_dex[412] == "BURMY"
     candidates = [
         {"species_symbol": "BURMY_PLANT", "national_dex_symbol": "BURMY"},
