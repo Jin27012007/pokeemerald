@@ -131,6 +131,8 @@ def emit_gen8_pokedex_runtime(pokedex_rows: list[dict], order_rows: dict) -> tup
             raise RuntimeError(f"Incomplete runtime Pokédex text at National Dex {dex}")
         if len(category.encode("utf-8")) >= 16:
             raise RuntimeError(f"Pokédex category exceeds runtime field at National Dex {dex}: {category}")
+        if len(name.encode("utf-8")) >= 16:
+            raise RuntimeError(f"Pokédex species name exceeds runtime field at National Dex {dex}: {name}")
         try:
             height = int(str(row["height_dm"]).strip(), 10)
             weight = int(str(row["weight_hg"]).strip(), 10)
