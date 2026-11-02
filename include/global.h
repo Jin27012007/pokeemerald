@@ -220,11 +220,11 @@ struct Time
 
 struct Gen8DexExtension
 {
+    // 12-byte header + 4 * 61-byte flag arrays = exactly 256 bytes.
     u32 magic;
-    u16 version;
-    u16 payloadSize;
-    u32 generation;
     u32 checksum;
+    u16 version;
+    u16 generation;
     u8 seen[GEN8_DEX_EXT_FLAG_BYTES];
     u8 owned[GEN8_DEX_EXT_FLAG_BYTES];
     u8 seenBackup[GEN8_DEX_EXT_FLAG_BYTES];
