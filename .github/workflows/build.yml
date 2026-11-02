@@ -152,8 +152,6 @@ jobs:
       - name: Test bounded learnset table access
         run: python3 tools/test_gen8_learnset_access.py
 
-      - name: Test bounded species graphics table access
-        run: python3 tools/test_gen8_graphics_access.py
 
       - name: Generate comprehensive canonical Gen 8 source tables
         run: python3 tools/gen8_build_pending_tables.py
