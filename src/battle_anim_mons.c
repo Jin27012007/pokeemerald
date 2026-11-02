@@ -201,7 +201,7 @@ u8 GetBattlerYDelta(u8 battler, u16 species)
                 coordSpecies = species;
             else
                 coordSpecies = letter + SPECIES_UNOWN_B - 1;
-            ret = gMonBackPicCoords[coordSpecies].y_offset;
+            ret = GetMonBackPicCoordsEntry(coordSpecies)->y_offset;
         }
         else if (species == SPECIES_CASTFORM)
         {
@@ -209,11 +209,11 @@ u8 GetBattlerYDelta(u8 battler, u16 species)
         }
         else if (species > NUM_SPECIES)
         {
-            ret = gMonBackPicCoords[0].y_offset;
+            ret = GetMonBackPicCoordsEntry(0)->y_offset;
         }
         else
         {
-            ret = gMonBackPicCoords[species].y_offset;
+            ret = GetMonBackPicCoordsEntry(species)->y_offset;
         }
     }
     else
@@ -230,7 +230,7 @@ u8 GetBattlerYDelta(u8 battler, u16 species)
                 coordSpecies = species;
             else
                 coordSpecies = letter + SPECIES_UNOWN_B - 1;
-            ret = gMonFrontPicCoords[coordSpecies].y_offset;
+            ret = GetMonFrontPicCoordsEntry(coordSpecies)->y_offset;
         }
         else if (species == SPECIES_CASTFORM)
         {
@@ -238,11 +238,11 @@ u8 GetBattlerYDelta(u8 battler, u16 species)
         }
         else if (species > NUM_SPECIES)
         {
-            ret = gMonFrontPicCoords[0].y_offset;
+            ret = GetMonFrontPicCoordsEntry(0)->y_offset;
         }
         else
         {
-            ret = gMonFrontPicCoords[species].y_offset;
+            ret = GetMonFrontPicCoordsEntry(species)->y_offset;
         }
     }
     return ret;
@@ -1908,7 +1908,7 @@ static u16 GetBattlerYDeltaFromSpriteId(u8 spriteId)
             if (IsContest())
             {
                 species = gContestResources->moveAnim->species;
-                return gMonBackPicCoords[species].y_offset;
+                return GetMonBackPicCoordsEntry(species)->y_offset;
             }
             else
             {
@@ -1923,7 +1923,7 @@ static u16 GetBattlerYDeltaFromSpriteId(u8 spriteId)
                     if (species == SPECIES_CASTFORM)
                         return sCastformBackSpriteYCoords[gBattleMonForms[battler]];
                     else
-                        return gMonBackPicCoords[species].y_offset;
+                        return GetMonBackPicCoordsEntry(species)->y_offset;
                 }
                 else
                 {
@@ -1936,7 +1936,7 @@ static u16 GetBattlerYDeltaFromSpriteId(u8 spriteId)
                     if (species == SPECIES_CASTFORM)
                         return sCastformElevations[gBattleMonForms[battler]];
                     else
-                        return gMonFrontPicCoords[species].y_offset;
+                        return GetMonFrontPicCoordsEntry(species)->y_offset;
                 }
             }
         }
@@ -2131,9 +2131,9 @@ u8 CreateAdditionalMonSpriteForMoveAnim(u16 species, bool8 isBackpic, u8 id, s16
     FREE_AND_SET_NULL(gMonSpritesGfxPtr->buffer);
 
     if (!isBackpic)
-        spriteId = CreateSprite(&sSpriteTemplates_MoveEffectMons[id], x, y + gMonFrontPicCoords[species].y_offset, subpriority);
+        spriteId = CreateSprite(&sSpriteTemplates_MoveEffectMons[id], x, y + GetMonFrontPicCoordsEntry(species)->y_offset, subpriority);
     else
-        spriteId = CreateSprite(&sSpriteTemplates_MoveEffectMons[id], x, y + gMonBackPicCoords[species].y_offset, subpriority);
+        spriteId = CreateSprite(&sSpriteTemplates_MoveEffectMons[id], x, y + GetMonBackPicCoordsEntry(species)->y_offset, subpriority);
 
     if (IsContest())
     {
@@ -2177,7 +2177,7 @@ s16 GetBattlerSpriteCoordAttr(u8 battler, u8 attr)
                 unownSpecies = SPECIES_UNOWN;
             else
                 unownSpecies = letter + SPECIES_UNOWN_B - 1;
-            coords = &gMonBackPicCoords[unownSpecies];
+            coords = GetMonBackPicCoordsEntry(unownSpecies);
         }
         else if (species == SPECIES_CASTFORM)
         {
@@ -2185,11 +2185,11 @@ s16 GetBattlerSpriteCoordAttr(u8 battler, u8 attr)
         }
         else if (species <= SPECIES_EGG)
         {
-            coords = &gMonBackPicCoords[species];
+            coords = GetMonBackPicCoordsEntry(species);
         }
         else
         {
-            coords = &gMonBackPicCoords[0];
+            coords = GetMonBackPicCoordsEntry(0);
         }
     }
     else
@@ -2215,15 +2215,15 @@ s16 GetBattlerSpriteCoordAttr(u8 battler, u8 attr)
                     unownSpecies = SPECIES_UNOWN;
                 else
                     unownSpecies = letter + SPECIES_UNOWN_B - 1;
-                coords = &gMonBackPicCoords[unownSpecies];
+                coords = GetMonBackPicCoordsEntry(unownSpecies);
             }
             else if (species > NUM_SPECIES)
             {
-                coords = &gMonBackPicCoords[0];
+                coords = GetMonBackPicCoordsEntry(0);
             }
             else
             {
-                coords = &gMonBackPicCoords[species];
+                coords = GetMonBackPicCoordsEntry(species);
             }
         }
         else
@@ -2247,7 +2247,7 @@ s16 GetBattlerSpriteCoordAttr(u8 battler, u8 attr)
                     unownSpecies = SPECIES_UNOWN;
                 else
                     unownSpecies = letter + SPECIES_UNOWN_B - 1;
-                coords = &gMonFrontPicCoords[unownSpecies];
+                coords = GetMonFrontPicCoordsEntry(unownSpecies);
             }
             else if (species == SPECIES_CASTFORM)
             {
@@ -2255,11 +2255,11 @@ s16 GetBattlerSpriteCoordAttr(u8 battler, u8 attr)
             }
             else if (species > NUM_SPECIES)
             {
-                coords = &gMonFrontPicCoords[0];
+                coords = GetMonFrontPicCoordsEntry(0);
             }
             else
             {
-                coords = &gMonFrontPicCoords[species];
+                coords = GetMonFrontPicCoordsEntry(species);
             }
         }
     }
