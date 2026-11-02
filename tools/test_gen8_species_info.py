@@ -74,6 +74,24 @@ def check_balanced_species_record_strings():
     assert "A {brace}, and a comma," in rows[0]["body"]
 
 
+def check_balanced_species_records_ignore_comments():
+    source = """
+    // fake entry [SPECIES_FAKE] = { .baseHP = 0 },
+    [SPECIES_TESTMON] = {
+        .baseHP = 50, /* braces } , and fake [SPECIES_GHOST] = { */
+        .description = COMPOUND_STRING("text, with } and ["),
+        // a comma, brace }, and bracket ] must not terminate the record
+        .natDexNum = NATIONAL_DEX_TESTMON,
+    },
+    [SPECIES_NEXTMON] = { .baseHP = 60, .natDexNum = NATIONAL_DEX_NEXTMON },
+    """
+    rows = module.balanced_species_records(source)
+    assert [row["symbol"] for row in rows] == ["TESTMON", "NEXTMON"], rows
+    fields = module.extract_designated_fields(rows[0]["body"])
+    assert fields["natDexNum"] == "NATIONAL_DEX_TESTMON", fields
+    assert "NATIONAL_DEX_TESTMON" in rows[0]["body"]
+
+
 def check_expansion_brace_on_next_line():
     source = """
     [SPECIES_TURTWIG] =
@@ -523,6 +541,7 @@ def main():
     check_nested_designated_initializers()
     check_balanced_species_record_strings()
     check_expansion_brace_on_next_line()
+    check_balanced_species_records_ignore_comments()
     check_macro_expansion_and_target_conditionals()
     check_real_form_initializer_macros()
     check_ability_initializer_contents_are_parsed()
