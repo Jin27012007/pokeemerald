@@ -94,6 +94,9 @@ jobs:
       - name: Generate comprehensive canonical Gen 8 source tables
         run: python3 tools/gen8_build_pending_tables.py
 
+      - name: Validate canonical Gen 8 intake catalog
+        run: python3 tools/validate_gen8_intake.py
+
       - name: Verify generated staging sources are tracked and complete
         run: |
           test -s include/gen8_species_map.h
@@ -253,6 +256,7 @@ jobs:
           name: gen8-conversion-report
           path: |
             reports/gen8-conversion/
+            docs/GEN8_CANONICAL_INTAKE_CONTRACT.md
             data/pokemon/gen8_species_evolutions.json
             data/pokemon/gen8_species_pokedex_entries.json
             data/pokemon/gen8_species_cry_map.json
