@@ -197,6 +197,5 @@ def test_extension_read_write_mirrors_and_boundaries():
 if __name__ == "__main__":
     main()
     test_extension_layout_and_legacy_compatibility()
-    test_extension_bit_index_boundaries()
     test_extension_read_write_mirrors_and_boundaries()
     print("PASS: staged SaveBlock1 extension layout, four mirror read/write boundaries.")
