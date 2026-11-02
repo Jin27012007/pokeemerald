@@ -280,7 +280,7 @@ def test_gen8_pokedex_runtime_tables():
     assert "gGen8PokedexData[GEN8_DEX_COUNT + 1]" in source
     assert "[NATIONAL_DEX_TURTWIG]" in source
     assert "sGen8PokedexDescription_387" in source
-    assert "First line.\\\\n" in source
+    assert "First line.\\n" in source
     assert '.speciesName = _("TESTMON387")' in source
     assert "NATIONAL_DEX_OLD_UNOWN_B" in order_header
     assert "NATIONAL_DEX_CALYREX" in order_header
