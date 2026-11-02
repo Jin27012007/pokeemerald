@@ -210,21 +210,22 @@ jobs:
           pending = json.load(open("reports/gen8-conversion/pending_species_tables_audit.json", encoding="utf-8"))
           assert pending["counts"]["canonical_species"] == 898
           assert pending["readiness"]["898_canonical_species_rows"] is True
-          assert pending["readiness"]["898_gen8_level_up_learnsets"] is True
+          assert pending["readiness"]["512_gen8_level_up_learnsets"] is True
           assert pending["readiness"]["all_present_evolution_expressions_parsed"] is True
           assert pending["counts"]["canonical_conditional_evolution_edges"] > 0
           assert pending["counts"]["distinct_evolution_condition_symbols"] > 0
           assert pending["counts"]["evolution_conditions_with_candidate_target_methods"] > 0
           assert pending["counts"]["canonical_evolution_methods_requiring_new_handlers"] >= 1
           assert pending["counts"]["unknown_evolution_target_symbols"] == 0
-          assert pending["readiness"]["898_pokedex_text_rows"] is True
-          assert pending["counts"]["pokedex_text_rows_with_decoded_description"] == 898
+          assert pending["readiness"]["898_pokedex_catalog_rows"] is True
+          assert pending["readiness"]["512_new_species_pokedex_text_rows"] is True
+          assert pending["counts"]["pokedex_text_rows_with_decoded_description"] == 512
           assert pending["counts"]["unresolved_pokedex_text_rows"] == 0
-          assert pending["readiness"]["898_cry_identifiers_mapped_to_source_table"] is True
+          assert pending["readiness"]["512_new_species_cry_identifiers_mapped_to_source_table"] is True
           assert pending["counts"]["cry_rows_matching_emerald_table"] + pending["counts"]["missing_emerald_cry_table_matches"] == 898
           assert pending["counts"]["target_graphics_asset_complete_rows"] + pending["counts"]["target_graphics_asset_incomplete_rows"] == 898
           assert pending["counts"]["target_graphics_asset_incomplete_rows"] == len(pending["missing_target_graphics_assets"])
-          assert pending["readiness"]["898_graphics_reference_rows"] is True
+          assert pending["readiness"]["512_new_species_graphics_reference_rows"] is True
           assert pending["readiness"]["all_referenced_form_tables_found"] is True
           assert pending["readiness"]["all_three_pokedex_orders_cover_gen8"] is True
           assert pending["readiness"]["all_source_move_info_rows_found"] is True
