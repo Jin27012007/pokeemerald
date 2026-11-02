@@ -14,10 +14,10 @@ This document records the minimum gates before the National Dex 1-898 dataset ma
 
 ## Confirmed runtime gaps from the conversion audit
 
-- 311 canonical Gen 8 learnset moves lack target Emerald battle/contest move records.
-- 165 abilities lack target Emerald constants.
-- 57 held items lack target Emerald constants; 23 lack target item data records.
-- Fairy type lacks an Emerald type definition.
+- 322 distinct canonical Gen 8 learnset moves lack target Emerald battle/Contest records.
+- 172 abilities lack target Emerald constants.
+- 85 held items lack target Emerald constants; 30 lack target item data records.
+- Fairy and Stellar types lack Emerald type definitions.
 - 2 canonical evolution methods require new handlers.
 - 512 new species have no matching Emerald cry-table entry.
 - 512 new species lack imported target graphics payloads.
@@ -68,7 +68,7 @@ This is now a live SaveBlock1 integration, not merely an isolated helper. Howeve
 
 1. Resolve every species-index consumer, including the 453 unclassified references, special values, forms, Unown auxiliary values, and egg.
 2. The canonical National Dex lookup now uses the tested generated API with a preserved Unown auxiliary fallback; migrate the remaining consumers with explicit domain and sentinel handling.
-3. Migrate the 313 missing move records, ability/item/type domains, evolution handlers, cries, graphics, Pokédex text, and form behavior.
+3. Migrate the 322 missing battle/Contest move records, ability/item/type domains, evolution handlers, cries, graphics, Pokédex text, and form behavior.
 4. Test party, PC storage, daycare, battle, trade, link, save/load, summary, Pokédex, sprite/audio, evolution, and game-corner consumers.
 5. Only then propose numeric IDs and update `NUM_SPECIES` in a separate, reviewable commit with a full migration plan.
 
