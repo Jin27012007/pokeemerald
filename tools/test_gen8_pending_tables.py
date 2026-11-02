@@ -247,6 +247,46 @@ def test_named_array_inventory():
     assert "SPECIES_EXAMPLE_MEGA" in tables["sExampleFormSpeciesIdTable"]
 
 
+def test_gen8_pokedex_runtime_tables():
+    rows = [
+        {
+            "national_dex": dex,
+            "species_symbol": f"TEST_{dex}",
+            "record_provenance": "expansion_source_initializer",
+            "species_name_fragments": [f"TESTMON{dex}"],
+            "category_fragments": ["Test Category"],
+            "description_fragments": ["First line.\\n", "Second line."],
+            "height_dm": "5",
+            "weight_hg": "42",
+        }
+        for dex in range(387, 899)
+    ]
+    orders = {
+        name: {
+            "national_dex_order": list(range(1, 899)),
+            "entries": 898,
+            "unique_entries": 898,
+            "duplicates": [],
+            "missing": [],
+            "complete_for_gen8": True,
+        }
+        for name in (
+            "gPokedexOrder_Alphabetical",
+            "gPokedexOrder_Weight",
+            "gPokedexOrder_Height",
+        )
+    }
+    source, order_header = module.emit_gen8_pokedex_runtime(rows, orders)
+    assert "gGen8PokedexData[GEN8_DEX_COUNT + 1]" in source
+    assert "[NATIONAL_DEX_TURTWIG]" in source
+    assert "sGen8PokedexDescription_387" in source
+    assert "First line.\\\\n" in source
+    assert '.speciesName = _("TESTMON387")' in source
+    assert "NATIONAL_DEX_OLD_UNOWN_B" in order_header
+    assert "NATIONAL_DEX_CALYREX" in order_header
+    assert order_header.count("NATIONAL_DEX_") == 898 + 25 + 898 + 898
+
+
 def main():
     test_nested_initializer_scan()
     test_evolution_expressions()
@@ -260,6 +300,7 @@ def main():
     test_battle_effect_dependency_grouping()
     test_cry_table_labels()
     test_named_array_inventory()
+    test_gen8_pokedex_runtime_tables()
     print("PASS: nested move/evolution initializers, source strings and form-table scanning.")
 
 
