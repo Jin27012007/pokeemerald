@@ -68,6 +68,16 @@ def set_flag(data: bytearray, dex: int, owned: bool, value: bool) -> None:
     struct.pack_into("<I", data, 12, checksum(data))
 
 
+def next_generation(data: bytearray) -> None:
+    if not valid(data):
+        raise ValueError("invalid extension")
+    generation = struct.unpack_from("<I", data, 8)[0]
+    if generation == 0xFFFFFFFF:
+        raise OverflowError("generation exhausted")
+    struct.pack_into("<I", data, 8, generation + 1)
+    struct.pack_into("<I", data, 12, checksum(data))
+
+
 def get_flag(data: bytes, dex: int, owned: bool) -> bool:
     if not valid(data) or not FIRST_EXTENDED_DEX <= dex <= LAST_DEX:
         return False
@@ -115,6 +125,14 @@ class Gen8DexExtensionTests(unittest.TestCase):
         data[32] ^= 0x80
         self.assertFalse(valid(data))
         self.assertFalse(get_flag(data, 500, False))
+
+    def test_generation_rollover_is_rejected(self):
+        data = make_extension()
+        struct.pack_into("<I", data, 8, 0xFFFFFFFF)
+        struct.pack_into("<I", data, 12, checksum(data))
+        self.assertTrue(valid(data))
+        with self.assertRaises(OverflowError):
+            next_generation(data)
 
     def test_wrong_version_and_header_rejected(self):
         data = make_extension()
