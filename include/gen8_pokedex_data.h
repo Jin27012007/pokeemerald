@@ -6,7 +6,7 @@
 struct Gen8PokedexData
 {
     struct PokedexEntry entry;
-    u8 speciesName[POKEMON_NAME_LENGTH + 1];
+    u8 speciesName[16];
 };
 
 extern const struct Gen8PokedexData gGen8PokedexData[GEN8_DEX_COUNT + 1];
