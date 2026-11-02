@@ -59,6 +59,19 @@ def main() -> int:
     sector_bytes = int(sector_match.group(1))
 
     save1_bytes = struct_size(save1, 0x3D88)
+    ext_member = re.search(r"dexFlagExtension\[(0x[0-9A-Fa-f]+)\]", save1)
+    if not ext_member:
+        raise RuntimeError("SaveBlock1 dexFlagExtension member not found")
+    runtime_extension_bytes = int(ext_member.group(1), 16)
+    runtime_extension_required_bytes = 4 * ((898 - 412 + 7) // 8)
+    runtime_extension_capacity_valid = (
+        runtime_extension_bytes == 0x100
+        and runtime_extension_required_bytes == 244
+        and runtime_extension_required_bytes <= runtime_extension_bytes
+    )
+    trainer_hill_offset_ok = "/*0x3718*/ u32 trainerHillTimes" in save1
+    if not runtime_extension_capacity_valid or not trainer_hill_offset_ok:
+        raise RuntimeError("SaveBlock1 dex extension overlaps required fields or is undersized")
     save2_bytes = struct_size(save2, 0xF2C)
     storage_bytes = struct_size(storage, 0x83C3)
     # The exact save format stores two alternating 14-sector slots. This
@@ -170,6 +183,10 @@ def main() -> int:
             "extension_header_bytes": extension_header_bytes,
             "extension_payload_capacity_bytes": extension_payload_bytes,
             "extension_layout_valid": extension_layout_valid,
+            "runtime_extension_bytes": runtime_extension_bytes,
+            "runtime_extension_required_bytes": runtime_extension_required_bytes,
+            "runtime_extension_capacity_valid": runtime_extension_capacity_valid,
+            "trainer_hill_offset_preserved": trainer_hill_offset_ok,
             "pokedex_struct_bytes": current_pokedex_bytes,
             "expanded_pokedex_struct_bytes": expanded_pokedex_bytes,
             "note": (
