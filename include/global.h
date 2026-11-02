@@ -212,11 +212,11 @@ struct Time
 // Versioned, staging-only storage for Gen 8 National Dex flags.
 // This is deliberately NOT embedded in SaveBlock1/SaveBlock2 and is not
 // wired to save IO until migration and power-loss tests are implemented.
-#define GEN8_DEX_EXTENSION_MAGIC 0x38445847 // "GXD8"
-#define GEN8_DEX_EXTENSION_VERSION 1
-#define GEN8_DEX_EXTENSION_FLAG_BYTES 61
-#define GEN8_DEX_EXTENSION_COPY_COUNT 4
-#define GEN8_DEX_EXTENSION_PAYLOAD_BYTES (GEN8_DEX_EXTENSION_FLAG_BYTES * GEN8_DEX_EXTENSION_COPY_COUNT)
+#define GEN8_DEX_EXT_MAGIC_VALUE 0x38445847 // "GXD8"
+#define GEN8_DEX_EXT_FORMAT_VERSION 1
+#define GEN8_DEX_EXT_FLAG_BYTES 61
+#define GEN8_DEX_EXT_COPY_COUNT 4
+#define GEN8_DEX_EXT_PAYLOAD_BYTES (GEN8_DEX_EXT_FLAG_BYTES * GEN8_DEX_EXT_COPY_COUNT)
 
 struct Gen8DexExtension
 {
@@ -225,10 +225,10 @@ struct Gen8DexExtension
     u16 payloadSize;
     u32 generation;
     u32 checksum;
-    u8 seen[GEN8_DEX_EXTENSION_FLAG_BYTES];
-    u8 owned[GEN8_DEX_EXTENSION_FLAG_BYTES];
-    u8 seenBackup[GEN8_DEX_EXTENSION_FLAG_BYTES];
-    u8 ownedBackup[GEN8_DEX_EXTENSION_FLAG_BYTES];
+    u8 seen[GEN8_DEX_EXT_FLAG_BYTES];
+    u8 owned[GEN8_DEX_EXT_FLAG_BYTES];
+    u8 seenBackup[GEN8_DEX_EXT_FLAG_BYTES];
+    u8 ownedBackup[GEN8_DEX_EXT_FLAG_BYTES];
 };
 
 struct Pokedex
