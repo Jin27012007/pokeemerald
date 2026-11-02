@@ -195,8 +195,20 @@ endif
 
 # Collect sources
 C_SRCS_IN := $(wildcard $(C_SUBDIR)/*.c $(C_SUBDIR)/*/*.c $(C_SUBDIR)/*/*/*.c)
+C_SRCS_IN += $(filter-out $(C_SRCS_IN),src/data/gen8/species_map.c)
 C_SRCS := $(foreach src,$(C_SRCS_IN),$(if $(findstring .inc.c,$(src)),,$(src)))
 C_OBJS := $(patsubst $(C_SUBDIR)/%.c,$(C_BUILDDIR)/%.o,$(C_SRCS))
+
+# Generate the canonical National Dex bridge on demand for clean local builds.
+.PHONY: gen8_species_map
+gen8_species_map:
+	@if [ ! -s include/gen8_species_map.h ] || [ ! -s src/data/gen8/species_map.c ] || [ tools/gen8_convert_emerald.py -nt include/gen8_species_map.h ]; then python3 tools/gen8_convert_emerald.py; fi
+
+src/data/gen8/species_map.c include/gen8_species_map.h: | gen8_species_map
+	@test -s $@
+
+$(C_BUILDDIR)/pokemon.o: include/gen8_species_map.h
+$(C_BUILDDIR)/pokemon.o $(C_BUILDDIR)/data/gen8/species_map.o: | gen8_species_map
 
 C_ASM_SRCS := $(wildcard $(C_SUBDIR)/*.s $(C_SUBDIR)/*/*.s $(C_SUBDIR)/*/*/*.s)
 C_ASM_OBJS := $(patsubst $(C_SUBDIR)/%.s,$(C_BUILDDIR)/%.o,$(C_ASM_SRCS))
