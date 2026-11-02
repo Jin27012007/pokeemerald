@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HEADER = ROOT / "include/pokemon.h"
 POKEMON = ROOT / "src/pokemon.c"
 EVOLUTION_SCENE = ROOT / "src/evolution_scene.c"
+DAYCARE = ROOT / "src/daycare.c"
 REPORT = ROOT / "reports/gen8-conversion/evolution_access_audit.json"
 
 
@@ -16,6 +17,7 @@ def main() -> int:
     header = HEADER.read_text(encoding="utf-8")
     pokemon = POKEMON.read_text(encoding="utf-8")
     scene = EVOLUTION_SCENE.read_text(encoding="utf-8")
+    daycare = DAYCARE.read_text(encoding="utf-8")
 
     assert "const struct Evolution *GetEvolutionTableSafe(u16 species);" in header
 
@@ -53,6 +55,13 @@ def main() -> int:
     assert "gEvolutionTable[" not in shedinja_function
     assert "extern struct Evolution gEvolutionTable" not in scene
 
+    egg_start = daycare.index("static u16 GetEggSpecies(u16 species)")
+    egg_end = daycare.index("\nstatic ", egg_start + 10)
+    egg_function = daycare[egg_start:egg_end]
+    assert "evolutions = GetEvolutionTableSafe(j);" in egg_function
+    assert "evolutions[k].targetSpecies" in egg_function
+    assert "gEvolutionTable[" not in egg_function
+
     direct_indexes = []
     accessor_calls = 0
     accessor_files = set()
@@ -84,8 +93,8 @@ def main() -> int:
         }
     ]
     assert direct_indexes == expected_direct_indexes, direct_indexes
-    assert accessor_calls == 2, accessor_calls
-    assert accessor_files == {"src/pokemon.c", "src/evolution_scene.c"}
+    assert accessor_calls == 3, accessor_calls
+    assert accessor_files == {"src/pokemon.c", "src/evolution_scene.c", "src/daycare.c"}
 
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     report = {
