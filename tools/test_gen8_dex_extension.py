@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""Test the staged Gen 8 National Dex envelope and its disabled runtime boundary."""
+"""Test the Gen 8 Dex envelope C implementation and SaveBlock1 integration."""
 from __future__ import annotations
 
 import struct
 import unittest
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+
+ROOT = Path(__file__).resolve().parents[1]
 
 MAGIC = 0x38445847
 VERSION = 1
@@ -149,26 +155,106 @@ class Gen8DexExtensionTests(unittest.TestCase):
 
 
 
-class RuntimeBoundaryTests(unittest.TestCase):
-    def test_extension_payload_not_consumed_or_written_by_live_dex_accessors(self):
+class RuntimeIntegrationTests(unittest.TestCase):
+    def test_live_pokedex_routes_extended_flags_through_validated_envelope(self):
         source = (ROOT / "src/pokedex.c").read_text(encoding="utf-8")
-        start = source.index("static u8 ReadDexSeenMirror(u8 mirror, u16 index)")
-        end = source.index("s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)", start)
-        accessors = source[start:end]
-        self.assertIn("return 0;", accessors)
-        self.assertNotIn("dexFlagExtension[", accessors)
-        self.assertIn("Extension writes remain disabled", accessors)
+        self.assertIn('#include "gen8_dex_extension.h"', source)
+        self.assertIn("GetGen8DexExtension", source)
+        self.assertIn("Gen8DexExtensionReadFlag(extension, nationalDexNo", source)
+        self.assertIn("Gen8DexExtensionWriteFlag(extension, nationalDexNo", source)
+        self.assertIn("Gen8DexExtensionInit(GetGen8DexExtension())", source)
+        self.assertIn("nationalDexNo > GEN8_DEX_COUNT", source)
+        self.assertIn("nationalDexNo > GEN8_DEX_LEGACY_COUNT", source)
 
         reset_start = source.index("void ResetPokedex(void)")
         reset_end = source.index("void ResetPokedexScrollPositions", reset_start)
-        reset = source[reset_start:reset_end]
-        self.assertNotIn("dexFlagExtension", reset)
+        self.assertIn("Gen8DexExtensionInit(GetGen8DexExtension())", source[reset_start:reset_end])
 
-        getter_start = source.index("s8 GetSetPokedexFlag(u16 nationalDexNo, u8 caseID)")
-        getter_end = source.index("u16 GetNationalPokedexCount", getter_start)
-        getter = source[getter_start:getter_end]
-        self.assertIn("nationalDexNo > GEN8_DEX_LEGACY_COUNT", getter)
-        self.assertNotIn("GEN8_DEX_COUNT)", getter)
+    def test_saveblock_reserved_window_is_exact_and_fixed(self):
+        source = (ROOT / "include/global.h").read_text(encoding="utf-8")
+        self.assertIn("dexFlagExtension[0x100]", source)
+        self.assertIn("sizeof(struct Gen8DexExtension)", source)
+        self.assertIn("__builtin_offsetof(struct SaveBlock1, dexFlagExtension) == 0x3598", source)
+
+    def test_compile_and_execute_real_c_extension(self):
+        compiler = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
+        self.assertIsNotNone(compiler, "A C compiler is required for the Gen 8 extension test")
+
+        with tempfile.TemporaryDirectory(prefix="gen8-dex-c-test-") as directory:
+            temp = Path(directory)
+            (temp / "global.h").write_text(
+                """#ifndef TEST_GLOBAL_H
+#define TEST_GLOBAL_H
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef int32_t bool32;
+#define TRUE 1
+#define FALSE 0
+#define GEN8_SPECIES_DEX_LAST 898
+#define GEN8_DEX_EXT_MAGIC_VALUE 0x38445847
+#define GEN8_DEX_EXT_FORMAT_VERSION 1
+#define GEN8_DEX_EXT_FLAG_BYTES 61
+#define STATIC_ASSERT(expr, name) typedef char name[(expr) ? 1 : -1]
+struct Gen8DexExtension
+{
+    u32 magic;
+    u32 checksum;
+    u16 version;
+    u16 generation;
+    u8 seen[GEN8_DEX_EXT_FLAG_BYTES];
+    u8 owned[GEN8_DEX_EXT_FLAG_BYTES];
+    u8 seenBackup[GEN8_DEX_EXT_FLAG_BYTES];
+    u8 ownedBackup[GEN8_DEX_EXT_FLAG_BYTES];
+};
+static inline void CpuFill32(u32 value, void *destination, u32 size)
+{
+    memset(destination, (int)value, size);
+}
+#endif
+""",
+                encoding="utf-8",
+            )
+            header = (ROOT / "include/gen8_dex_extension.h").read_text(encoding="utf-8")
+            (temp / "gen8_dex_extension.h").write_text(header, encoding="utf-8")
+            (temp / "test.c").write_text(
+                """#include "gen8_dex_extension.h"
+int main(void)
+{
+    struct Gen8DexExtension extension;
+    Gen8DexExtensionInit(&extension);
+    if (!Gen8DexExtensionValidate(&extension)) return 1;
+    if (Gen8DexExtensionWriteFlag(&extension, 413, FALSE, TRUE) != GEN8_DEX_EXTENSION_OK) return 2;
+    if (!Gen8DexExtensionReadFlag(&extension, 413, FALSE)) return 3;
+    if (Gen8DexExtensionWriteFlag(&extension, 898, TRUE, TRUE) != GEN8_DEX_EXTENSION_OK) return 4;
+    if (!Gen8DexExtensionReadFlag(&extension, 898, TRUE)) return 5;
+    if (Gen8DexExtensionReadFlag(&extension, 412, FALSE)) return 6;
+    if (Gen8DexExtensionReadFlag(&extension, 899, FALSE)) return 7;
+    extension.seenBackup[0] ^= 1;
+    extension.checksum = Gen8DexExtensionChecksum(&extension);
+    if (Gen8DexExtensionReadFlag(&extension, 413, FALSE)) return 8;
+    extension.checksum ^= 1;
+    if (Gen8DexExtensionValidate(&extension)) return 9;
+    return 0;
+}
+""",
+                encoding="utf-8",
+            )
+            executable = temp / "gen8-dex-test"
+            subprocess.run(
+                [
+                    compiler, "-std=c11", "-Wall", "-Wextra", "-Werror",
+                    "-I", str(temp), str(ROOT / "src/gen8_dex_extension.c"),
+                    str(temp / "test.c"), "-o", str(executable),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
 
 if __name__ == "__main__":
