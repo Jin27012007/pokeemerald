@@ -390,6 +390,33 @@ def check_per_species_stellar_runtime_gap():
     assert "fairy_type_not_in_emerald_enum" not in runtime_gaps
 
 
+def check_vanilla_speciesinfo_indexes_by_designator():
+    # Emerald's native SpeciesInfo initializers omit .natDexNum. The
+    # initializer designator must be resolved through NATIONAL_DEX_* instead.
+    dex_values = {
+        row["symbol"]: row["id"]
+        for row in module.symbols(
+            module.read(module.DST_POKEDEX), "NATIONAL_DEX_", enum=True
+        )
+    }
+    records = module.balanced_species_records(module.read(module.DST_INFO))
+    by_dex = module.index_species_info_by_national_dex(records, dex_values)
+    expected = {290: "NINCADA", 351: "CASTFORM", 386: "DEOXYS"}
+    for dex, symbol in expected.items():
+        assert by_dex[dex]["symbol"] == symbol, (dex, by_dex.get(dex))
+    assert set(range(1, 387)).issubset(by_dex), sorted(set(range(1, 387)) - set(by_dex))
+
+    # Ambiguous native designators must not silently overwrite one another.
+    try:
+        module.index_species_info_by_national_dex(
+            [{"symbol": "NINCADA"}, {"symbol": "NINCADA_ALT"}],
+            {"NINCADA": 290, "NINCADA_ALT": 290},
+        )
+    except RuntimeError as error:
+        assert "National Dex 290" in str(error)
+    else:
+        raise AssertionError("duplicate target National Dex mapping was accepted")
+
 def check_existing_species_namespace_has_no_numeric_collisions():
     header = (ROOT / "include/constants/species.h").read_text(encoding="utf-8")
     entries = [
@@ -432,6 +459,7 @@ def main():
     check_canonical_species_record_selection_contract()
     check_source_completeness_requires_resolved_national_dex()
     check_per_species_stellar_runtime_gap()
+    check_vanilla_speciesinfo_indexes_by_designator()
     check_existing_species_namespace_has_no_numeric_collisions()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
     print("PASS: canonical SpeciesInfo acceptance gate defined for National Dex 1-898.")
