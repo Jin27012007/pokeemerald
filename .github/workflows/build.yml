@@ -231,8 +231,8 @@ jobs:
           assert pending["readiness"]["all_source_move_info_rows_found"] is True
           assert pending["counts"]["canonical_gen8_learnset_moves_missing_target_battle_records"] >= 0
           assert pending["counts"]["canonical_gen8_learnset_moves_missing_target_contest_records"] >= 0
-          assert pending["counts"]["canonical_types_without_emerald_definition"] == 2
-          assert pending["counts"]["canonical_types_missing_emerald_definition_symbols"] == ["FAIRY", "STELLAR"]
+          assert pending["counts"]["canonical_types_without_emerald_definition"] == 1
+          assert pending["counts"]["canonical_types_missing_emerald_definition_symbols"] == ["FAIRY"]
           assert pending["counts"]["canonical_egg_groups_without_emerald_definition"] == 0
           assert pending["counts"]["canonical_growth_rates_without_emerald_definition"] == 0
           assert pending["readiness"]["num_species_change_allowed"] is False
