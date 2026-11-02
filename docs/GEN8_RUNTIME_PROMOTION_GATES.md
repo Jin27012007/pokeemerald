@@ -1,6 +1,6 @@
 # Gen 8 runtime promotion gates
 
-Status: **staging-only; production species IDs and save IO are unchanged.**
+Status: **staging-only; production species IDs remain unchanged and Gen 8 extension flags are intentionally disabled in live accessors.**
 
 This document records the minimum gates before the National Dex 1-898 dataset may become visible to gameplay code.
 
@@ -50,7 +50,7 @@ Level-up learnsets now use `GetLevelUpLearnsetSafe` in the initial moveset, leve
 - The 256-byte candidate envelope has a 12-byte header and 244 bytes of flag payload: four 61-byte copies for seen, owned, and backups.
 - This capacity calculation is not a save migration approval.
 
-The current implementation adds a typed, versioned envelope and independent checksum/flag helpers. It is not embedded in a live save block, is not referenced by save IO, and must not be used to mutate user saves.
+The current tree contains a reserved 256-byte area in SaveBlock1 and a typed, versioned envelope with standalone checksum/flag helpers. A previous partial hook routed national Dex values above the legacy range into this reserved byte area without invoking the envelope validator or persistence protocol. That hook has been removed: live GetSetPokedexFlag now rejects values above the legacy range, extension reads return clear, writes are disabled, and ResetPokedex does not mutate the reserved bytes. This restores a safe disabled boundary until round-trip, generation, power-loss and old-save tests authorize storage integration.
 
 ## Required gates before save integration
 
