@@ -1167,7 +1167,17 @@ def generate(check: bool = False) -> dict:
     )
     species_info_compact_compatible = (
         species_info_source_complete
-        and all(row.get("source_fields_resolved", False) and row.get("target_mapping_compatible", False) for row in canonical_species_info)
+        and all(
+            row.get("compact_compatible", False)
+            for row in canonical_species_info
+            if row.get("record_provenance") == "existing_emerald_runtime_record"
+        )
+        and all(
+            row.get("source_fields_resolved", False)
+            and row.get("target_mapping_compatible", False)
+            for row in canonical_species_info
+            if row.get("record_provenance") == "expansion_source_initializer"
+        )
     )
     report = {
         "source": "pinned pokeemerald-expansion source snapshot (Gen 4-9 family data)",
