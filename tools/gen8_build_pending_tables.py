@@ -369,10 +369,13 @@ def source_table_inventory() -> dict:
         symbol = canonical_row.get("source_record_symbol") or mapping["source_symbol"]
         provenance = canonical_row.get("record_provenance")
         source = info_by_symbol.get(symbol)
-        if source is None and provenance == "existing_emerald_runtime_record":
+        if provenance == "existing_emerald_runtime_record":
             # Existing Emerald species are already represented in the target
             # runtime. Their Gen 8 source alternatives remain in the vendor
             # catalog but are not required to synthesize a replacement row.
+            # Skip them even when a same-symbol Expansion record also exists:
+            # the canonical row intentionally preserves the native Emerald
+            # source and therefore has no Expansion natDexNum to compare.
             source_rows.append((dex, mapping, canonical_row, None, {}))
             continue
         if source is None:
