@@ -41,10 +41,12 @@ def main() -> int:
         combined, target_info, target_pokemon, target_abilities, target_items,
         generations, source_abilities, source_items, source_pokemon, macros
     )
+    # Candidate .natDexNum tokens belong to the Expansion source enum, not
+    # Emerald's target enum (which can have different symbols and ordering).
     pokedex = {
         row["symbol"]: row["id"]
         for row in conv.symbols(
-            (ROOT / "include/constants/pokedex.h").read_text(encoding="utf-8"),
+            (VENDOR / "include/constants/pokedex.h").read_text(encoding="utf-8"),
             "NATIONAL_DEX_", enum=True
         )
     }
