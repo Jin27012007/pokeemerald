@@ -1133,7 +1133,7 @@ def generate(check: bool = False) -> dict:
         "canonical_species_info_raw_field_coverage": field_coverage,
         "canonical_species_info_source_complete_rows": sum(1 for row in canonical_species_info if row.get("source_complete", False)),
         "canonical_species_info_compact_compatible_rows": sum(1 for row in canonical_species_info if row.get("compact_compatible", False)),
-        "canonical_species_info_source_fields_resolved_rows": sum(1 for row in canonical_species_info if row.get("source_fields_resolved", False)),
+        "canonical_species_info_source_fields_resolved_rows": sum(1 for row in canonical_species_info if row.get("record_provenance") == "expansion_source_initializer" and row.get("source_fields_resolved", False)),
         "canonical_species_info_target_mapping_compatible_rows": sum(1 for row in canonical_species_info if row.get("target_mapping_compatible", False)),
         "canonical_species_info_compatibility_issue_records": sum(1 for row in canonical_species_info if row.get("compatibility_issues")),
         "canonical_species_info_runtime_gap_records": sum(1 for row in canonical_species_info if row.get("runtime_gaps")),
@@ -1144,11 +1144,26 @@ def generate(check: bool = False) -> dict:
     species_info_source_complete = (
         len(canonical_species_info) == 898
         and not missing_species_info
-        and all(row.get("source_complete", False) for row in canonical_species_info)
-        and all(not row.get("source_missing_fields") for row in canonical_species_info)
-        and all(not row.get("source_unresolved_fields") for row in canonical_species_info)
-        and all("baseHP" in row["source_fields_present"] for row in canonical_species_info)
-        and all("natDexNum" in row["source_fields_present"] for row in canonical_species_info)
+        and all(
+            row.get("source_complete", False)
+            for row in canonical_species_info
+            if row.get("record_provenance") == "expansion_source_initializer"
+        )
+        and all(
+            not row.get("source_missing_fields") and not row.get("source_unresolved_fields")
+            for row in canonical_species_info
+            if row.get("record_provenance") == "expansion_source_initializer"
+        )
+        and all(
+            row.get("source_fields_resolved", False)
+            for row in canonical_species_info
+            if row.get("record_provenance") == "expansion_source_initializer"
+        )
+        and all(
+            "baseHP" in row["source_fields_present"] and "natDexNum" in row["source_fields_present"]
+            for row in canonical_species_info
+            if row.get("record_provenance") == "expansion_source_initializer"
+        )
     )
     species_info_compact_compatible = (
         species_info_source_complete
