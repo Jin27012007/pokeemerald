@@ -899,6 +899,28 @@ def parse_species_info(source_text: str, target_info_text: str,
         },
     }
 
+def index_species_info_by_national_dex(records: list[dict],
+                                      national_dex_values: dict[str, int],
+                                      max_dex: int = 898) -> dict[int, dict]:
+    """Index target SpeciesInfo rows by their vanilla species designator.
+
+    Vanilla Emerald's SpeciesInfo struct does not contain a natDexNum field.
+    Its designated initializer key (SPECIES_*) is the reliable identity and
+    can be resolved through the target National Dex enum.
+    """
+    indexed = {}
+    for record in records:
+        dex_id = national_dex_values.get(record["symbol"])
+        if dex_id is None or not 1 <= dex_id <= max_dex:
+            continue
+        if dex_id in indexed:
+            raise RuntimeError(
+                f"Multiple target SpeciesInfo records map to National Dex {dex_id}: "
+                f"{indexed[dex_id]['symbol']} and {record['symbol']}"
+            )
+        indexed[dex_id] = record
+    return indexed
+
 def generate(check: bool = False) -> dict:
     source_species = symbols(read(SRC_SPECIES), "SPECIES_", enum=True)
     target_species = symbols(read(DST_SPECIES), "SPECIES_")
@@ -960,18 +982,19 @@ def generate(check: bool = False) -> dict:
     # existing National Dex species. These remain the existing runtime rows;
     # this does not allocate or renumber any internal species IDs.
     target_info_records = balanced_species_records(target_info_text)
-    target_info_by_symbol = {row["symbol"]: row for row in target_info_records}
     target_species_by_dex = {}
     natdex_target_values = {
         row["symbol"]: row["id"]
         for row in symbols(read(DST_POKEDEX), "NATIONAL_DEX_", enum=True)
     }
-    for row in target_info_records:
+    # Unlike Expansion, vanilla Emerald does not initialize .natDexNum.
+    # Resolve its existing species using the [SPECIES_*] designator.
+    target_info_by_dex = index_species_info_by_national_dex(
+        target_info_records, natdex_target_values
+    )
+    for dex_id, row in target_info_by_dex.items():
         fields = extract_designated_fields(row["body"])
-        nat_match = re.fullmatch(r"NATIONAL_DEX_([A-Z0-9_]+)", fields.get("natDexNum", ""))
-        dex_id = natdex_target_values.get(nat_match.group(1)) if nat_match else None
-        if dex_id is not None and 1 <= dex_id <= 898:
-            target_species_by_dex[dex_id] = {
+        target_species_by_dex[dex_id] = {
                 "species_symbol": row["symbol"],
                 "generation": 3,
                 "record_provenance": "existing_emerald_runtime_record",
