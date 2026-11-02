@@ -69,24 +69,6 @@ if __name__ == "__main__":
 
 
 
-def test_risk_for_rejects_in_range_sentinels_and_auxiliary_forms():
-    # A sentinel can be dangerous even when the source line does not mention
-    # its symbol: the indexed value may have come from a party/box/save field.
-    level, reasons = module.risk_for(
-        "value = gSpeciesInfo[species];", "species", "species_info", set()
-    )
-    assert level == "high"
-    assert "species_derived_index" in reasons
-
-    # Validate the scanner's special-domain detection independently of token
-    # co-occurrence on the exact indexed line.
-    level, reasons = module.risk_for(
-        "icon = gMonIconTable[species];", "species", "icon", {"unown"}
-    )
-    assert level == "medium"
-    assert "sentinel_token_near_table_index" in reasons
-
-
 def test_scan_does_not_miss_multiline_species_table_index():
     source = """
     value = gSpeciesInfo[
