@@ -390,6 +390,38 @@ def check_per_species_stellar_runtime_gap():
     assert "fairy_type_not_in_emerald_enum" not in runtime_gaps
 
 
+def check_expansion_natdex_domain_and_form_alias_selection():
+    # Expansion's NATIONAL_DEX_* order is authoritative for its own .natDexNum
+    # fields; the target Emerald enum differs for these concrete examples.
+    source_values = {
+        row["symbol"]: row["id"]
+        for row in module.symbols(
+            module.read(module.VENDOR / "include/constants/pokedex.h"),
+            "NATIONAL_DEX_", enum=True
+        )
+    }
+    target_values = {
+        row["symbol"]: row["id"]
+        for row in module.symbols(module.read(module.DST_POKEDEX), "NATIONAL_DEX_", enum=True)
+    }
+    assert source_values["ARCHEOPS"] == 567
+    assert source_values["DEDENNE"] == 702
+    assert source_values["CARBINK"] == 703
+    assert target_values["ARCHAEOPS"] == 567
+    assert target_values["CARBINK"] == 702
+
+    # Form rows can use the base species in .natDexNum while retaining the
+    # canonical form in their initializer designator.
+    candidates = [
+        {"species_symbol": "BURMY_PLANT", "national_dex_symbol": "BURMY"},
+        {"species_symbol": "BURMY_SANDY", "national_dex_symbol": "BURMY"},
+        {"species_symbol": "WORMADAM_PLANT", "national_dex_symbol": "BURMY"},
+    ]
+    selected = module.filter_canonical_species_info_candidates(
+        candidates, "BURMY_PLANT", "BURMY"
+    )
+    assert [row["species_symbol"] for row in selected] == ["BURMY_PLANT"]
+
 def check_vanilla_speciesinfo_indexes_by_designator():
     # Emerald's native SpeciesInfo initializers omit .natDexNum. The
     # initializer designator must be resolved through NATIONAL_DEX_* instead.
@@ -460,6 +492,7 @@ def main():
     check_source_completeness_requires_resolved_national_dex()
     check_per_species_stellar_runtime_gap()
     check_vanilla_speciesinfo_indexes_by_designator()
+    check_expansion_natdex_domain_and_form_alias_selection()
     check_existing_species_namespace_has_no_numeric_collisions()
     print("PASS: enum parsing, nested C initializers, quoted strings and source inventory.")
     print("PASS: canonical SpeciesInfo acceptance gate defined for National Dex 1-898.")
