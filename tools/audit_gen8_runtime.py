@@ -63,10 +63,13 @@ def main() -> int:
     if not ext_member:
         raise RuntimeError("SaveBlock1 dexFlagExtension member not found")
     runtime_extension_bytes = int(ext_member.group(1), 16)
-    runtime_extension_required_bytes = 4 * ((898 - 412 + 7) // 8)
+    runtime_extension_header_bytes = 12
+    runtime_extension_payload_bytes = 4 * ((898 - 412 + 7) // 8)
+    runtime_extension_required_bytes = runtime_extension_header_bytes + runtime_extension_payload_bytes
     runtime_extension_capacity_valid = (
         runtime_extension_bytes == 0x100
-        and runtime_extension_required_bytes == 244
+        and runtime_extension_payload_bytes == 244
+        and runtime_extension_required_bytes == 0x100
         and runtime_extension_required_bytes <= runtime_extension_bytes
     )
     trainer_hill_offset_ok = "/*0x3718*/ u32 trainerHillTimes" in save1
@@ -74,9 +77,9 @@ def main() -> int:
         raise RuntimeError("SaveBlock1 dex extension overlaps required fields or is undersized")
     save2_bytes = struct_size(save2, 0xF2C)
     storage_bytes = struct_size(storage, 0x83C3)
-    # The exact save format stores two alternating 14-sector slots. This
-    # audit intentionally models a staged extension in unused SaveBlock1 RAM
-    # space and does not resize any production structure.
+    # The exact save format stores two alternating 14-sector slots. The live
+    # extension occupies a fixed reserved SaveBlock1 window; it does not resize
+    # SaveBlock1/2 or allocate a new save sector.
     dex_count = 898
     dex_bytes_per_set = (dex_count + 7) // 8
     current_dex_bytes_per_set = 52
@@ -93,13 +96,12 @@ def main() -> int:
     reserved_save1_bytes = int(reserved.group(1), 16) if reserved else 0
     if reserved_save1_bytes != 0x100:
         raise RuntimeError(f"Unexpected SaveBlock1 dex extension area: {reserved_save1_bytes:#x}")
-    # Staged National Dex expansion plan: keep the legacy 52-byte arrays and
-    # store the additional 486 entries as four raw 61-byte mirrors in SaveBlock1.
+    # The live versioned extension keeps the legacy 52-byte arrays and stores
+    # the additional 486 entries as four 61-byte mirrors after a 12-byte header.
     legacy_dex_count = 412
     extension_dex_count = dex_count - legacy_dex_count
     extension_flag_bytes = (extension_dex_count + 7) // 8
-    # The runtime uses the full extension window directly; there is no header.
-    extension_header_bytes = 0
+    extension_header_bytes = 12
     extension_copy_count = 4
     extension_required_bytes = extension_copy_count * extension_flag_bytes
     extension_window_bytes = 0x100
@@ -187,6 +189,8 @@ def main() -> int:
             "extension_payload_capacity_bytes": extension_payload_bytes,
             "extension_layout_valid": extension_layout_valid,
             "runtime_extension_bytes": runtime_extension_bytes,
+            "runtime_extension_header_bytes": runtime_extension_header_bytes,
+            "runtime_extension_payload_bytes": runtime_extension_payload_bytes,
             "runtime_extension_required_bytes": runtime_extension_required_bytes,
             "runtime_extension_capacity_valid": runtime_extension_capacity_valid,
             "trainer_hill_offset_preserved": trainer_hill_offset_ok,

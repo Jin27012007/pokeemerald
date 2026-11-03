@@ -176,6 +176,13 @@ class RuntimeIntegrationTests(unittest.TestCase):
         reset_end = source.index("void ResetPokedexScrollPositions", reset_start)
         self.assertIn("Gen8DexExtensionInit(GetGen8DexExtension())", source[reset_start:reset_end])
 
+    def test_runtime_storage_audit_counts_header_and_payload(self):
+        audit = (ROOT / "tools/audit_gen8_runtime.py").read_text(encoding="utf-8")
+        self.assertIn("runtime_extension_header_bytes = 12", audit)
+        self.assertIn("runtime_extension_required_bytes = runtime_extension_header_bytes + runtime_extension_payload_bytes", audit)
+        self.assertIn("extension_header_bytes = 12", audit)
+        self.assertIn('"runtime_extension_payload_bytes": runtime_extension_payload_bytes', audit)
+
     def test_saveblock_reserved_window_is_exact_and_fixed(self):
         source = (ROOT / "include/global.h").read_text(encoding="utf-8")
         self.assertIn("dexFlagExtension[0x100]", source)

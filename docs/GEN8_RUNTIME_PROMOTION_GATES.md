@@ -1,6 +1,6 @@
 # Gen 8 runtime promotion gates
 
-Status: **staging-only; production species IDs remain unchanged and Gen 8 extension flags are intentionally disabled in live accessors.**
+Status: **staging-only; production species IDs remain unchanged. National Dex flags 413-898 are routed through the live, versioned SaveBlock1 extension (12-byte header plus 244-byte payload). The extension is not release-approved until real save-sector round-trip, interrupted-write, and recovery tests pass.**
 
 This document records the minimum gates before the National Dex 1-898 dataset may become visible to gameplay code.
 
@@ -39,7 +39,7 @@ The compatibility audit confirms Expansion SpeciesInfo is not a drop-in replacem
 
 The SpeciesInfo read migration is now covered by a CI audit: 158 `GetSpeciesInfoSafe` call sites across 22 C files and zero remaining direct `gSpeciesInfo[...]` indexes outside the accessor. The evolution-table migration adds `GetEvolutionTableSafe`, which returns an empty zero-method row for species values at or beyond `NUM_SPECIES`. `GetEvolutionTargetSpecies`, the Shedinja creation path, and the daycare egg-species reverse traversal use the bounded accessor; the Shedinja target is also checked before indexing the species-name table. CI asserts that the only remaining direct `gEvolutionTable[...]` access is the guarded read inside the accessor. This is an index-safety migration only: it does not import Gen 8 evolution rows or add species IDs.
 
-Level-up learnsets now use `GetLevelUpLearnsetSafe` in the initial moveset, level-up move learning, move relearner, and Apprentice paths. An invalid species receives a one-entry `LEVEL_UP_END` list; the Apprentice alternate-move path returns `MOVE_NONE` for an empty list rather than entering a TM-selection loop. TM/HM checks use `GetTMHMLearnsetWordsSafe`, whose invalid-species fallback is a zeroed word array; word indexes are bounded by the actual `TMHMLearnset` size. CI checks seven level-up accessor call sites and two TM/HM call sites, with the only remaining raw indexes inside the accessors. This is an index-safety change, not a Gen 8 move-data import: 311 distinct canonical Gen 8 learnset moves still lack Emerald battle and contest records, so runtime move-table readiness remains false.
+Level-up learnsets now use `GetLevelUpLearnsetSafe` in the initial moveset, level-up move learning, move relearner, and Apprentice paths. An invalid species receives a one-entry `LEVEL_UP_END` list; the Apprentice alternate-move path returns `MOVE_NONE` for an empty list rather than entering a TM-selection loop. TM/HM checks use `GetTMHMLearnsetWordsSafe`, whose invalid-species fallback is a zeroed word array; word indexes are bounded by the actual `TMHMLearnset` size. CI checks seven level-up accessor call sites and two TM/HM call sites, with the only remaining raw indexes inside the accessors. This is an index-safety change, not a Gen 8 move-data import: 322 distinct canonical Gen 8 learnset moves still lack Emerald battle and contest records, so runtime move-table readiness remains false.
 
 ## Save and Pokédex storage
 
@@ -54,15 +54,15 @@ The envelope is now mapped onto the fixed 256-byte `SaveBlock1.dexFlagExtension`
 
 This is now a live SaveBlock1 integration, not merely an isolated helper. However, the host C test and current ROM build do not prove interrupted multi-sector writes, old-save migration, or power-loss recovery. The save extension is not approved for a release build until those tests pass. No species IDs or `NUM_SPECIES` values are promoted by this change.
 
-## Required gates before save integration
+## Remaining save-validation gates before release approval
 
-1. C and host-side tests for header/version/size validation, bit boundaries, checksum corruption, generation rollover, and backup disagreement. The C helper is now compiled and executed by the host test.
-2. Round-trip write/read tests through the actual save-sector APIs, including save/load in both rotating slots.
-3. Interrupted-write/power-loss tests proving one valid generation survives.
-4. Corruption recovery policy that chooses a valid copy deterministically and does not silently combine conflicting data.
-5. Old-save migration tests for saves with and without existing Pokédex data.
-6. Sector offset tests proving Trainer Hill and Recorded Battle are untouched.
-7. Full save size and checksum validation on hardware-compatible sector sizes.
+1. **Host-side gate implemented:** the C helper is compiled and executed for header/version/size validation, bit boundaries, checksum corruption, generation rollover, and backup disagreement. This does not exercise the production save-sector APIs.
+2. **Pending:** round-trip write/read tests through the actual save-sector APIs, including save/load in both rotating slots.
+3. **Pending:** interrupted-write/power-loss tests proving that a valid generation survives.
+4. **Pending:** define and test the recovery policy for invalid checksums or disagreeing primary/backup flags. Current accessors fail closed and do not overwrite nonblank invalid data.
+5. **Pending:** compatibility tests for fresh saves and older saves whose reserved extension bytes are blank.
+6. **Pending:** sector-offset tests proving Trainer Hill and Recorded Battle are untouched.
+7. **Pending:** full save-size and checksum validation using hardware-compatible sector sizes.
 
 ## Required gates before species IDs / NUM_SPECIES
 
