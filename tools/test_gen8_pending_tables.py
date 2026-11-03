@@ -256,7 +256,7 @@ def test_gen8_pokedex_runtime_tables():
             "record_provenance": "expansion_source_initializer",
             "species_name_fragments": [f"TESTMON{dex}"],
             "category_fragments": ["Test Category"],
-            "description_fragments": ["First line.\\n", "Second line."],
+            "description_fragments": ["First line.\n", "Second line."],
             "height_dm": "5",
             "weight_hg": "42",
         }
