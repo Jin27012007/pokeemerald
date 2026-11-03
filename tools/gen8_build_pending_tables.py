@@ -118,7 +118,7 @@ def emit_gen8_pokedex_runtime(pokedex_rows: list[dict], order_rows: dict) -> tup
     target_dex_rows = conv.symbols(read(ROOT / "include/constants/pokedex.h"), "NATIONAL_DEX_", enum=True)
     dex_symbol_by_number: dict[int, str] = {}
     for row in target_dex_rows:
-        dex_symbol_by_number.setdefault(int(row["id"]), f"NATIONAL_DEX_{row['symbol']}")
+        dex_symbol_by_number.setdefault(int(row["id"]), row["symbol"])
     missing_symbols = sorted(set(range(1, 899)) - set(dex_symbol_by_number))
     if missing_symbols:
         raise RuntimeError(f"Target National Dex constants missing: {missing_symbols[:12]}")
