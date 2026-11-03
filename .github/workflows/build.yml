@@ -15,11 +15,16 @@ on:
 permissions:
   contents: read
 
+# Push and pull_request events for the same branch must not compile twice.
+concurrency:
+  group: gen8-build-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Validate data and compile modern ROM
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Check out source
         uses: actions/checkout@v4
