@@ -17,7 +17,7 @@ permissions:
 
 # Push and pull_request events for the same branch must not compile twice.
 concurrency:
-  group: gen8-build-${{ github.event.pull_request.head.ref || github.ref }}
+  group: gen8-build-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 
 jobs:
