@@ -287,6 +287,22 @@ def test_gen8_pokedex_runtime_tables():
     assert order_header.count("NATIONAL_DEX_") == 898 * 3
 
 
+def test_enum_parser_preserves_full_constant_name():
+    source = '''enum {
+    NATIONAL_DEX_NONE,
+    NATIONAL_DEX_BULBASAUR,
+    NATIONAL_DEX_IVYSAUR,
+    NATIONAL_DEX_CALYREX,
+};
+'''
+    rows = converter.symbols(source, 'NATIONAL_DEX_', enum=True)
+    assert rows == [
+        {'symbol': 'NATIONAL_DEX_NONE', 'id': 0},
+        {'symbol': 'NATIONAL_DEX_BULBASAUR', 'id': 1},
+        {'symbol': 'NATIONAL_DEX_IVYSAUR', 'id': 2},
+        {'symbol': 'NATIONAL_DEX_CALYREX', 'id': 3},
+    ]
+
 def test_generated_text_writer_is_idempotent():
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "generated" / "pokedex_data.c"
@@ -301,6 +317,7 @@ def test_generated_text_writer_is_idempotent():
 
 
 def main():
+    test_enum_parser_preserves_full_constant_name()
     test_generated_text_writer_is_idempotent()
     test_nested_initializer_scan()
     test_evolution_expressions()
