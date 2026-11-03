@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 import sys
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -286,7 +287,21 @@ def test_gen8_pokedex_runtime_tables():
     assert order_header.count("NATIONAL_DEX_") == 898 * 3
 
 
+def test_generated_text_writer_is_idempotent():
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "generated" / "pokedex_data.c"
+        module.write_text_if_changed(path, "static const int value = 1;\\n")
+        original_mtime = path.stat().st_mtime_ns
+
+        module.write_text_if_changed(path, "static const int value = 1;\\n")
+        assert path.stat().st_mtime_ns == original_mtime, "Identical output changed its timestamp"
+
+        module.write_text_if_changed(path, "static const int value = 2;\\n")
+        assert path.read_text(encoding="utf-8") == "static const int value = 2;\\n"
+
+
 def main():
+    test_generated_text_writer_is_idempotent()
     test_nested_initializer_scan()
     test_evolution_expressions()
     test_text_fragments()

@@ -83,9 +83,21 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def write_json(path: Path, value) -> None:
+def write_text_if_changed(path: Path, content: str) -> None:
+    """Write generated text only when bytes change, preserving build timestamps."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    try:
+        if path.read_text(encoding="utf-8") == content:
+            return
+    except FileNotFoundError:
+        pass
+    path.write_text(content, encoding="utf-8")
+
+
+def write_json(path: Path, value) -> None:
+    write_text_if_changed(
+        path, json.dumps(value, indent=2, ensure_ascii=False) + "\n"
+    )
 
 
 def c_string_literal(value: str) -> str:
@@ -1249,10 +1261,9 @@ def source_table_inventory() -> dict:
         pokedex_rows, order_rows
     )
     runtime_pokedex_path = ROOT / "src/data/gen8/pokedex_data.c"
-    runtime_pokedex_path.parent.mkdir(parents=True, exist_ok=True)
-    runtime_pokedex_path.write_text(runtime_pokedex_source, encoding="utf-8")
+    write_text_if_changed(runtime_pokedex_path, runtime_pokedex_source)
     runtime_pokedex_orders_path = ROOT / "src/data/gen8/pokedex_orders.h"
-    runtime_pokedex_orders_path.write_text(runtime_pokedex_orders, encoding="utf-8")
+    write_text_if_changed(runtime_pokedex_orders_path, runtime_pokedex_orders)
 
     outputs = {
         DATA / "gen8_species_evolutions.json": evolution_rows,

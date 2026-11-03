@@ -123,6 +123,9 @@ jobs:
       - name: Correct Route 121 vertical fence tiles
         run: python3 tools/fix_route121_fence.py
 
+      - name: Test Gen 8 pending table parsers and idempotent generation
+        run: python3 tools/test_gen8_pending_tables.py
+
       - name: Compile modern ROM
         run: make -j2 modern
 
@@ -136,9 +139,6 @@ jobs:
           path: pokeemerald_modern.gba
           if-no-files-found: error
           retention-days: 90
-
-      - name: Test Gen 8 pending table parsers
-        run: python3 tools/test_gen8_pending_tables.py
 
       - name: Test isolated Gen 8 Dex extension storage envelope
         run: python3 tools/test_gen8_dex_extension.py
