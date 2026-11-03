@@ -156,7 +156,7 @@ def emit_gen8_pokedex_runtime(pokedex_rows: list[dict], order_rows: dict) -> tup
         for fragment in description:
             c_lines.append(f"    {c_string_literal(fragment)}")
         c_lines.extend([");", ""])
-        dex_symbol = dex_symbol_by_number[dex]
+        dex_symbol = f"NATIONAL_DEX_{dex_symbol_by_number[dex]}"
         entries.extend([
             f"    [{dex_symbol}] =",
             "    {",
@@ -198,7 +198,7 @@ def emit_gen8_pokedex_runtime(pokedex_rows: list[dict], order_rows: dict) -> tup
         values = [int(x) for x in row["national_dex_order"]]
         if len(values) != 898 or set(values) != set(range(1, 899)):
             raise RuntimeError(f"Gen 8 Pokédex order failed one-to-one validation: {order_name}")
-        symbols = [dex_symbol_by_number[dex] for dex in values]
+        symbols = [f"NATIONAL_DEX_{dex_symbol_by_number[dex]}" for dex in values]
         order_lines.append(f"const u16 {order_name}[] =")
         order_lines.append("{")
         for offset in range(0, len(symbols), 8):
