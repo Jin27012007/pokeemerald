@@ -295,12 +295,12 @@ def test_enum_parser_preserves_full_constant_name():
     NATIONAL_DEX_CALYREX,
 };
 '''
-    rows = converter.symbols(source, 'NATIONAL_DEX_', enum=True)
+    rows = module.conv.symbols(source, 'NATIONAL_DEX_', enum=True)
     assert rows == [
-        {'symbol': 'NATIONAL_DEX_NONE', 'id': 0},
-        {'symbol': 'NATIONAL_DEX_BULBASAUR', 'id': 1},
-        {'symbol': 'NATIONAL_DEX_IVYSAUR', 'id': 2},
-        {'symbol': 'NATIONAL_DEX_CALYREX', 'id': 3},
+        {'symbol': 'NONE', 'id': 0},
+        {'symbol': 'BULBASAUR', 'id': 1},
+        {'symbol': 'IVYSAUR', 'id': 2},
+        {'symbol': 'CALYREX', 'id': 3},
     ]
 
 def test_generated_text_writer_is_idempotent():
