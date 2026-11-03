@@ -80,13 +80,14 @@ def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
     enum_blocks = re.finditer(r"enum(?:\s+__attribute__\s*\(\([^)]*\)\))?[^{]*\{([^}]*)\}", text, re.S)
     result = []
     member_re = re.compile(
-        rf"^\s*{re.escape(prefix)}([A-Z0-9_]+)\s*(?:=\s*([^,]+))?\s*,?\s*(?://.*)?$",
+        rf"^\s*({re.escape(prefix)}[A-Z0-9_]+)\s*(?:=\s*([^,]+))?\s*,?\s*(?://.*)?$",
         re.M,
     )
     for block in enum_blocks:
         next_value = 0
         for match in member_re.finditer(block.group(1)):
-            symbol, raw = match.group(1), match.group(2)
+            full_symbol, raw = match.group(1), match.group(2)
+            symbol = full_symbol[len(prefix):]
             if raw is not None:
                 raw = raw.strip()
                 if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
