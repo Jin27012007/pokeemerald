@@ -1,0 +1,308 @@
+#!/usr/bin/env python3
+"""Quantify Gen 8 RAM/save and data compatibility gates without modifying runtime C."""
+from __future__ import annotations
+import json
+import re
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / "reports/gen8-conversion"
+
+def read(path: Path) -> str:
+    if not path.is_file():
+        raise RuntimeError(f"Missing audit input: {path}")
+    return path.read_text(encoding="utf-8")
+
+def block(text: str, name: str) -> str:
+    at = text.find(name)
+    if at < 0:
+        return ""
+    start = text.find("{", at)
+    depth = 1
+    i = start + 1
+    while i < len(text) and depth:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+        i += 1
+    return text[at:i]
+
+def struct_size(text: str, fallback: int) -> int:
+    match = re.search(r"sizeof:\s*(0x[0-9A-Fa-f]+)", text)
+    return int(match.group(1), 16) if match else fallback
+
+def main() -> int:
+    global_h = read(ROOT / "include/global.h")
+    save_h = read(ROOT / "include/save.h")
+    save_c = read(ROOT / "src/save.c")
+    load_save_c = read(ROOT / "src/load_save.c")
+    new_game_c = read(ROOT / "src/new_game.c")
+    pokedex_c = read(ROOT / "src/pokedex.c")
+    extension_h = read(ROOT / "include/gen8_dex_extension.h")
+    extension_c = read(ROOT / "src/gen8_dex_extension.c")
+    extension_test = read(ROOT / "tools/test_gen8_dex_extension.py")
+    pokemon_constants = read(ROOT / "include/constants/pokemon.h")
+    vendor_info_dir = ROOT / "tools/vendor/pokeemerald-expansion/src/data/pokemon/species_info"
+    vendor_info_files = sorted(vendor_info_dir.glob("*.h"))
+    source_info = "\n".join(read(path) for path in vendor_info_files)
+    if not vendor_info_files:
+        raise RuntimeError("No vendored Expansion SpeciesInfo headers found")
+    target_info = read(ROOT / "src/data/pokemon/species_info.h")
+    source_species = read(ROOT / "tools/vendor/pokeemerald-expansion/include/constants/species.h")
+    source_moves = read(ROOT / "tools/vendor/pokeemerald-expansion/include/constants/moves.h")
+    source_learn = read(ROOT / "tools/vendor/pokeemerald-expansion/src/data/pokemon/level_up_learnsets/gen_8.h")
+    abilities_h = read(ROOT / "include/constants/abilities.h")
+    items_h = read(ROOT / "include/constants/items.h")
+    cry_table = read(ROOT / "sound/cry_tables.inc")
+
+    save1 = block(global_h, "struct SaveBlock1")
+    save2 = block(global_h, "struct SaveBlock2")
+    pokedex = block(global_h, "struct Pokedex")
+    storage = block(read(ROOT / "include/pokemon_storage_system.h"), "struct PokemonStorage")
+    sector_match = re.search(r"#define SECTOR_DATA_SIZE\s+(\d+)", save_h)
+    if not sector_match:
+        raise RuntimeError("SECTOR_DATA_SIZE not found")
+    sector_bytes = int(sector_match.group(1))
+
+    save1_bytes = struct_size(save1, 0x3D88)
+    ext_member = re.search(r"dexFlagExtension\[(0x[0-9A-Fa-f]+)\]", save1)
+    if not ext_member:
+        raise RuntimeError("SaveBlock1 dexFlagExtension member not found")
+    runtime_extension_bytes = int(ext_member.group(1), 16)
+    runtime_extension_header_bytes = 12
+    runtime_extension_payload_bytes = 4 * ((898 - 412 + 7) // 8)
+    runtime_extension_required_bytes = runtime_extension_header_bytes + runtime_extension_payload_bytes
+    runtime_extension_capacity_valid = (
+        runtime_extension_bytes == 0x100
+        and runtime_extension_payload_bytes == 244
+        and runtime_extension_required_bytes == 0x100
+        and runtime_extension_required_bytes <= runtime_extension_bytes
+    )
+    trainer_hill_offset_ok = "/*0x3718*/ u32 trainerHillTimes" in save1
+    if not runtime_extension_capacity_valid or not trainer_hill_offset_ok:
+        raise RuntimeError("SaveBlock1 dex extension overlaps required fields or is undersized")
+    save2_bytes = struct_size(save2, 0xF2C)
+    storage_bytes = struct_size(storage, 0x83C3)
+    # The exact save format stores two alternating 14-sector slots. The live
+    # extension occupies a fixed reserved SaveBlock1 window; it does not resize
+    # SaveBlock1/2 or allocate a new save sector.
+    dex_count = 898
+    dex_bytes_per_set = (dex_count + 7) // 8
+    current_dex_bytes_per_set = 52
+    current_pokedex_bytes = 0x10 + 2 * current_dex_bytes_per_set
+    expanded_pokedex_bytes = 0x10 + 2 * dex_bytes_per_set
+    save2_expanded_bytes = save2_bytes + (expanded_pokedex_bytes - current_pokedex_bytes)
+    save2_expanded_headroom_bytes = sector_bytes - save2_expanded_bytes
+    # The current redundant model has three seen copies and one owned copy:
+    # SaveBlock2 seen + SaveBlock2 owned + SaveBlock1 seen1 + seen2.
+    required_seen_owned_bytes = 2 * dex_bytes_per_set
+    required_total_flag_bytes = 4 * dex_bytes_per_set
+    current_species_bytes = 4 * ((412 + 7) // 8)
+    reserved = re.search(r"dexFlagExtension\[(0x[0-9A-Fa-f]+)\]", save1)
+    reserved_save1_bytes = int(reserved.group(1), 16) if reserved else 0
+    if reserved_save1_bytes != 0x100:
+        raise RuntimeError(f"Unexpected SaveBlock1 dex extension area: {reserved_save1_bytes:#x}")
+    # The live versioned extension keeps the legacy 52-byte arrays and stores
+    # the additional 486 entries as four 61-byte mirrors after a 12-byte header.
+    legacy_dex_count = 412
+    extension_dex_count = dex_count - legacy_dex_count
+    extension_flag_bytes = (extension_dex_count + 7) // 8
+    extension_header_bytes = 12
+    extension_copy_count = 4
+    extension_required_bytes = extension_copy_count * extension_flag_bytes
+    extension_window_bytes = 0x100
+    extension_payload_bytes = extension_window_bytes - extension_header_bytes
+    extension_layout_valid = (
+        extension_dex_count == 486
+        and extension_flag_bytes == 61
+        and extension_copy_count == 4
+        and extension_required_bytes == 244
+        and extension_required_bytes <= extension_payload_bytes
+        and extension_window_bytes <= reserved_save1_bytes
+        and 0x3598 + 0x180 == 0x3718
+        and reserved_save1_bytes <= 0x180
+    )
+    clear_sav1_block = block(load_save_c, "void ClearSav1")
+    new_game_init_block = block(new_game_c, "void NewGameInitData")
+    save_extension_legacy_fixture_migration_tested = (
+        "Gen8DexExtensionPrepareForWrite" in extension_h
+        and "Gen8DexExtensionPrepareForWrite" in extension_c
+        and "Gen8DexExtensionPrepareForWrite(extension)" in pokedex_c
+        and "CpuFill16(0, &gSaveblock1, sizeof(struct SaveBlock1ASLR));" in clear_sav1_block
+        and "ClearSav1();" in new_game_init_block
+        and "memset(legacySaveBlock1 + EXTENSION_OFFSET, 0, 0x100)" in extension_test
+        and "Invalid, nonblank data must fail closed" in extension_test
+    )
+    save_extension_sector_roundtrip_tested = (
+        "SAVE_BLOCK1_SIZE 0x3D88" in extension_test
+        and "SAVE_BLOCK1_SECTORS 4" in extension_test
+        and "SAVE_SECTOR_DATA_SIZE 3968" in extension_test
+        and "CopyBlockToSectors" in extension_test
+        and "CopyBlockFromSectors" in extension_test
+        and "SAVEBLOCK_CHUNK(struct SaveBlock1, 3)" in save_c
+        and "data[i] = sector->data[i]" in save_c
+    )
+    save_extension_read_write_tested = (
+        save_extension_legacy_fixture_migration_tested
+        and save_extension_sector_roundtrip_tested
+        and "Gen8DexExtensionWriteFlag" in extension_test
+        and "Gen8DexExtensionReadFlag" in extension_test
+        and "test_saveblock1_extension_survives_sector_chunk_round_trip" in extension_test
+    )
+
+    source_info_blocks = len(re.findall(r"^\s*\[SPECIES_[A-Z0-9_]+\]\s*=", source_info, re.M))
+    source_info_symbols = re.findall(r"^\s*\[SPECIES_([A-Z0-9_]+)\]\s*=", source_info, re.M)
+    source_info_unique_symbols = sorted(set(source_info_symbols))
+    source_info_duplicate_designators = len(source_info_symbols) - len(source_info_unique_symbols)
+    source_fields = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", source_info, re.M))
+    target_fields = set(re.findall(r"^\s*\.([A-Za-z0-9_]+)\s*=", target_info, re.M))
+    missing_fields = sorted(source_fields - target_fields)
+
+    source_move_ids = {
+        int(value)
+        for value in re.findall(r"^\s*MOVE_[A-Z0-9_]+\s*=\s*(\d+)", source_moves, re.M)
+    }
+    new_moves_after_gen3 = len({value for value in source_move_ids if 354 < value <= 847})
+    learnset_blocks = len(re.findall(
+        r"static const struct LevelUpMove s[A-Za-z0-9]+LevelUpLearnset\[\]\s*=",
+        source_learn
+    ))
+
+    source_abilities = set(re.findall(r"\bABILITY_([A-Z0-9_]+)\b", source_info))
+    target_abilities = set(re.findall(r"^#define ABILITY_([A-Z0-9_]+)\s+", abilities_h, re.M))
+    source_items = set(re.findall(r"\bITEM_([A-Z0-9_]+)\b", source_info))
+    target_items = set(re.findall(r"^\s*ITEM_([A-Z0-9_]+)\s*,", items_h, re.M))
+    source_types = set(re.findall(r"\bTYPE_([A-Z0-9_]+)\b", source_info))
+    target_types = set(re.findall(r"^#define TYPE_([A-Z0-9_]+)\s+", pokemon_constants, re.M))
+
+    source_cries = set(re.findall(r"\bCRY_([A-Z0-9_]+)\b", source_info))
+    target_cries = {name.upper() for name in re.findall(
+        r"^\s*cry(?:_reverse)?\s+Cry_([A-Za-z0-9_]+)", cry_table, re.M
+    )}
+
+    missing_identifiers = {
+        "abilities": sorted(source_abilities - target_abilities),
+        "items": sorted(source_items - target_items),
+        "types": sorted(source_types - target_types),
+    }
+    report = {
+        "save_layout": {
+            "sector_data_bytes": sector_bytes,
+            "saveblock1_bytes": save1_bytes,
+            "saveblock1_capacity_bytes": 4 * sector_bytes,
+            "saveblock1_headroom_bytes": 4 * sector_bytes - save1_bytes,
+            "saveblock1_unused_internal_bytes": reserved_save1_bytes,
+            "saveblock2_bytes": save2_bytes,
+            "saveblock2_capacity_bytes": sector_bytes,
+            "saveblock2_headroom_bytes": sector_bytes - save2_bytes,
+            "saveblock2_expanded_pokedex_bytes": save2_expanded_bytes,
+            "saveblock2_expanded_headroom_bytes": save2_expanded_headroom_bytes,
+            "saveblock2_fits_after_dex_expansion": save2_expanded_bytes <= sector_bytes,
+            "pokemon_storage_bytes": storage_bytes,
+            "pokemon_storage_capacity_bytes": 9 * sector_bytes,
+            "national_dex_count": dex_count,
+            "required_pokedex_flag_bytes_per_set": dex_bytes_per_set,
+            "required_seen_owned_flag_bytes": required_seen_owned_bytes,
+            "required_total_redundant_flag_bytes": required_total_flag_bytes,
+            "current_dex_bytes_per_set": current_dex_bytes_per_set,
+            "current_pokedex_struct_bytes": current_pokedex_bytes,
+            "current_species_flag_bytes": current_species_bytes,
+            "additional_flag_bytes_needed": required_total_flag_bytes - current_species_bytes,
+            "single_sector_extension_payload_bytes": sector_bytes - 16,
+            "double_buffer_extension_bytes": 2 * (required_total_flag_bytes + 16),
+            "saveblock1_reserved_window_bytes": 0x180,
+            "saveblock1_candidate_extension_capacity_bytes": reserved_save1_bytes,
+            "legacy_dex_flag_count": legacy_dex_count,
+            "extension_dex_flag_count": extension_dex_count,
+            "extension_flag_bytes_per_copy": extension_flag_bytes,
+            "extension_flag_copy_count": extension_copy_count,
+            "extension_seen_owned_required_bytes": extension_required_bytes,
+            "extension_window_bytes": extension_window_bytes,
+            "extension_header_bytes": extension_header_bytes,
+            "extension_payload_capacity_bytes": extension_payload_bytes,
+            "extension_layout_valid": extension_layout_valid,
+            "runtime_extension_bytes": runtime_extension_bytes,
+            "runtime_extension_header_bytes": runtime_extension_header_bytes,
+            "runtime_extension_payload_bytes": runtime_extension_payload_bytes,
+            "runtime_extension_required_bytes": runtime_extension_required_bytes,
+            "runtime_extension_capacity_valid": runtime_extension_capacity_valid,
+            "trainer_hill_offset_preserved": trainer_hill_offset_ok,
+            "pokedex_struct_bytes": current_pokedex_bytes,
+            "expanded_pokedex_struct_bytes": expanded_pokedex_bytes,
+            "note": (
+                "The Pokedex member is 0x78 bytes with the current 52-byte dex flag arrays and grows when NUM_DEX_FLAG_BYTES changes. SaveBlock1 and SaveBlock2 are sector-bounded. Sectors 30 and 31 are "
+                "currently reserved for Trainer Hill and Recorded Battle. No sector "
+                "allocation is changed by this audit."
+            ),
+        },
+        "source_inventory": {
+            "vendored_species_info_files": [path.name for path in vendor_info_files],
+            "vendored_species_info_file_count": len(vendor_info_files),
+            "gen8_species_info_unique_symbol_count": len(source_info_unique_symbols),
+            "gen8_species_info_duplicate_designators": source_info_duplicate_designators,
+        },
+        "data": {
+            "vendored_species_info_files": [path.name for path in vendor_info_files],
+            "gen8_species_info_records": source_info_blocks,
+            "unique_gen8_species_info_species": len(source_info_unique_symbols),
+            "duplicate_gen8_species_info_designators": source_info_duplicate_designators,
+            "species_info_symbols_sample": source_info_unique_symbols[:12],
+            "species_info_fields_not_in_vanilla": missing_fields,
+            "new_moves_after_gen3_through_gen8": new_moves_after_gen3,
+            "learnset_blocks": learnset_blocks,
+            "missing_abilities": missing_identifiers["abilities"],
+            "missing_items": missing_identifiers["items"],
+            "missing_types": missing_identifiers["types"],
+            "source_cry_ids": len(source_cries),
+            "matching_cry_names": len(source_cries & target_cries),
+            "unmatched_cry_ids": sorted(source_cries - target_cries),
+        },
+        "readiness": {
+            "save_extension_sector_plan_validated": extension_layout_valid,
+            "save_extension_legacy_fixture_migration_tested": save_extension_legacy_fixture_migration_tested,
+            "save_extension_saveblock1_sector_roundtrip_tested": save_extension_sector_roundtrip_tested,
+            "save_extension_runtime_migration_validated": False,
+            "save_extension_test_scope": (
+                "Host-compiled C test uses the production extension implementation and "
+                "simulates SaveBlock1 sector chunks; real in-game flash migration remains unvalidated."
+            ),
+            "saveblock2_fits_after_dex_expansion": save2_expanded_bytes <= sector_bytes,
+            "save_extension_read_write_tests": save_extension_read_write_tested,
+            "species_info_complete": False,
+            "species_info_source_coverage_proven": False,
+            "abilities_complete": not missing_identifiers["abilities"],
+            "held_items_complete": not missing_identifiers["items"],
+            "types_complete": not missing_identifiers["types"],
+            "battle_and_contest_moves_complete": False,
+            "evolutions_complete": False,
+            "pokedex_text_complete": False,
+            "cries_complete": False,
+            "graphics_complete": False,
+            "runtime_ready": False,
+            "num_species_change_allowed": False,
+        },
+    }
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / "storage_architecture_audit.json").write_text(
+        json.dumps(report, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({
+        "save_layout": report["save_layout"],
+        "data_summary": {
+            "gen8_species_info_records": source_info_blocks,
+            "new_moves_after_gen3_through_gen8": new_moves_after_gen3,
+            "learnset_blocks": learnset_blocks,
+            "missing_abilities": len(missing_identifiers["abilities"]),
+            "missing_items": len(missing_identifiers["items"]),
+            "missing_types": len(missing_identifiers["types"]),
+            "source_cry_ids": len(source_cries),
+            "matching_cry_names": len(source_cries & target_cries),
+        },
+        "readiness": report["readiness"],
+    }, indent=2))
+    return 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())

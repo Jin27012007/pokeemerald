@@ -417,6 +417,14 @@
 #define SPECIES_CHIMECHO 411
 #define SPECIES_EGG 412
 
+// Reserved staging namespace for the canonical National Dex 1-898 map.
+// These constants are NOT production species IDs and must not be used to
+// index legacy runtime tables or persisted Pokemon fields.
+#define GEN8_SPECIES_DEX_FIRST 1
+#define GEN8_SPECIES_DEX_LAST 898
+#define GEN8_SPECIES_DEX_COUNT 898
+#define GEN8_SPECIES_EXTENSION_VERSION 1
+
 #define NUM_SPECIES SPECIES_EGG
 
 #define SPECIES_UNOWN_B (NUM_SPECIES + 1)

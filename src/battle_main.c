@@ -2765,7 +2765,7 @@ void SpriteCB_FaintOpponentMon(struct Sprite *sprite)
         else
             unownSpecies = NUM_SPECIES + unownForm;  // Use one of the other Unown letters.
 
-        yOffset = gMonFrontPicCoords[unownSpecies].y_offset;
+        yOffset = GetMonFrontPicCoordsEntry(unownSpecies)->y_offset;
     }
     else if (species == SPECIES_CASTFORM)
     {
@@ -2773,11 +2773,11 @@ void SpriteCB_FaintOpponentMon(struct Sprite *sprite)
     }
     else if (species > NUM_SPECIES)
     {
-        yOffset = gMonFrontPicCoords[SPECIES_NONE].y_offset;
+        yOffset = GetMonFrontPicCoordsEntry(SPECIES_NONE)->y_offset;
     }
     else
     {
-        yOffset = gMonFrontPicCoords[species].y_offset;
+        yOffset = GetMonFrontPicCoordsEntry(species)->y_offset;
     }
 
     sprite->data[3] = 8 - yOffset / 8;
@@ -3112,7 +3112,7 @@ static void BattleStartClearSetData(void)
     gBattleStruct->runTries = 0;
     gBattleStruct->safariGoNearCounter = 0;
     gBattleStruct->safariPkblThrowCounter = 0;
-    *(&gBattleStruct->safariCatchFactor) = gSpeciesInfo[GetMonData(&gEnemyParty[0], MON_DATA_SPECIES)].catchRate * 100 / 1275;
+    *(&gBattleStruct->safariCatchFactor) = GetSpeciesInfoSafe(GetMonData(&gEnemyParty[0], MON_DATA_SPECIES))->catchRate * 100 / 1275;
     gBattleStruct->safariEscapeFactor = 3;
     gBattleStruct->wildVictorySong = 0;
     gBattleStruct->moneyMultiplier = 1;
@@ -3347,8 +3347,8 @@ void FaintClearSetData(void)
 
     gBattleResources->flags->flags[gActiveBattler] = 0;
 
-    gBattleMons[gActiveBattler].types[0] = gSpeciesInfo[gBattleMons[gActiveBattler].species].types[0];
-    gBattleMons[gActiveBattler].types[1] = gSpeciesInfo[gBattleMons[gActiveBattler].species].types[1];
+    gBattleMons[gActiveBattler].types[0] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[0];
+    gBattleMons[gActiveBattler].types[1] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[1];
 
     ClearBattlerMoveHistory(gActiveBattler);
     ClearBattlerAbilityHistory(gActiveBattler);
@@ -3415,8 +3415,8 @@ static void BattleIntroDrawTrainersOrMonsSprites(void)
             for (i = 0; i < sizeof(struct BattlePokemon); i++)
                 ptr[i] = gBattleBufferB[gActiveBattler][4 + i];
 
-            gBattleMons[gActiveBattler].types[0] = gSpeciesInfo[gBattleMons[gActiveBattler].species].types[0];
-            gBattleMons[gActiveBattler].types[1] = gSpeciesInfo[gBattleMons[gActiveBattler].species].types[1];
+            gBattleMons[gActiveBattler].types[0] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[0];
+            gBattleMons[gActiveBattler].types[1] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[1];
             gBattleMons[gActiveBattler].ability = GetAbilityBySpecies(gBattleMons[gActiveBattler].species, gBattleMons[gActiveBattler].abilityNum);
             hpOnSwitchout = &gBattleStruct->hpOnSwitchout[GetBattlerSide(gActiveBattler)];
             *hpOnSwitchout = gBattleMons[gActiveBattler].hp;

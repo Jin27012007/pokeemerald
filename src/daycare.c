@@ -23,8 +23,6 @@
 #include "constants/moves.h"
 #include "constants/region_map_sections.h"
 
-extern const struct Evolution gEvolutionTable[][EVOS_PER_MON];
-
 static void ClearDaycareMonMail(struct DaycareMail *mail);
 static void SetInitialEggData(struct Pokemon *mon, u16 species, struct DayCare *daycare);
 static u8 GetDaycareCompatibilityScore(struct DayCare *daycare);
@@ -382,6 +380,7 @@ static u16 GetEggSpecies(u16 species)
 {
     int i, j, k;
     bool8 found;
+    const struct Evolution *evolutions;
 
     // Working backwards up to 5 times seems arbitrary, since the maximum number
     // of times would only be 3 for 3-stage evolutions.
@@ -390,9 +389,10 @@ static u16 GetEggSpecies(u16 species)
         found = FALSE;
         for (j = 1; j < NUM_SPECIES; j++)
         {
+            evolutions = GetEvolutionTableSafe(j);
             for (k = 0; k < EVOS_PER_MON; k++)
             {
-                if (gEvolutionTable[j][k].targetSpecies == species)
+                if (evolutions[k].targetSpecies == species)
                 {
                     species = j;
                     found = TRUE;
@@ -839,7 +839,7 @@ void CreateEgg(struct Pokemon *mon, u16 species, bool8 setHotSpringsLocation)
     language = LANGUAGE_JAPANESE;
     SetMonData(mon, MON_DATA_POKEBALL, &ball);
     SetMonData(mon, MON_DATA_NICKNAME, sJapaneseEggNickname);
-    SetMonData(mon, MON_DATA_FRIENDSHIP, &gSpeciesInfo[species].eggCycles);
+    SetMonData(mon, MON_DATA_FRIENDSHIP, &GetSpeciesInfoSafe(species)->eggCycles);
     SetMonData(mon, MON_DATA_MET_LEVEL, &metLevel);
     SetMonData(mon, MON_DATA_LANGUAGE, &language);
     if (setHotSpringsLocation)
@@ -866,7 +866,7 @@ static void SetInitialEggData(struct Pokemon *mon, u16 species, struct DayCare *
     language = LANGUAGE_JAPANESE;
     SetMonData(mon, MON_DATA_POKEBALL, &ball);
     SetMonData(mon, MON_DATA_NICKNAME, sJapaneseEggNickname);
-    SetMonData(mon, MON_DATA_FRIENDSHIP, &gSpeciesInfo[species].eggCycles);
+    SetMonData(mon, MON_DATA_FRIENDSHIP, &GetSpeciesInfoSafe(species)->eggCycles);
     SetMonData(mon, MON_DATA_MET_LEVEL, &metLevel);
     SetMonData(mon, MON_DATA_LANGUAGE, &language);
 }
@@ -1028,8 +1028,8 @@ static u8 GetDaycareCompatibilityScore(struct DayCare *daycare)
         trainerIds[i] = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_OT_ID);
         personality = GetBoxMonData(&daycare->mons[i].mon, MON_DATA_PERSONALITY);
         genders[i] = GetGenderFromSpeciesAndPersonality(species[i], personality);
-        eggGroups[i][0] = gSpeciesInfo[species[i]].eggGroups[0];
-        eggGroups[i][1] = gSpeciesInfo[species[i]].eggGroups[1];
+        eggGroups[i][0] = GetSpeciesInfoSafe(species[i])->eggGroups[0];
+        eggGroups[i][1] = GetSpeciesInfoSafe(species[i])->eggGroups[1];
     }
 
     // check unbreedable egg group

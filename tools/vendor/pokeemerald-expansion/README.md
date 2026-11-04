@@ -2,24 +2,22 @@
 
 Source repository: https://github.com/rh-hideout/pokeemerald-expansion
 Pinned upstream commit: c460a8661dfa0598ae25d42a968c690ecbf489c6
-Source paths:
-- `src/data/pokemon/species_info/gen_8_families.h`
-- `src/data/pokemon/level_up_learnsets/gen_8.h`
-- `include/constants/species.h`
-- `include/constants/moves.h`
 
-These files are retained as reference inputs for the Lilycove Emerald importer.
-They are **not directly included by the Emerald build**. The Expansion source
-uses additional macros, structures, feature flags, species forms, abilities,
-items, types, and move definitions that do not exist in vanilla Emerald.
-An importer must normalize the canonical National Dex 1-898 species, preserve
-all existing Emerald IDs, translate every referenced identifier, and generate
-all Emerald-indexed runtime tables before changing `NUM_SPECIES`.
+This directory contains source references for the Lilycove Emerald importer.
+The vendored files are **not directly included by the Emerald build**. They
+are inputs for offline extraction and audits. The Expansion source uses
+macros, structures, feature flags, species forms, abilities, items, types,
+moves, cries and graphics that are not binary-compatible with vanilla Emerald.
 
-The Gen 8 species file contains conditional family blocks and references
-assets/fields from the Expansion project. Do not copy it into
-`src/data/pokemon/species_info.h` as-is.
+The importer must normalize National Dex 1-898, preserve all 386 current
+Emerald species IDs, translate identifiers and generate all Emerald-indexed
+runtime tables before changing `NUM_SPECIES`.
 
-Respect the upstream repository's license and attribution requirements when
-redistributing derived source. This vendor snapshot is source data, not game
-graphics or a compiled ROM.
+Do not copy Expansion initializers into vanilla Emerald's `gSpeciesInfo`
+without field-by-field conversion. The two `SpeciesInfo` layouts differ
+substantially. No file in this vendor directory is compiled into the ROM.
+
+See `UPSTREAM_TABLES.md` for the exact source-to-table inventory and limits.
+Respect the upstream repository's license and attribution requirements.
+This vendor snapshot is source data, not a redistribution of graphics or a
+compiled ROM.

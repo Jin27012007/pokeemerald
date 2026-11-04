@@ -199,9 +199,9 @@ static bool8 FindMonThatAbsorbsOpponentsMove(void)
 
         species = GetMonData(&party[i], MON_DATA_SPECIES);
         if (GetMonData(&party[i], MON_DATA_ABILITY_NUM) != 0)
-            monAbility = gSpeciesInfo[species].abilities[1];
+            monAbility = GetSpeciesInfoSafe(species)->abilities[1];
         else
-            monAbility = gSpeciesInfo[species].abilities[0];
+            monAbility = GetSpeciesInfoSafe(species)->abilities[0];
 
         if (absorbingTypeAbility == monAbility && Random() & 1)
         {
@@ -397,9 +397,9 @@ static bool8 FindMonWithFlagsAndSuperEffective(u8 flags, u8 moduloPercent)
 
         species = GetMonData(&party[i], MON_DATA_SPECIES);
         if (GetMonData(&party[i], MON_DATA_ABILITY_NUM) != 0)
-            monAbility = gSpeciesInfo[species].abilities[1];
+            monAbility = GetSpeciesInfoSafe(species)->abilities[1];
         else
-            monAbility = gSpeciesInfo[species].abilities[0];
+            monAbility = GetSpeciesInfoSafe(species)->abilities[0];
 
         moveFlags = AI_TypeCalc(gLastLandedMoves[gActiveBattler], species, monAbility);
         if (moveFlags & flags)
@@ -703,8 +703,8 @@ u8 GetMostSuitableMonToSwitchInto(void)
                 && i != *(gBattleStruct->monToSwitchIntoId + battlerIn1)
                 && i != *(gBattleStruct->monToSwitchIntoId + battlerIn2))
             {
-                u8 type1 = gSpeciesInfo[species].types[0];
-                u8 type2 = gSpeciesInfo[species].types[1];
+                u8 type1 = GetSpeciesInfoSafe(species)->types[0];
+                u8 type2 = GetSpeciesInfoSafe(species)->types[1];
                 u8 typeDmg = TYPE_MUL_NORMAL;
                 ModulateByTypeEffectiveness(gBattleMons[opposingBattler].types[0], type1, type2, &typeDmg);
                 ModulateByTypeEffectiveness(gBattleMons[opposingBattler].types[1], type1, type2, &typeDmg);

@@ -343,7 +343,9 @@ static u16 GetRandomAlternateMove(u8 monId)
 
     id = APPRENTICE_SPECIES_ID(monId);
     species = gApprentices[PLAYER_APPRENTICE.id].species[id];
-    learnset = gLevelUpLearnsets[species];
+    learnset = GetLevelUpLearnsetSafe(species);
+    if (species >= NUM_SPECIES)
+        return MOVE_NONE;
     j = 0;
 
     if (PLAYER_APPRENTICE.lvlMode == APPRENTICE_LVL_MODE_50)
@@ -467,7 +469,14 @@ static void GetLatestLearnedMoves(u16 species, u16 *moves)
     else // == APPRENTICE_LVL_MODE_OPEN
         level = 60;
 
-    learnset = gLevelUpLearnsets[species];
+    learnset = GetLevelUpLearnsetSafe(species);
+    if (learnset[0] == LEVEL_UP_END)
+    {
+        for (j = 0; j < MAX_MON_MOVES; j++)
+            moves[j] = MOVE_NONE;
+        return;
+    }
+
     for (i = 0; learnset[i] != LEVEL_UP_END; i++)
     {
         if ((learnset[i] & LEVEL_UP_MOVE_LV) > (level << 9))
