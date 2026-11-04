@@ -121,7 +121,7 @@ def emit_gen8_pokedex_runtime(pokedex_rows: list[dict], order_rows: dict) -> tup
     dex_symbol_by_number: dict[int, str] = {}
     for row in target_dex_rows:
         dex_id = int(row["id"])
-        if 1 <= dex_id <= 898:
+        if 1 <= dex_id <= 898 and not row["symbol"].startswith("OLD_UNOWN_"):
             dex_symbol_by_number.setdefault(dex_id, row["symbol"])
     missing_symbols = sorted(set(range(1, 899)) - set(dex_symbol_by_number))
     if missing_symbols:
