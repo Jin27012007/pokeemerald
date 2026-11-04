@@ -365,6 +365,20 @@ int main(void)
         save_header = (ROOT / "include/save.h").read_text(encoding="utf-8")
         save_source = (ROOT / "src/save.c").read_text(encoding="utf-8")
         global_source = (ROOT / "include/global.h").read_text(encoding="utf-8")
+        load_save_source = (ROOT / "src/load_save.c").read_text(encoding="utf-8")
+        new_game_source = (ROOT / "src/new_game.c").read_text(encoding="utf-8")
+
+        clear_sav1_start = load_save_source.index("void ClearSav1(void)")
+        clear_sav1_end = load_save_source.index("\n}", clear_sav1_start)
+        clear_sav1_body = load_save_source[clear_sav1_start:clear_sav1_end]
+        self.assertIn(
+            "CpuFill16(0, &gSaveblock1, sizeof(struct SaveBlock1ASLR));",
+            clear_sav1_body,
+        )
+
+        new_game_start = new_game_source.index("void NewGameInitData(void)")
+        new_game_end = new_game_source.index("static void ResetMiniGamesRecords", new_game_start)
+        self.assertIn("ClearSav1();", new_game_source[new_game_start:new_game_end])
 
         self.assertIn("#define SECTOR_DATA_SIZE 3968", save_header)
         self.assertIn("SAVEBLOCK_CHUNK(struct SaveBlock1, 0)", save_source)

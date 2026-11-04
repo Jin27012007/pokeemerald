@@ -36,6 +36,8 @@ def main() -> int:
     global_h = read(ROOT / "include/global.h")
     save_h = read(ROOT / "include/save.h")
     save_c = read(ROOT / "src/save.c")
+    load_save_c = read(ROOT / "src/load_save.c")
+    new_game_c = read(ROOT / "src/new_game.c")
     pokedex_c = read(ROOT / "src/pokedex.c")
     extension_h = read(ROOT / "include/gen8_dex_extension.h")
     extension_c = read(ROOT / "src/gen8_dex_extension.c")
@@ -121,10 +123,14 @@ def main() -> int:
         and 0x3598 + 0x180 == 0x3718
         and reserved_save1_bytes <= 0x180
     )
+    clear_sav1_block = block(load_save_c, "void ClearSav1")
+    new_game_init_block = block(new_game_c, "void NewGameInitData")
     save_extension_legacy_fixture_migration_tested = (
         "Gen8DexExtensionPrepareForWrite" in extension_h
-        and "Gen8DexExtensionPrepareForWrite(extension)" in extension_c
+        and "Gen8DexExtensionPrepareForWrite" in extension_c
         and "Gen8DexExtensionPrepareForWrite(extension)" in pokedex_c
+        and "CpuFill16(0, &gSaveblock1, sizeof(struct SaveBlock1ASLR));" in clear_sav1_block
+        and "ClearSav1();" in new_game_init_block
         and "memset(legacySaveBlock1 + EXTENSION_OFFSET, 0, 0x100)" in extension_test
         and "Invalid, nonblank data must fail closed" in extension_test
     )
@@ -257,6 +263,10 @@ def main() -> int:
             "save_extension_legacy_fixture_migration_tested": save_extension_legacy_fixture_migration_tested,
             "save_extension_saveblock1_sector_roundtrip_tested": save_extension_sector_roundtrip_tested,
             "save_extension_runtime_migration_validated": False,
+            "save_extension_test_scope": (
+                "Host-compiled C test uses the production extension implementation and "
+                "simulates SaveBlock1 sector chunks; real in-game flash migration remains unvalidated."
+            ),
             "saveblock2_fits_after_dex_expansion": save2_expanded_bytes <= sector_bytes,
             "save_extension_read_write_tests": save_extension_read_write_tested,
             "species_info_complete": False,

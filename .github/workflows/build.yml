@@ -79,6 +79,9 @@ jobs:
           assert save["runtime_extension_capacity_valid"] is True
           assert save["trainer_hill_offset_preserved"] is True
           assert readiness["save_extension_sector_plan_validated"] is True
+          assert readiness["save_extension_legacy_fixture_migration_tested"] is True
+          assert readiness["save_extension_saveblock1_sector_roundtrip_tested"] is True
+          assert readiness["save_extension_read_write_tests"] is True
           assert readiness["save_extension_runtime_migration_validated"] is False
           assert save["saveblock1_bytes"] == 0x3D88
           assert save["saveblock2_bytes"] == 0xF2C
@@ -88,9 +91,8 @@ jobs:
           assert save["saveblock2_fits_after_dex_expansion"] is False
           assert save["sector_data_bytes"] == 3968
           assert readiness["num_species_change_allowed"] is False
-          assert readiness["save_extension_read_write_tests"] is False
           assert readiness["runtime_ready"] is False
-          print("PASS: save sector sizing verified; runtime/save migration remains blocked.")
+          print("PASS: SaveBlock1 migration fixture and sector round-trip verified; in-game save migration remains unvalidated.")
           PY
 
       - name: Test Gen 8 SpeciesInfo parsers and source mappings
