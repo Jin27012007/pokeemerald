@@ -155,9 +155,9 @@ def main() -> int:
             })
     assert not mismatches, f"Existing Emerald mappings changed: {mismatches[:10]}"
 
-    # Emerald's legacy table assigns pseudo-Dex slots 899-920 to the old
-    # Unown B-Z auxiliary IDs. Those collide with canonical Gen 4 species
-    # Dex numbers beyond the canonical 1-898 range, so the legacy lookup must retain this auxiliary mapping.
+    # Emerald's legacy table assigns pseudo-Dex slots 899-923 to all 25
+    # old Unown B-Z auxiliary IDs. These remain outside the canonical 1-898
+    # range, so the legacy lookup must retain this auxiliary mapping.
     unown_collisions = []
     for dex, legacy_id in sorted(legacy_by_dex.items()):
         if dex > 898:
@@ -168,7 +168,7 @@ def main() -> int:
             assert 252 <= legacy_id <= 276, (
                 f"Unexpected legacy auxiliary entry at Dex {dex}: {legacy_id}"
             )
-    expected_collision_dex = list(range(899, 921))
+    expected_collision_dex = list(range(899, 924))
     assert [row["national_dex"] for row in unown_collisions] == expected_collision_dex, (
         unown_collisions
     )
