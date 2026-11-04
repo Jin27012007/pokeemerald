@@ -564,8 +564,8 @@ def check_per_species_stellar_runtime_gap():
 
 
 def check_expansion_natdex_domain_and_form_alias_selection():
-    # Expansion's NATIONAL_DEX_* order is authoritative for its own .natDexNum
-    # fields; the target Emerald enum differs for these concrete examples.
+    # Expansion's NATIONAL_DEX_* order is authoritative for .natDexNum fields;
+    # the target enum must preserve the full national numbering without gaps.
     source_values = {
         row["symbol"]: row["id"]
         for row in module.symbols(
@@ -580,8 +580,12 @@ def check_expansion_natdex_domain_and_form_alias_selection():
     assert source_values["ARCHEOPS"] == 567
     assert source_values["DEDENNE"] == 702
     assert source_values["CARBINK"] == 703
-    assert target_values["ARCHAEOPS"] == 567
-    assert target_values["CARBINK"] == 702
+    assert target_values["ARCHEOPS"] == 567
+    assert target_values["DEDENNE"] == 702
+    assert target_values["CARBINK"] == 703
+    assert target_values["MELTAN"] == 808
+    assert target_values["MELMETAL"] == 809
+    assert target_values["CALYREX"] == 898
 
     # Canonical identity comes from NATIONAL_DEX_BURMY, while the
     # representative Expansion species ID/designator is BURMY_PLANT.
