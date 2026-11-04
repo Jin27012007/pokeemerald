@@ -249,17 +249,39 @@ def test_named_array_inventory():
 
 
 def test_gen8_pokedex_runtime_tables():
-    # Non-national legacy form constants must never index the National Dex array.
-    pokedex_source = (ROOT / "include/constants/pokedex.h").read_text(encoding="utf-8")
-    target_rows = module.conv.symbols(pokedex_source, "NATIONAL_DEX_", enum=True)
-    by_id = {}
-    for row in target_rows:
-        dex_id = int(row["id"])
-        if 1 <= dex_id <= 898 and not row["symbol"].startswith("OLD_UNOWN_"):
-            by_id.setdefault(dex_id, row["symbol"])
-    assert len(by_id) == 898
-    assert by_id[898] == "CALYREX"
-    assert not any(symbol.startswith("OLD_UNOWN_") for symbol in by_id.values())
+    # Require every National Dex slot to match the pinned Expansion source.
+    target_source = (ROOT / "include/constants/pokedex.h").read_text(encoding="utf-8")
+    expansion_source = (
+        ROOT / "tools/vendor/pokeemerald-expansion/include/constants/pokedex.h"
+    ).read_text(encoding="utf-8")
+    target_rows = module.conv.symbols(target_source, "NATIONAL_DEX_", enum=True)
+    expansion_rows = module.conv.symbols(expansion_source, "NATIONAL_DEX_", enum=True)
+
+    def national_symbols(rows):
+        result = {}
+        for row in rows:
+            dex_id = int(row["id"])
+            symbol = row["symbol"]
+            if 1 <= dex_id <= 898 and not symbol.startswith("OLD_UNOWN_"):
+                result.setdefault(dex_id, symbol)
+        return result
+
+    target_by_id = national_symbols(target_rows)
+    expansion_by_id = national_symbols(expansion_rows)
+    assert set(target_by_id) == set(range(1, 899)), sorted(set(range(1, 899)) - set(target_by_id))
+    assert target_by_id == expansion_by_id, {
+        dex_id: (expansion_by_id.get(dex_id), target_by_id.get(dex_id))
+        for dex_id in range(1, 899)
+        if expansion_by_id.get(dex_id) != target_by_id.get(dex_id)
+    }
+    assert target_by_id[702] == "DEDENNE"
+    assert target_by_id[808] == "MELTAN"
+    assert target_by_id[809] == "MELMETAL"
+    assert target_by_id[898] == "CALYREX"
+    assert not any(
+        int(row["id"]) <= 898 and row["symbol"].startswith("OLD_UNOWN_")
+        for row in target_rows
+    )
 
     rows = [
         {
