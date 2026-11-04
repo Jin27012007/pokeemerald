@@ -76,6 +76,33 @@ bool32 Gen8DexExtensionValidate(const struct Gen8DexExtension *extension)
     return TRUE;
 }
 
+static bool32 IsGen8DexExtensionBlank(const struct Gen8DexExtension *extension)
+{
+    const u8 *bytes = (const u8 *)extension;
+    u32 i;
+
+    for (i = 0; i < sizeof(*extension); i++)
+    {
+        if (bytes[i] != 0)
+            return FALSE;
+    }
+    return TRUE;
+}
+
+// Older Emerald saves used this fixed SaveBlock1 region as unused padding.
+// Initialize only a blank legacy region. A nonblank invalid envelope is
+// treated as corruption or an unknown format and is never overwritten.
+bool32 Gen8DexExtensionPrepareForWrite(struct Gen8DexExtension *extension)
+{
+    if (extension == NULL)
+        return FALSE;
+
+    if (IsGen8DexExtensionBlank(extension))
+        Gen8DexExtensionInit(extension);
+
+    return Gen8DexExtensionValidate(extension);
+}
+
 static bool32 ReadFlagFromCopy(const struct Gen8DexExtension *extension, u16 nationalDex, u8 copy)
 {
     const u8 *array = GetGen8DexExtensionFlagArrayConst(extension, copy);

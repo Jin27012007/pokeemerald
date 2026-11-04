@@ -4289,29 +4289,6 @@ static struct Gen8DexExtension *GetGen8DexExtension(void)
     return (struct Gen8DexExtension *)gSaveBlock1Ptr->dexFlagExtension;
 }
 
-static bool32 IsGen8DexExtensionBlank(const struct Gen8DexExtension *extension)
-{
-    const u8 *bytes = (const u8 *)extension;
-    u32 i;
-
-    for (i = 0; i < sizeof(*extension); i++)
-    {
-        if (bytes[i] != 0)
-            return FALSE;
-    }
-    return TRUE;
-}
-
-static bool32 PrepareGen8DexExtensionForWrite(struct Gen8DexExtension *extension)
-{
-    // A blank reserved region is expected in a fresh game or an older save.
-    // Nonblank invalid data is corruption and must fail closed, not be erased.
-    if (IsGen8DexExtensionBlank(extension))
-        Gen8DexExtensionInit(extension);
-
-    return Gen8DexExtensionValidate(extension);
-}
-
 static s8 GetSetGen8DexFlag(u16 nationalDexNo, u8 caseID)
 {
     struct Gen8DexExtension *extension = GetGen8DexExtension();
@@ -4324,11 +4301,11 @@ static s8 GetSetGen8DexFlag(u16 nationalDexNo, u8 caseID)
         return Gen8DexExtensionReadFlag(extension, nationalDexNo, TRUE)
             && Gen8DexExtensionReadFlag(extension, nationalDexNo, FALSE);
     case FLAG_SET_SEEN:
-        if (PrepareGen8DexExtensionForWrite(extension))
+        if (Gen8DexExtensionPrepareForWrite(extension))
             Gen8DexExtensionWriteFlag(extension, nationalDexNo, FALSE, TRUE);
         break;
     case FLAG_SET_CAUGHT:
-        if (PrepareGen8DexExtensionForWrite(extension))
+        if (Gen8DexExtensionPrepareForWrite(extension))
             Gen8DexExtensionWriteFlag(extension, nationalDexNo, TRUE, TRUE);
         break;
     }

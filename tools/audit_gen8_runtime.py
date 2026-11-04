@@ -35,6 +35,11 @@ def struct_size(text: str, fallback: int) -> int:
 def main() -> int:
     global_h = read(ROOT / "include/global.h")
     save_h = read(ROOT / "include/save.h")
+    save_c = read(ROOT / "src/save.c")
+    pokedex_c = read(ROOT / "src/pokedex.c")
+    extension_h = read(ROOT / "include/gen8_dex_extension.h")
+    extension_c = read(ROOT / "src/gen8_dex_extension.c")
+    extension_test = read(ROOT / "tools/test_gen8_dex_extension.py")
     pokemon_constants = read(ROOT / "include/constants/pokemon.h")
     vendor_info_dir = ROOT / "tools/vendor/pokeemerald-expansion/src/data/pokemon/species_info"
     vendor_info_files = sorted(vendor_info_dir.glob("*.h"))
@@ -115,6 +120,29 @@ def main() -> int:
         and extension_window_bytes <= reserved_save1_bytes
         and 0x3598 + 0x180 == 0x3718
         and reserved_save1_bytes <= 0x180
+    )
+    save_extension_legacy_fixture_migration_tested = (
+        "Gen8DexExtensionPrepareForWrite" in extension_h
+        and "Gen8DexExtensionPrepareForWrite(extension)" in extension_c
+        and "Gen8DexExtensionPrepareForWrite(extension)" in pokedex_c
+        and "memset(legacySaveBlock1 + EXTENSION_OFFSET, 0, 0x100)" in extension_test
+        and "Invalid, nonblank data must fail closed" in extension_test
+    )
+    save_extension_sector_roundtrip_tested = (
+        "SAVE_BLOCK1_SIZE 0x3D88" in extension_test
+        and "SAVE_BLOCK1_SECTORS 4" in extension_test
+        and "SAVE_SECTOR_DATA_SIZE 3968" in extension_test
+        and "CopyBlockToSectors" in extension_test
+        and "CopyBlockFromSectors" in extension_test
+        and "SAVEBLOCK_CHUNK(struct SaveBlock1, 3)" in save_c
+        and "data[i] = sector->data[i]" in save_c
+    )
+    save_extension_read_write_tested = (
+        save_extension_legacy_fixture_migration_tested
+        and save_extension_sector_roundtrip_tested
+        and "Gen8DexExtensionWriteFlag" in extension_test
+        and "Gen8DexExtensionReadFlag" in extension_test
+        and "test_saveblock1_extension_survives_sector_chunk_round_trip" in extension_test
     )
 
     source_info_blocks = len(re.findall(r"^\s*\[SPECIES_[A-Z0-9_]+\]\s*=", source_info, re.M))
@@ -226,9 +254,11 @@ def main() -> int:
         },
         "readiness": {
             "save_extension_sector_plan_validated": extension_layout_valid,
+            "save_extension_legacy_fixture_migration_tested": save_extension_legacy_fixture_migration_tested,
+            "save_extension_saveblock1_sector_roundtrip_tested": save_extension_sector_roundtrip_tested,
             "save_extension_runtime_migration_validated": False,
             "saveblock2_fits_after_dex_expansion": save2_expanded_bytes <= sector_bytes,
-            "save_extension_read_write_tests": False,
+            "save_extension_read_write_tests": save_extension_read_write_tested,
             "species_info_complete": False,
             "species_info_source_coverage_proven": False,
             "abilities_complete": not missing_identifiers["abilities"],

@@ -165,12 +165,16 @@ class RuntimeIntegrationTests(unittest.TestCase):
         self.assertIn("Gen8DexExtensionInit(GetGen8DexExtension())", source)
         self.assertIn("nationalDexNo > GEN8_DEX_COUNT", source)
         self.assertIn("nationalDexNo > GEN8_DEX_LEGACY_COUNT", source)
-        prepare_start = source.index("static bool32 PrepareGen8DexExtensionForWrite")
-        prepare_end = source.index("static s8 GetSetGen8DexFlag", prepare_start)
-        prepare = source[prepare_start:prepare_end]
-        self.assertIn("IsGen8DexExtensionBlank(extension)", prepare)
-        self.assertIn("Gen8DexExtensionInit(extension)", prepare)
-        self.assertIn("return Gen8DexExtensionValidate(extension)", prepare)
+        flag_start = source.index("static s8 GetSetGen8DexFlag")
+        flag_end = source.index("static u8 ReadDexSeenMirror", flag_start)
+        flag_handler = source[flag_start:flag_end]
+        self.assertIn("Gen8DexExtensionPrepareForWrite(extension)", flag_handler)
+
+        extension_source = (ROOT / "src/gen8_dex_extension.c").read_text(encoding="utf-8")
+        self.assertIn("bool32 Gen8DexExtensionPrepareForWrite", extension_source)
+        self.assertIn("IsGen8DexExtensionBlank(extension)", extension_source)
+        self.assertIn("Gen8DexExtensionInit(extension)", extension_source)
+        self.assertIn("return Gen8DexExtensionValidate(extension)", extension_source)
 
         reset_start = source.index("void ResetPokedex(void)")
         reset_end = source.index("void ResetPokedexScrollPositions", reset_start)
@@ -235,22 +239,105 @@ static inline void CpuFill32(u32 value, void *destination, u32 size)
             (temp / "gen8_dex_extension.h").write_text(header, encoding="utf-8")
             (temp / "test.c").write_text(
                 """#include "gen8_dex_extension.h"
+#include <string.h>
+
+#define SAVE_BLOCK1_SIZE 0x3D88
+#define SAVE_BLOCK1_SECTORS 4
+#define SAVE_SECTOR_DATA_SIZE 3968
+#define EXTENSION_OFFSET 0x3598
+
+static void CopyBlockToSectors(
+    const u8 *block,
+    u8 sectors[SAVE_BLOCK1_SECTORS][SAVE_SECTOR_DATA_SIZE])
+{
+    u32 i;
+    for (i = 0; i < SAVE_BLOCK1_SECTORS; i++)
+    {
+        u32 offset = i * SAVE_SECTOR_DATA_SIZE;
+        u32 size = SAVE_BLOCK1_SIZE - offset;
+        if (size > SAVE_SECTOR_DATA_SIZE)
+            size = SAVE_SECTOR_DATA_SIZE;
+        memset(sectors[i], 0, SAVE_SECTOR_DATA_SIZE);
+        memcpy(sectors[i], block + offset, size);
+    }
+}
+
+static void CopyBlockFromSectors(
+    const u8 sectors[SAVE_BLOCK1_SECTORS][SAVE_SECTOR_DATA_SIZE],
+    u8 *block)
+{
+    u32 i;
+    memset(block, 0, SAVE_BLOCK1_SIZE);
+    for (i = 0; i < SAVE_BLOCK1_SECTORS; i++)
+    {
+        u32 offset = i * SAVE_SECTOR_DATA_SIZE;
+        u32 size = SAVE_BLOCK1_SIZE - offset;
+        if (size > SAVE_SECTOR_DATA_SIZE)
+            size = SAVE_SECTOR_DATA_SIZE;
+        memcpy(block + offset, sectors[i], size);
+    }
+}
+
 int main(void)
 {
-    struct Gen8DexExtension extension;
-    Gen8DexExtensionInit(&extension);
-    if (!Gen8DexExtensionValidate(&extension)) return 1;
-    if (Gen8DexExtensionWriteFlag(&extension, 413, FALSE, TRUE) != GEN8_DEX_EXTENSION_OK) return 2;
-    if (!Gen8DexExtensionReadFlag(&extension, 413, FALSE)) return 3;
-    if (Gen8DexExtensionWriteFlag(&extension, 898, TRUE, TRUE) != GEN8_DEX_EXTENSION_OK) return 4;
-    if (!Gen8DexExtensionReadFlag(&extension, 898, TRUE)) return 5;
-    if (Gen8DexExtensionReadFlag(&extension, 412, FALSE)) return 6;
-    if (Gen8DexExtensionReadFlag(&extension, 899, FALSE)) return 7;
-    extension.seenBackup[0] ^= 1;
-    extension.checksum = Gen8DexExtensionChecksum(&extension);
-    if (Gen8DexExtensionReadFlag(&extension, 413, FALSE)) return 8;
-    extension.checksum ^= 1;
-    if (Gen8DexExtensionValidate(&extension)) return 9;
+    u8 legacySaveBlock1[SAVE_BLOCK1_SIZE];
+    u8 loadedSaveBlock1[SAVE_BLOCK1_SIZE];
+    u8 reloadedSaveBlock1[SAVE_BLOCK1_SIZE];
+    u8 sectors[SAVE_BLOCK1_SECTORS][SAVE_SECTOR_DATA_SIZE];
+    struct Gen8DexExtension *extension;
+    struct Gen8DexExtension damaged;
+    u32 i;
+
+    // Model an older save: existing SaveBlock1 data is retained and the
+    // original unused_3598 padding is zero, ready for lazy initialization.
+    for (i = 0; i < SAVE_BLOCK1_SIZE; i++)
+        legacySaveBlock1[i] = (u8)(i * 17u + 3u);
+    memset(legacySaveBlock1 + EXTENSION_OFFSET, 0, 0x100);
+
+    // Exercise the same four 3968-byte SaveBlock1 chunks used by save.c.
+    CopyBlockToSectors(legacySaveBlock1, sectors);
+    CopyBlockFromSectors((const u8 (*)[SAVE_SECTOR_DATA_SIZE])sectors, loadedSaveBlock1);
+    if (memcmp(legacySaveBlock1, loadedSaveBlock1, SAVE_BLOCK1_SIZE) != 0) return 1;
+
+    extension = (struct Gen8DexExtension *)(loadedSaveBlock1 + EXTENSION_OFFSET);
+    if (!Gen8DexExtensionPrepareForWrite(extension)) return 2;
+    if (!Gen8DexExtensionValidate(extension)) return 3;
+    if (Gen8DexExtensionWriteFlag(extension, 413, FALSE, TRUE) != GEN8_DEX_EXTENSION_OK) return 4;
+    if (Gen8DexExtensionWriteFlag(extension, 898, TRUE, TRUE) != GEN8_DEX_EXTENSION_OK) return 5;
+    if (!Gen8DexExtensionReadFlag(extension, 413, FALSE)) return 6;
+    if (!Gen8DexExtensionReadFlag(extension, 898, TRUE)) return 7;
+    if (Gen8DexExtensionReadFlag(extension, 412, FALSE)) return 8;
+    if (Gen8DexExtensionReadFlag(extension, 899, FALSE)) return 9;
+
+    // Invalid, nonblank data must fail closed and remain untouched.
+    damaged = *extension;
+    damaged.checksum ^= 1;
+    {
+        struct Gen8DexExtension before = damaged;
+        if (Gen8DexExtensionPrepareForWrite(&damaged)) return 10;
+        if (memcmp(&damaged, &before, sizeof(damaged)) != 0) return 11;
+    }
+
+    // Save again, reload, and verify the envelope and unrelated legacy fields.
+    CopyBlockToSectors(loadedSaveBlock1, sectors);
+    CopyBlockFromSectors((const u8 (*)[SAVE_SECTOR_DATA_SIZE])sectors, reloadedSaveBlock1);
+    extension = (struct Gen8DexExtension *)(reloadedSaveBlock1 + EXTENSION_OFFSET);
+    if (!Gen8DexExtensionValidate(extension)) return 12;
+    if (!Gen8DexExtensionReadFlag(extension, 413, FALSE)) return 13;
+    if (!Gen8DexExtensionReadFlag(extension, 898, TRUE)) return 14;
+    if (memcmp(reloadedSaveBlock1, legacySaveBlock1, EXTENSION_OFFSET) != 0) return 15;
+    if (memcmp(
+            reloadedSaveBlock1 + EXTENSION_OFFSET + sizeof(*extension),
+            legacySaveBlock1 + EXTENSION_OFFSET + sizeof(*extension),
+            SAVE_BLOCK1_SIZE - EXTENSION_OFFSET - sizeof(*extension)) != 0)
+        return 16;
+
+    // A second prepare call is idempotent for an already valid extension.
+    {
+        u16 generation = extension->generation;
+        if (!Gen8DexExtensionPrepareForWrite(extension)) return 17;
+        if (extension->generation != generation) return 18;
+    }
     return 0;
 }
 """,

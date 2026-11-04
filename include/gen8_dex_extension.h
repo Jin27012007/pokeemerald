@@ -28,6 +28,7 @@ enum Gen8DexExtensionResult
 u32 Gen8DexExtensionChecksum(const struct Gen8DexExtension *extension);
 void Gen8DexExtensionInit(struct Gen8DexExtension *extension);
 bool32 Gen8DexExtensionValidate(const struct Gen8DexExtension *extension);
+bool32 Gen8DexExtensionPrepareForWrite(struct Gen8DexExtension *extension);
 bool32 Gen8DexExtensionReadFlag(const struct Gen8DexExtension *extension, u16 nationalDex, bool32 owned);
 enum Gen8DexExtensionResult Gen8DexExtensionWriteFlag(
     struct Gen8DexExtension *extension, u16 nationalDex, bool32 owned, bool32 value);
