@@ -255,10 +255,11 @@ def test_gen8_pokedex_runtime_tables():
     by_id = {}
     for row in target_rows:
         dex_id = int(row["id"])
-        if 1 <= dex_id <= 898:
+        if 1 <= dex_id <= 898 and not row["symbol"].startswith("OLD_UNOWN_"):
             by_id.setdefault(dex_id, row["symbol"])
     assert len(by_id) == 898
-    assert "OLD_UNOWN_D" not in by_id.values()
+    assert by_id[898] == "CALYREX"
+    assert not any(symbol.startswith("OLD_UNOWN_") for symbol in by_id.values())
 
     rows = [
         {
