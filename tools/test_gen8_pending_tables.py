@@ -249,6 +249,17 @@ def test_named_array_inventory():
 
 
 def test_gen8_pokedex_runtime_tables():
+    # Non-national legacy form constants must never index the National Dex array.
+    pokedex_source = (ROOT / "include/constants/pokedex.h").read_text(encoding="utf-8")
+    target_rows = module.conv.symbols(pokedex_source, "NATIONAL_DEX_", enum=True)
+    by_id = {}
+    for row in target_rows:
+        dex_id = int(row["id"])
+        if 1 <= dex_id <= 898:
+            by_id.setdefault(dex_id, row["symbol"])
+    assert len(by_id) == 898
+    assert "OLD_UNOWN_D" not in by_id.values()
+
     rows = [
         {
             "national_dex": dex,
