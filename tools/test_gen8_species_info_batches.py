@@ -52,6 +52,7 @@ def make_fixture():
                     "baseSpeed": "70",
                     "baseSpAttack": "80",
                     "baseSpDefense": "50",
+                    "evYield_Attack": "1",
                 },
                 "source_initializer_raw": "{ .baseHP = 50 }",
                 "source_initializer_expanded": "{ .baseHP = 50 }",
@@ -59,6 +60,7 @@ def make_fixture():
                     "baseHP": 50, "baseAttack": 60, "baseDefense": 40,
                     "baseSpeed": 70, "baseSpAttack": 80, "baseSpDefense": 50,
                     "catchRate": 45, "expYield": 120,
+                    "evYield_Attack": 1, "evYield_Defense": 0,
                 },
                 "gender_ratio": 127,
                 "friendship": 50,
@@ -128,6 +130,8 @@ def test_batch_is_complete_and_staging_only():
     assert [row["national_dex"] for row in result["species"]] == [387, 388]
     first = result["species"][0]
     assert first["statistics"]["baseHP"] == 50
+    assert first["statistics"]["evYield_Attack"] == 1
+    assert "evYield_Defense" not in first["statistics"]
     assert first["types_source_ids"] == [12, 4]
     assert first["runtime_gap_codes"] == ["test_gap"]
     assert "emerald_internal_id" not in first
