@@ -6,6 +6,8 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 HEADER = (ROOT / "include/pokemon.h").read_text(encoding="utf-8")
 POKEMON = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
+ABILITIES = (ROOT / "include/constants/abilities.h").read_text(encoding="utf-8")
+ABILITY_TEXT = (ROOT / "src/data/text/abilities.h").read_text(encoding="utf-8")
 
 
 def struct_body(name: str) -> str:
@@ -45,12 +47,26 @@ def test_boxed_and_party_mon_hidden_ability_selection():
     assert "SetBoxMonData(boxMon, MON_DATA_ABILITY_NUM, &abilityNum);" in POKEMON
 
 
+def test_gen8_ability_registry_has_unique_u8_ids_and_text():
+    rows = re.findall(r"#define ABILITY_([A-Z0-9_]+) (\\d+)", ABILITIES)
+    values = [int(value) for _, value in rows]
+    assert len(values) == len(set(values))
+    assert max(values) <= 255
+    assert "#define ABILITIES_COUNT 243" in ABILITIES
+    for symbol, value in rows:
+        if int(value) < 78:
+            continue
+        assert f"[ABILITY_{symbol}] = " in ABILITY_TEXT
+        assert f"[ABILITY_{symbol}] = sGen8" in ABILITY_TEXT
+
+
 def main():
     test_box_and_battle_pokemon_can_store_three_ability_slots()
     test_species_info_has_wide_exp_yield_and_three_abilities()
     test_ability_access_is_bounded_and_falls_back_safely()
     test_boxed_and_party_mon_hidden_ability_selection()
-    print("PASS: three ability slots, u16 experience yield and bounded ability selection.")
+    test_gen8_ability_registry_has_unique_u8_ids_and_text()
+    print("PASS: three ability slots, u16 experience yield, hidden ability selection and Gen 8 ability registry.")
 
 
 if __name__ == "__main__":
