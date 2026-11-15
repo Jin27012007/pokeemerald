@@ -16,11 +16,11 @@ A função `target_item_constant_catalog` agora lê os membros da enum com o par
 
 - **Habilidades ocultas:** 409 das 512 espécies têm um terceiro slot de habilidade diferente de `NONE`. O `struct SpeciesInfo` de Emerald possui apenas dois slots. O ledger conserva o slot oculto, mas marca que ele não cabe na estrutura atual.
 - **Experiência base:** 105 espécies têm `expYield` acima de 255. O campo correspondente no `struct SpeciesInfo` atual é `u8`. Copiar esses valores diretamente causaria perda por truncamento; a integração precisa decidir uma representação maior e revisar os consumidores.
-- **Tipo Fairy:** 49 slots de tipo nos registros novos usam `FAIRY`, sem enum-alvo em Emerald. Não basta adicionar um identificador: o cálculo e a tabela de efetividade de tipos também precisam ser adaptados.
+- **Tipo Fairy:** 36 slots de tipo nos registros novos usam `FAIRY`, sem enum-alvo em Emerald. Não basta adicionar um identificador: o cálculo e a tabela de efetividade de tipos também precisam ser adaptados.
 - **Enums de habilidades e itens:** os IDs da Expansion não são IDs de Emerald. Habilidades sem constante-alvo, itens sem constante ou sem registro de dados e comportamentos ainda não auditados permanecem como lacunas explícitas.
 - **EVs:** os valores fornecidos estão dentro do limite de 2 bits do struct atual. Quando um EV não é declarado na fonte, o valor de inicialização é registrado como zero, que é o valor padrão de um campo omitido em um inicializador C.
 
-Os números deste documento descrevem o conjunto de dados analisado no artefato Gen 8 validado. A auditoria de dependências de itens será recalculada pelo CI após a correção do parser.
+Os números deste documento descrevem o conjunto de dados analisado no CI #1017. Dos 57 itens segurados usados pelas espécies novas, 34 têm constante e registro-alvo no Emerald; 23 ainda não têm constante nem registro de dados. O ledger encontrou 92 referências de item resolvidas entre 138 referências comuns/raras analisadas; uma referência rara permanece sem ID numérico resolvido.
 
 ## Saídas e limites
 
