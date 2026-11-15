@@ -27,6 +27,7 @@ As duas resistências antigas de Steel contra Ghost e Dark foram removidas para 
 
 - Nome FAIRY registrado em `gTypeNames`.
 - Ícone de 32×16 adicionado em `graphics/types/fairy.png`, usando a segunda paleta de tipos (paleta 14).
+- O PNG do ícone é indexado em 4bpp; o teste valida dimensões, paleta e CRC dos blocos antes da compilação.
 - A regra de concatenação da folha de ícones agora define a ordem explicitamente: os 18 tipos originais, Fairy, e as cinco categorias de concurso.
 - A tela de resumo recebeu a animação e o índice de paleta do tipo Fairy.
 
