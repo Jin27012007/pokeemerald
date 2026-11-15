@@ -46,6 +46,14 @@ BATCHES = {
         "expected_species_count": 72,
         "source_generation_range": [1, 8],
     },
+    7: {
+        "batch_id": "gen7_species_info",
+        "species_introduction_generation": 7,
+        "national_dex_start": 722,
+        "national_dex_end": 809,
+        "expected_species_count": 88,
+        "source_generation_range": [1, 8],
+    },
 }
 # Keep the original default for callers and tests that explicitly target Gen 4.
 BATCH = BATCHES[4]
