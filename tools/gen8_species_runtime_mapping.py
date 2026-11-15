@@ -272,7 +272,7 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
             mapped.update({
                 "slot": slot,
                 "slot_role": ("primary" if slot == 1 else "secondary" if slot == 2 else "hidden"),
-                "emerald_struct_slot_supported": slot < NUM_ABILITY_SLOTS,
+                "emerald_struct_slot_supported": slot <= NUM_ABILITY_SLOTS,  # Ledger slots are 1-based.
                 "target_behavior_audited": bool(dependency.get("target_behavior_audited")),
             })
             abilities.append(mapped)
