@@ -142,14 +142,40 @@ def build_batch(
             value = source.get(field)
             if not isinstance(value, int) or value < 0:
                 raise RuntimeError(f"Dex {dex}: invalid or unresolved {field}={value!r}")
-        for field in ("types", "egg_groups", "abilities"):
-            value = source.get(field)
-            if not isinstance(value, list) or len(value) != 2 or any(
-                not isinstance(item, int) or item < 0 for item in value
-            ):
-                raise RuntimeError(f"Dex {dex}: invalid source enum pair {field}={value!r}")
         if not isinstance(source.get("source_expanded_fields"), dict):
             raise RuntimeError(f"Dex {dex}: expanded source fields are missing")
+        source_fields_expanded = source["source_expanded_fields"]
+
+        def source_enum_symbols(field: str, prefix: str) -> list[str]:
+            raw = source_fields_expanded.get(field, "")
+            names = re.findall(rf"\\b{prefix}([A-Z0-9_]+)\\b", raw)
+            if not names:
+                raise RuntimeError(f"Dex {dex}: source enum symbols are missing for {field}")
+            return names
+
+        enum_symbol_fields = {
+            "types": ("types", "TYPE_"),
+            "egg_groups": ("eggGroups", "EGG_GROUP_"),
+            "abilities": ("abilities", "ABILITY_"),
+        }
+        enum_symbols = {
+            field: source_enum_symbols(source_field, prefix)
+            for field, (source_field, prefix) in enum_symbol_fields.items()
+        }
+        enum_ids = {
+            "types": source.get("types"),
+            "egg_groups": source.get("egg_groups"),
+            "abilities": source.get("abilities"),
+        }
+        for field in ("types", "egg_groups", "abilities"):
+            value = enum_ids[field]
+            if not isinstance(value, list) or len(value) != 2 or any(
+                item is not None and (not isinstance(item, int) or item < 0)
+                for item in value
+            ):
+                raise RuntimeError(f"Dex {dex}: invalid source enum pair {field}={value!r}")
+            if not enum_symbols[field]:
+                raise RuntimeError(f"Dex {dex}: source enum symbols are empty for {field}")
         if not isinstance(source.get("source_initializer_raw"), str) or not isinstance(
             source.get("source_initializer_expanded"), str
         ):
@@ -168,9 +194,16 @@ def build_batch(
             "gender_ratio_source_value": source["gender_ratio"],
             "friendship_source_value": source["friendship"],
             "growth_rate_source_id": source["growth_rate"],
-            "types_source_ids": source["types"],
-            "egg_groups_source_ids": source["egg_groups"],
-            "abilities_source_ids": source["abilities"],
+            "types_source_symbols": enum_symbols["types"],
+            "types_source_ids": enum_ids["types"],
+            "types_numeric_ids_complete": all(isinstance(x, int) for x in enum_ids["types"]),
+            "egg_groups_source_symbols": enum_symbols["egg_groups"],
+            "egg_groups_source_ids": enum_ids["egg_groups"],
+            "egg_groups_numeric_ids_complete": all(isinstance(x, int) for x in enum_ids["egg_groups"]),
+            "abilities_source_symbols": enum_symbols["abilities"],
+            "abilities_source_ids": enum_ids["abilities"],
+            "abilities_numeric_ids_complete": all(isinstance(x, int) for x in enum_ids["abilities"]),
+            "hidden_ability_source_symbol": enum_symbols["abilities"][2] if len(enum_symbols["abilities"]) > 2 else None,
             "hidden_ability_source_id": source.get("hidden_ability"),
             "item_common_source_id": source.get("item_common"),
             "item_rare_source_id": source.get("item_rare"),
