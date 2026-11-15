@@ -53,6 +53,9 @@ def make_fixture():
                     "baseSpAttack": "80",
                     "baseSpDefense": "50",
                     "evYield_Attack": "1",
+                    "types": "MON_TYPES(TYPE_GRASS, TYPE_POISON)",
+                    "eggGroups": "MON_EGG_GROUPS(EGG_GROUP_MONSTER, EGG_GROUP_GRASS)",
+                    "abilities": "{ ABILITY_OVERGROW, ABILITY_TEST_ALIAS, ABILITY_TEST_HIDDEN }",
                 },
                 "source_initializer_raw": "{ .baseHP = 50 }",
                 "source_initializer_expanded": "{ .baseHP = 50 }",
@@ -67,7 +70,7 @@ def make_fixture():
                 "growth_rate": 3,
                 "types": [12, 4],
                 "egg_groups": [1, 7],
-                "abilities": [65, 0],
+                "abilities": [65, None],
                 "hidden_ability": 34,
                 "item_common": 0,
                 "item_rare": 25,
@@ -99,7 +102,7 @@ def make_fixture():
         "types": {"GRASS": 12, "POISON": 4},
         "egg_groups": {"MONSTER": 1, "GRASS": 7},
         "growth_rates": {"MEDIUM_FAST": 3},
-        "abilities": {"OVERGROW": 65, "NONE": 0, "TEST_HIDDEN": 34},
+        "abilities": {"OVERGROW": 65, "NONE": 0, "TEST_ALIAS": None, "TEST_HIDDEN": 34},
         "items": {"NONE": 0, "TEST_ITEM": 25},
     }
     return canonical, compact, domains
@@ -134,6 +137,12 @@ def test_batch_is_complete_and_staging_only():
     assert first["statistics"]["evYield_Attack"] == 1
     assert "evYield_Defense" not in first["statistics"]
     assert first["types_source_ids"] == [12, 4]
+    assert first["types_source_symbols"] == ["GRASS", "POISON"]
+    assert first["egg_groups_source_symbols"] == ["MONSTER", "GRASS"]
+    assert first["abilities_source_symbols"] == ["OVERGROW", "TEST_ALIAS", "TEST_HIDDEN"]
+    assert first["abilities_source_ids"] == [65, None]
+    assert first["abilities_numeric_ids_complete"] is False
+    assert first["hidden_ability_source_symbol"] == "TEST_HIDDEN"
     assert first["source_generation"] == 4
     assert first["source_file"].endswith("gen_4_families.h")
     assert first["runtime_gap_codes"] == ["test_gap"]
