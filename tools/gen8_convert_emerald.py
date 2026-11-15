@@ -948,8 +948,6 @@ def parse_species_info(source_text: str, target_info_text: str,
         species_type_names = set(
             re.findall(r"TYPE_([A-Z0-9_]+)", fields.get("types", ""))
         )
-        if "FAIRY" in species_type_names:
-            runtime_gaps.append("fairy_type_not_in_emerald_enum")
         if "STELLAR" in species_type_names:
             runtime_gaps.append("stellar_type_not_in_emerald_enum")
         if any(problem.startswith(("unknown_ability:", "unknown_hidden_ability:")) for problem in compatibility_issues):
@@ -1413,7 +1411,7 @@ def generate(check: bool = False) -> dict:
         "unsupported_canonical_types": sorted(
             {"FAIRY", "STELLAR"} - {x["symbol"] for x in symbols(type_text, "TYPE_")}
         ),
-        "source_only_fields_require_runtime_work": ["new_ability_battle_behaviors", "new_items", "fairy_type", "stellar_type"],
+        "source_only_fields_require_runtime_work": ["new_ability_battle_behaviors", "new_items", "stellar_type"],
     }
     counts = {
         "canonical_dex_entries": len(species_map), "existing_species": existing_count,
