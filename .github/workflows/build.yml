@@ -104,6 +104,9 @@ jobs:
       - name: Test Gen 8 Fairy type chart, icon and battle access
         run: python3 tools/test_gen8_fairy_type.py
 
+      - name: Test imported Gen 4–8 item registry
+        run: python3 tools/test_gen8_item_registry.py
+
       - name: Audit all Expansion SpeciesInfo candidates by National Dex
         run: python3 tools/audit_gen8_species_info_candidates.py
 
