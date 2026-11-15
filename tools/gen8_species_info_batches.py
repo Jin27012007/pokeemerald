@@ -162,6 +162,15 @@ def build_batch(
             field: source_enum_symbols(source_field, prefix)
             for field, (source_field, prefix) in enum_symbol_fields.items()
         }
+        # Expansion's parser can retain symbolic aliases whose enum expression
+        # is not a literal integer (e.g. ABILITY_TANGLED_FEET = ABILITIES_COUNT_GEN3).
+        # Keep the symbol and the unresolved numeric mapping separately.
+        for field in ("types", "egg_groups"):
+            if len(enum_symbols[field]) == 1:
+                enum_symbols[field] = enum_symbols[field] * 2
+            if len(enum_symbols[field]) != 2:
+                raise RuntimeError(f"Dex {dex}: invalid source enum symbol pair {field}={enum_symbols[field]!r}")
+        enum_symbols["abilities"] = (enum_symbols["abilities"] + ["NONE", "NONE", "NONE"])[:3]
         enum_ids = {
             "types": source.get("types"),
             "egg_groups": source.get("egg_groups"),
@@ -174,8 +183,16 @@ def build_batch(
                 for item in value
             ):
                 raise RuntimeError(f"Dex {dex}: invalid source enum pair {field}={value!r}")
-            if not enum_symbols[field]:
-                raise RuntimeError(f"Dex {dex}: source enum symbols are empty for {field}")
+            domain = source_enum_domains[field]
+            names = enum_symbols[field]
+            if any(name not in domain for name in names):
+                missing = sorted(set(names) - set(domain))
+                raise RuntimeError(f"Dex {dex}: source enum symbols missing from {field} catalog: {missing}")
+            expected_ids = [domain[name] for name in names[:2]]
+            if value != expected_ids:
+                raise RuntimeError(f"Dex {dex}: parsed {field} IDs {value!r} disagree with symbols {names!r}")
+        if source.get("hidden_ability") != source_enum_domains["abilities"][enum_symbols["abilities"][2]]:
+            raise RuntimeError(f"Dex {dex}: hidden ability ID disagrees with its source symbol")
         if not isinstance(source.get("source_initializer_raw"), str) or not isinstance(
             source.get("source_initializer_expanded"), str
         ):
@@ -203,7 +220,7 @@ def build_batch(
             "abilities_source_symbols": enum_symbols["abilities"],
             "abilities_source_ids": enum_ids["abilities"],
             "abilities_numeric_ids_complete": all(isinstance(x, int) for x in enum_ids["abilities"]),
-            "hidden_ability_source_symbol": enum_symbols["abilities"][2] if len(enum_symbols["abilities"]) > 2 else None,
+            "hidden_ability_source_symbol": enum_symbols["abilities"][2],
             "hidden_ability_source_id": source.get("hidden_ability"),
             "item_common_source_id": source.get("item_common"),
             "item_rare_source_id": source.get("item_rare"),
