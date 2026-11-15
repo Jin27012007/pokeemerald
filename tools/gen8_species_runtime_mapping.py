@@ -129,9 +129,12 @@ def map_held_item(source_id, source_domain, dependencies_by_id):
 
 
 def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict]],
-                          expected_species_count: int = 512) -> tuple[dict, dict]:
-    if len(batches) != 5:
+                          expected_species_count: int = 512,
+                          strict_batch_contract: bool = True) -> tuple[dict, dict]:
+    if strict_batch_contract and len(batches) != 5:
         raise RuntimeError(f"Expected five generation batches, got {len(batches)}")
+    if not batches:
+        raise RuntimeError("At least one SpeciesInfo batch is required")
 
     domains = batches[0].get("source_enum_domains")
     if not isinstance(domains, dict):
@@ -142,11 +145,18 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
         generation = int(batch.get("species_introduction_generation", 0))
         if generation not in BATCH_RANGES:
             raise RuntimeError(f"Unexpected SpeciesInfo generation: {generation}")
-        start, end, count = BATCH_RANGES[generation]
         if batch.get("status") != "staging_only_not_runtime":
             raise RuntimeError(f"Gen {generation} batch is not staging-only")
         if batch.get("runtime_activation_allowed") is not False:
             raise RuntimeError(f"Gen {generation} batch allows runtime activation")
+        if strict_batch_contract:
+            start, end, count = BATCH_RANGES[generation]
+        else:
+            batch_rows = batch.get("species", [])
+            if not batch_rows:
+                raise RuntimeError(f"Gen {generation} test batch is empty")
+            dex_values = [int(item["national_dex"]) for item in batch_rows]
+            start, end, count = min(dex_values), max(dex_values), len(dex_values)
         if batch.get("national_dex_range") != [start, end] or batch.get("species_count") != count:
             raise RuntimeError(f"Gen {generation} batch range/count mismatch")
         if batch.get("source_enum_domains") != domains:
