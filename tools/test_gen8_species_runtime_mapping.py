@@ -111,6 +111,7 @@ def test_runtime_three_slot_ability_storage_contract():
     ]
 
     assert "#define NUM_ABILITY_SLOTS 3" in header
+    assert "NUM_ABILITY_SLOTS = 3" in (ROOT / "tools/gen8_species_runtime_mapping.py").read_text(encoding="utf-8")
     assert "u8 abilities[NUM_ABILITY_SLOTS];" in header
     assert "u8 abilityNumHigh:1;" in header
     assert "u8 unused:3;" in header
