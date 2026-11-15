@@ -4567,17 +4567,22 @@ u8 GetAbilityBySpecies(u16 species, u8 abilityNum)
     return gLastUsedAbility;
 }
 
-bool8 SetMonAbilityNum(struct Pokemon *mon, u8 abilityNum)
+bool8 SetBoxMonAbilityNum(struct BoxPokemon *boxMon, u8 abilityNum)
 {
-    u16 species = GetMonData(mon, MON_DATA_SPECIES, NULL);
+    u16 species = GetBoxMonData(boxMon, MON_DATA_SPECIES);
     const struct SpeciesInfo *speciesInfo = GetSpeciesInfoSafe(species);
 
     if (abilityNum >= ARRAY_COUNT(speciesInfo->abilities)
      || speciesInfo->abilities[abilityNum] == ABILITY_NONE)
         return FALSE;
 
-    SetMonData(mon, MON_DATA_ABILITY_NUM, &abilityNum);
+    SetBoxMonData(boxMon, MON_DATA_ABILITY_NUM, &abilityNum);
     return TRUE;
+}
+
+bool8 SetMonAbilityNum(struct Pokemon *mon, u8 abilityNum)
+{
+    return SetBoxMonAbilityNum(&mon->box, abilityNum);
 }
 
 u8 GetMonAbility(struct Pokemon *mon)
