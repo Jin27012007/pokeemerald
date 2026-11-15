@@ -57,12 +57,19 @@ def test_type_chart_random_probe_cannot_read_past_the_table():
     assert "> sizeof(gTypeEffectiveness) / 3" not in BATTLE_SCRIPTS
 
 
+def test_hidden_power_keeps_the_original_gen3_type_pool():
+    assert "NUMBER_OF_MON_TYPES - 4" in BATTLE_SCRIPTS
+    assert "NUMBER_OF_MON_TYPES - 3) * typeBits" not in BATTLE_SCRIPTS
+    assert "Fairy type are excluded" in BATTLE_SCRIPTS
+
+
 def main():
     test_fairy_has_a_unique_emerald_type_id()
     test_fairy_chart_contains_all_gen6_matchups()
     test_fairy_summary_icon_and_palette_are_registered()
     test_type_chart_random_probe_cannot_read_past_the_table()
-    print("PASS: Fairy type ID, 12 matchup changes, summary icon and bounded chart access.")
+    test_hidden_power_keeps_the_original_gen3_type_pool()
+    print("PASS: Fairy type ID, 12 matchup changes, summary icon, bounded chart access and legacy Hidden Power pool.")
 
 
 if __name__ == "__main__":
