@@ -35,7 +35,11 @@ def test_all_gen8_item_ids_have_records_text_and_safe_icons():
 
 
 def test_imported_hold_effect_ids_are_unique_and_fit_u8():
-    rows = re.findall(r"#define HOLD_EFFECT_([A-Z0-9_]+)\s+([0-9]+)", HOLD_EFFECTS)
+    rows = [
+        (symbol, value)
+        for symbol, value in re.findall(r"#define HOLD_EFFECT_([A-Z0-9_]+)\s+([0-9]+)", HOLD_EFFECTS)
+        if not symbol.startswith("PARAM_") and symbol != "COUNT"
+    ]
     values = [int(value) for _, value in rows]
     assert len(values) == len(set(values))
     assert max(values) < 256
