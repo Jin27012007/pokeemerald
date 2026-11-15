@@ -345,6 +345,15 @@ enum {
     assert items["USE_PARTY_MENU"] == 1
 
 
+def test_target_item_catalog_matches_real_emerald_items():
+    source = (ROOT / "include/constants/items.h").read_text(encoding="utf-8")
+    items = module.target_item_constant_catalog(source)
+    assert items["NONE"] == 0
+    assert "ASPEAR_BERRY" in items
+    assert "BIG_MUSHROOM" in items
+    assert "LIGHT_BALL" not in items
+
+
 def test_enum_parser_preserves_full_constant_name():
     source = '''enum {
     NATIONAL_DEX_NONE,
@@ -376,6 +385,7 @@ def test_generated_text_writer_is_idempotent():
 
 def main():
     test_target_item_catalog_reads_implicit_item_enum_values()
+    test_target_item_catalog_matches_real_emerald_items()
     test_enum_parser_preserves_full_constant_name()
     test_generated_text_writer_is_idempotent()
     test_nested_initializer_scan()
