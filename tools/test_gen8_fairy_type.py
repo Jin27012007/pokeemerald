@@ -166,7 +166,7 @@ def main():
     test_fairy_battle_text_and_pokedex_filter()
     test_species_that_gained_fairy_keep_modern_types()
     test_gen8_converter_no_longer_treats_fairy_as_a_gap()
-    print("PASS: Fairy type, modern chart, UI, Pokédex, legacy species and Gen 8 conversion.")
+    print("PASS: Fairy chart, 4bpp icon integrity, summary UI, Pokédex, species and legacy Hidden Power.")
 
 
 if __name__ == "__main__":
