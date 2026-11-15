@@ -351,7 +351,8 @@ def test_target_item_catalog_matches_real_emerald_items():
     assert items["NONE"] == 0
     assert "ASPEAR_BERRY" in items
     assert "BIG_MUSHROOM" in items
-    assert "ABSORB_BULB" not in items
+    assert "ABSORB_BULB" in items
+    assert "ASSAULT_VEST" not in items
 
 
 def test_enum_parser_preserves_full_constant_name():
