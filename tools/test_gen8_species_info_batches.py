@@ -48,9 +48,9 @@ def make_fixture():
                     "baseHP": "50",
                     "types": (
                         "#if P_UPDATED_TYPES >= GEN_6\n"
-                        "MON_TYPES(TYPE_GRASS, TYPE_POISON)\n"
+                        "MON_TYPES(TYPE_FAIRY, TYPE_FLYING)\n"
                         "#else\n"
-                        "MON_TYPES(TYPE_GRASS)\n"
+                        "MON_TYPES(TYPE_NORMAL, TYPE_FLYING)\n"
                         "#endif"
                     ),
                     "eggGroups": "MON_EGG_GROUPS(EGG_GROUP_MONSTER, EGG_GROUP_GRASS)",
@@ -64,7 +64,7 @@ def make_fixture():
                     "baseSpAttack": "80",
                     "baseSpDefense": "50",
                     "evYield_Attack": "1",
-                    "types": "MON_TYPES(TYPE_GRASS, TYPE_POISON)",
+                    "types": "MON_TYPES((P_UPDATED_TYPES >= GEN_6 ? TYPE_FAIRY : TYPE_NORMAL), TYPE_FLYING)",
                     "eggGroups": "MON_EGG_GROUPS(EGG_GROUP_MONSTER, EGG_GROUP_GRASS)",
                     "abilities": "{ ABILITY_OVERGROW, ABILITY_TEST_ALIAS, ABILITY_TEST_HIDDEN }",
                 },
@@ -79,7 +79,7 @@ def make_fixture():
                 "gender_ratio": 127,
                 "friendship": 50,
                 "growth_rate": 3,
-                "types": [12, 4],
+                "types": [19, 3],
                 "egg_groups": [1, 7],
                 "abilities": [65, None],
                 "hidden_ability": 34,
@@ -110,7 +110,7 @@ def make_fixture():
                 "runtime_gaps": [],
             })
     domains = {
-        "types": {"GRASS": 12, "POISON": 4},
+        "types": {"GRASS": 12, "POISON": 4, "FAIRY": 19, "NORMAL": 1, "FLYING": 3},
         "egg_groups": {"MONSTER": 1, "GRASS": 7},
         "growth_rates": {"MEDIUM_FAST": 3},
         "abilities": {"OVERGROW": 65, "NONE": 0, "TEST_ALIAS": None, "TEST_HIDDEN": 34},
@@ -147,8 +147,8 @@ def test_batch_is_complete_and_staging_only():
     assert first["statistics"]["baseHP"] == 50
     assert first["statistics"]["evYield_Attack"] == 1
     assert "evYield_Defense" not in first["statistics"]
-    assert first["types_source_ids"] == [12, 4]
-    assert first["types_source_symbols"] == ["GRASS", "POISON"]
+    assert first["types_source_ids"] == [19, 3]
+    assert first["types_source_symbols"] == ["FAIRY", "FLYING"]
     assert first["egg_groups_source_symbols"] == ["MONSTER", "GRASS"]
     assert first["abilities_source_symbols"] == ["OVERGROW", "TEST_ALIAS", "TEST_HIDDEN"]
     assert first["abilities_source_ids"] == [65, None]
@@ -247,7 +247,9 @@ def test_raw_and_expanded_source_are_both_preserved():
     assert row["source_fields_raw"]["baseHP"] == "50"
     assert "#if P_UPDATED_TYPES >= GEN_6" in row["source_fields_raw"]["types"]
     assert row["source_fields_expanded"]["baseHP"] == "50"
-    assert row["source_fields_expanded"]["types"] == "MON_TYPES(TYPE_GRASS, TYPE_POISON)"
+    assert row["source_fields_expanded"]["types"] == (
+        "MON_TYPES((P_UPDATED_TYPES >= GEN_6 ? TYPE_FAIRY : TYPE_NORMAL), TYPE_FLYING)"
+    )
     assert row["source_initializer_raw"] == "{ .baseHP = 50 }"
     assert row["source_initializer_expanded"] == "{ .baseHP = 50 }"
 
