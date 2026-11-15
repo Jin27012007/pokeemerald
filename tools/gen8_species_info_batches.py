@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the first reviewable, non-runtime Gen 4 SpeciesInfo import batch."""
+"""Build reviewable, non-runtime SpeciesInfo batches for Gen 4 through Gen 8."""
 from __future__ import annotations
 
 import argparse
