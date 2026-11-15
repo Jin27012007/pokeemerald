@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for deterministic and isolated Gen 4 SpeciesInfo batching."""
+"""Regression tests for deterministic and isolated Gen 4/Gen 5 SpeciesInfo batches."""
 from __future__ import annotations
 
 import importlib.util
@@ -17,11 +17,12 @@ sys.modules[SPEC.name] = module
 SPEC.loader.exec_module(module)
 
 
-def make_fixture():
+def make_fixture(batch=None):
+    batch = batch or batch_spec()
     canonical = []
     compact = []
     for dex in range(1, 899):
-        is_batch = 387 <= dex <= 388
+        is_batch = batch["national_dex_start"] <= dex <= batch["national_dex_start"] + 1
         symbol = f"TESTMON_{dex}"
         if is_batch:
             canonical.append({
@@ -30,7 +31,7 @@ def make_fixture():
                 "source_record_symbol": symbol,
                 "source_national_dex_symbol": f"NATIONAL_DEX_{symbol}",
                 "source_national_dex_matches_selected": True,
-                "source_generation": 4,
+                "source_generation": batch["species_introduction_generation"],
                 "record_provenance": "expansion_source_initializer",
                 "source_fields_present": sorted(module.REQUIRED_SOURCE_FIELDS),
                 "source_complete": True,
@@ -42,7 +43,7 @@ def make_fixture():
             })
             compact.append({
                 "species_symbol": symbol,
-                "generation": 4,
+                "generation": batch["species_introduction_generation"],
                 "national_dex_symbol": f"NATIONAL_DEX_{symbol}",
                 "source_raw": {
                     "baseHP": "50",
@@ -119,15 +120,40 @@ def make_fixture():
     return canonical, compact, domains
 
 
-def batch_spec():
+def batch_spec(generation=4):
+    start, introduction_generation = {4: (387, 4), 5: (494, 5)}[generation]
     return {
         "batch_id": "test_batch",
-        "species_introduction_generation": 4,
-        "national_dex_start": 387,
-        "national_dex_end": 388,
+        "species_introduction_generation": introduction_generation,
+        "national_dex_start": start,
+        "national_dex_end": start + 1,
         "expected_species_count": 2,
         "source_generation_range": [1, 8],
     }
+
+
+def test_gen5_batch_configuration_and_generation():
+    configured = module.BATCHES[5]
+    assert configured["batch_id"] == "gen5_species_info"
+    assert configured["species_introduction_generation"] == 5
+    assert configured["national_dex_start"] == 494
+    assert configured["national_dex_end"] == 649
+    assert configured["expected_species_count"] == 156
+
+    fixture_spec = batch_spec(5)
+    canonical, compact, domains = make_fixture(fixture_spec)
+    result = module.build_batch(
+        canonical, compact, domains,
+        {"repository": "https://github.com/example/source", "commit": "b" * 40},
+        fixture_spec,
+    )
+    assert result["national_dex_range"] == [494, 495]
+    assert result["species_introduction_generation"] == 5
+    assert result["species_count"] == 2
+    assert [row["national_dex"] for row in result["species"]] == [494, 495]
+    assert result["runtime_activation_allowed"] is False
+    assert result["species"][0]["source_generation"] == 5
+    assert result["species"][0]["source_file"].endswith("gen_5_families.h")
 
 
 def test_batch_is_complete_and_staging_only():
@@ -206,7 +232,7 @@ def test_missing_canonical_row_is_rejected():
 
 def test_source_file_generation_is_preserved_and_must_match():
     canonical, compact, domains = make_fixture()
-    canonical[386]["source_generation"] = 3
+    canonical[batch_spec()["national_dex_start"] - 1]["source_generation"] = 3
     compact[0]["generation"] = 3
     result = module.build_batch(
         canonical, compact, domains,
@@ -273,6 +299,7 @@ def test_raw_and_expanded_source_are_both_preserved():
 
 
 def main():
+    test_gen5_batch_configuration_and_generation()
     test_batch_is_complete_and_staging_only()
     test_family_macro_brace_initializer_is_preserved()
     test_batch_is_deterministic()
@@ -280,7 +307,7 @@ def main():
     test_source_file_generation_is_preserved_and_must_match()
     test_unresolved_source_record_is_rejected()
     test_raw_and_expanded_source_are_both_preserved()
-    print("PASS: Gen 4 batch identity, field coverage, provenance, determinism and runtime isolation.")
+    print("PASS: Gen 4/Gen 5 batch identity, field coverage, provenance, determinism and runtime isolation.")
 
 
 if __name__ == "__main__":
