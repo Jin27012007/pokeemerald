@@ -165,9 +165,17 @@ def build_batch(
                     continue
                 if macro_name:
                     macro_match = re.fullmatch(rf"{macro_name}\((.*)\)", raw, re.S)
-                    if not macro_match:
+                    if macro_match:
+                        arguments = split_c_arguments(macro_match.group(1))
+                    elif raw.startswith("{") and raw.endswith("}"):
+                        # Family macros such as ROTOM_FAMILY_TYPES expand to
+                        # a brace initializer rather than MON_TYPES(...).
+                        arguments = split_c_arguments(raw[1:-1])
+                    else:
+                        names = re.findall(rf"{prefix}([A-Z0-9_]+)", raw)
+                        if names:
+                            return names
                         continue
-                    arguments = split_c_arguments(macro_match.group(1))
                 elif raw.startswith("{") and raw.endswith("}"):
                     arguments = split_c_arguments(raw[1:-1])
                 else:
