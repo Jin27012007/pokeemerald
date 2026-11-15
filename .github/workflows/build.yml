@@ -109,6 +109,10 @@ jobs:
 
       - name: Verify canonical map against legacy Emerald Dex lookup
         run: python3 tools/test_gen8_species_map_parity.py
+      - name: Audit Gen 8 species namespace readiness (read-only)
+        run: |
+          python3 tools/audit_gen8_species_namespace_readiness.py
+          python3 tools/test_gen8_species_namespace_readiness.py
 
       - name: Verify clean build can regenerate the species map
         run: |
