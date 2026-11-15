@@ -147,15 +147,16 @@ def build_batch(
         source_fields_expanded = source["source_expanded_fields"]
 
         def source_enum_symbols(field: str, prefix: str) -> list[str]:
-            # The parser's expanded fields may contain evaluated numeric data
-            # or macro expansions. Prefer the original designated initializer
-            # field for symbolic provenance, falling back only when absent.
+            # Prefer the original designated field so source aliases remain
+            # visible. If that form is indirect or macro-based, inspect the
+            # parser's expanded field as a second, independent representation.
             raw_fields = source.get("source_raw", {})
-            raw = raw_fields.get(field, source_fields_expanded.get(field, ""))
-            names = re.findall(rf"{prefix}([A-Z0-9_]+)", raw)
-            if not names:
-                raise RuntimeError(f"Dex {dex}: source enum symbols are missing for {field}")
-            return names
+            candidates = (raw_fields.get(field, ""), source_fields_expanded.get(field, ""))
+            for raw in candidates:
+                names = re.findall(rf"{prefix}([A-Z0-9_]+)", raw or "")
+                if names:
+                    return names
+            raise RuntimeError(f"Dex {dex}: source enum symbols are missing for {field}")
 
         enum_symbol_fields = {
             "types": ("types", "TYPE_"),
