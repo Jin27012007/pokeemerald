@@ -359,7 +359,7 @@ def main() -> int:
         )
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(
-            json.dumps(result, indent=2, ensure_ascii=False) + "\\n",
+            json.dumps(result, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         print(json.dumps({
