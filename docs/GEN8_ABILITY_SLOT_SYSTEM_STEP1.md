@@ -35,4 +35,4 @@ As espécies novas ainda não foram ativadas em `gSpeciesInfo`. O ledger de comp
 
 ## Testes
 
-O CI executa regressões que verificam os três slots, a leitura e escrita dos dois bits, a preservação do tamanho de `BattlePokemon`, a resolução do slot oculto e a correção do Pickup. A ROM moderna precisa continuar compilando com as tabelas de gameplay atuais.
+O CI verifica os três slots, leitura e escrita dos dois bits, preservação dos tamanhos de `PokemonSubstruct3`, `BoxPokemon` e `BattlePokemon`, resolução do slot oculto, serialização pelos quatro controladores, atualização de troca, estimativa da IA e Pickup. A ROM moderna precisa continuar compilando com as tabelas de gameplay atuais.
