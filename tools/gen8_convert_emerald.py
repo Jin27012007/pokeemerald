@@ -1385,10 +1385,10 @@ def generate(check: bool = False) -> dict:
         for field in source_field_universe
     }
     emerald_compatibility = {
-        "struct_species_info_bytes": 0x1A,
+        "struct_species_info_bytes": 0x1E,
         "source_species_info_uses_three_ability_slots": True,
-        "emerald_species_info_has_two_ability_slots": True,
-        "ability_slot_3_runtime_compatible": False,
+        "emerald_species_info_has_three_ability_slots": True,
+        "ability_slot_3_runtime_compatible": True,
         "source_ability_enum_width_bits": 16,
         "emerald_ability_slot_width_bits": 8,
         "all_source_ability_ids_fit_emerald_slot": all(
@@ -1403,7 +1403,7 @@ def generate(check: bool = False) -> dict:
         "unsupported_canonical_types": sorted(
             {"FAIRY", "STELLAR"} - {x["symbol"] for x in symbols(type_text, "TYPE_")}
         ),
-        "source_only_fields_require_runtime_work": ["third_ability_slot", "new_abilities", "new_items", "fairy_type", "stellar_type"],
+        "source_only_fields_require_runtime_work": ["new_abilities", "new_items", "fairy_type", "stellar_type"],
     }
     counts = {
         "canonical_dex_entries": len(species_map), "existing_species": existing_count,
