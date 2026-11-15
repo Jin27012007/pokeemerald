@@ -125,6 +125,7 @@ def test_batch_is_complete_and_staging_only():
     )
     assert result["species_count"] == 2
     assert result["national_dex_range"] == [387, 388]
+    assert result["species_introduction_generation"] == 4
     assert result["status"] == "staging_only_not_runtime"
     assert result["runtime_activation_allowed"] is False
     assert [row["national_dex"] for row in result["species"]] == [387, 388]
@@ -133,6 +134,8 @@ def test_batch_is_complete_and_staging_only():
     assert first["statistics"]["evYield_Attack"] == 1
     assert "evYield_Defense" not in first["statistics"]
     assert first["types_source_ids"] == [12, 4]
+    assert first["source_generation"] == 4
+    assert first["source_file"].endswith("gen_4_families.h")
     assert first["runtime_gap_codes"] == ["test_gap"]
     assert "emerald_internal_id" not in first
     assert "species_internal_id" not in first
@@ -163,19 +166,22 @@ def test_missing_canonical_row_is_rejected():
         raise AssertionError("incomplete canonical catalog was accepted")
 
 
-def test_wrong_generation_or_dex_identity_is_rejected():
+def test_source_file_generation_is_preserved_and_must_match():
     canonical, compact, domains = make_fixture()
-    canonical[386]["source_generation"] = 5
-    try:
-        module.build_batch(canonical, compact, domains,
-            {"repository": "https://github.com/example/source", "commit": "a" * 40},
-            batch_spec())
-    except RuntimeError as error:
-        assert "source generation" in str(error)
-    else:
-        raise AssertionError("wrong source generation was accepted")
+    canonical[386]["source_generation"] = 3
+    compact[0]["generation"] = 3
+    result = module.build_batch(
+        canonical, compact, domains,
+        {"repository": "https://github.com/example/source", "commit": "a" * 40},
+        batch_spec(),
+    )
+    first = result["species"][0]
+    assert result["species_introduction_generation"] == 4
+    assert first["source_generation"] == 3
+    assert first["source_file"].endswith("gen_3_families.h")
 
     canonical, compact, domains = make_fixture()
+    canonical[386]["source_generation"] = 5
     canonical[386]["source_national_dex_matches_selected"] = False
     try:
         module.build_batch(canonical, compact, domains,
@@ -218,7 +224,7 @@ def main():
     test_batch_is_complete_and_staging_only()
     test_batch_is_deterministic()
     test_missing_canonical_row_is_rejected()
-    test_wrong_generation_or_dex_identity_is_rejected()
+    test_source_file_generation_is_preserved_and_must_match()
     test_unresolved_source_record_is_rejected()
     test_raw_and_expanded_source_are_both_preserved()
     print("PASS: Gen 4 batch identity, field coverage, provenance, determinism and runtime isolation.")
