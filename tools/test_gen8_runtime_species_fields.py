@@ -52,6 +52,7 @@ def test_gen8_ability_registry_has_unique_u8_ids_and_text():
     values = [int(value) for _, value in rows]
     assert len(values) == len(set(values))
     assert max(values) <= 255
+    assert len([value for value in values if value >= 78]) == 165
     assert "#define ABILITIES_COUNT 243" in ABILITIES
     for symbol, value in rows:
         if int(value) < 78:
