@@ -97,6 +97,18 @@ def test_runtime_three_slot_ability_storage_contract():
     header = (ROOT / "include/pokemon.h").read_text(encoding="utf-8")
     pokemon = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
     battle_scripts = (ROOT / "src/battle_script_commands.c").read_text(encoding="utf-8")
+    battle_main = (ROOT / "src/battle_main.c").read_text(encoding="utf-8")
+    battle_ai = (ROOT / "src/battle_ai_script_commands.c").read_text(encoding="utf-8")
+    controller_paths = (
+        "src/battle_controller_opponent.c",
+        "src/battle_controller_link_opponent.c",
+        "src/battle_controller_link_partner.c",
+        "src/battle_controller_player.c",
+    )
+    controllers = [
+        (ROOT / path).read_text(encoding="utf-8")
+        for path in controller_paths
+    ]
 
     assert "#define NUM_ABILITY_SLOTS 3" in header
     assert "u8 abilities[NUM_ABILITY_SLOTS];" in header
@@ -124,6 +136,15 @@ def test_runtime_three_slot_ability_storage_contract():
     assert "SetBattleMonAbilityNum(" in pokemon
     assert "SetBattleMonAbilityNum(\n        &gBattleMons[battler]" in pokemon
     assert "GetBattleMonAbilityNum(&gBattleMons[gActiveBattler])" in battle_scripts
+    assert "GetBattleMonAbilityNum(&gBattleMons[gActiveBattler])" in battle_main
+    assert all("SetBattleMonAbilityNum(&battleMon, GetMonData(" in source for source in controllers)
+    assert all("battleMon.abilityNum = GetMonData(" not in source for source in controllers)
+
+    # The AI now treats all three non-empty slots as possible for an unknown
+    # opponent, both when guessing and when answering an ability query.
+    assert "for (i = 0; i < NUM_ABILITY_SLOTS; i++)" in battle_ai
+    assert "GetRandomSpeciesAbility(gBattleMons[battler].species)" in battle_ai
+    assert "SpeciesCanHaveAbility(gBattleMons[battler].species, ability)" in battle_ai
 
     # Pickup used to collapse every nonzero ability index to slot 2 in C's
     # zero-based terms (Emerald's second slot). It now asks the common getter.
