@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "status": "policy_defined_form_inventory_pending_classification",
+  "canonical_national_dex": {
+    "first": 1,
+    "last": 898,
+    "count": 898,
+    "identity_key": "national_dex",
+    "one_canonical_base_species_per_number": true,
+    "alternate_forms_add_national_dex_entries": false,
+    "alternate_forms_receive_species_internal_ids": false
+  },
+  "form_identity": {
+    "key": "form_key",
+    "parent_key": "national_dex",
+    "namespace": "separate_from_species_internal_ids",
+    "numeric_form_ids_allocated": false,
+    "source_form_symbols_must_be_preserved": true,
+    "missing_or_ambiguous_classification_blocks_runtime_import": true
+  },
+  "policies": [
+    {
+      "value": "canonical",
+      "meaning": "The single base/default form represented by the canonical National Dex row.",
+      "national_dex_entry": true,
+      "species_internal_id": true,
+      "persistent_form_state": false
+    },
+    {
+      "value": "cosmetic",
+      "meaning": "A visual variation whose gameplay identity is unchanged or can be reconstructed from existing persistent data.",
+      "national_dex_entry": false,
+      "species_internal_id": false,
+      "persistent_form_state": false,
+      "requirement": "The visual form must be deterministically recoverable; otherwise classify it as persistent_separate."
+    },
+    {
+      "value": "persistent_separate",
+      "meaning": "A non-canonical form that changes persistent gameplay identity, such as form-dependent stats, typing, abilities, learnsets, or evolution behavior.",
+      "national_dex_entry": false,
+      "species_internal_id": false,
+      "persistent_form_state": true,
+      "persistence_key": "stable symbolic form_key",
+      "storage_status": "requires a separately versioned save/storage design before runtime use"
+    },
+    {
+      "value": "temporary_battle",
+      "meaning": "A battle-only transformation that reverts after battle and does not change the stored party/box species.",
+      "national_dex_entry": false,
+      "species_internal_id": false,
+      "persistent_form_state": false,
+      "storage_location": "battle runtime state only"
+    }
+  ],
+  "record_schema": {
+    "required_fields": [
+      "national_dex",
+      "base_species_symbol",
+      "form_key",
+      "source_form_symbol",
+      "policy",
+      "gameplay_differences",
+      "graphics_dependencies",
+      "evolution_dependencies"
+    ],
+    "policy_values": [
+      "canonical",
+      "cosmetic",
+      "persistent_separate",
+      "temporary_battle"
+    ],
+    "no_implicit_default_policy": true
+  },
+  "invariants": [
+    "National Dex 1-898 contains only canonical base species rows.",
+    "Each canonical National Dex row has exactly one canonical form.",
+    "Alternate forms never consume a National Dex number or a species internal ID.",
+    "Persistent form differences use a separate stable form_key, not a new species ID.",
+    "Temporary battle forms never overwrite the persistent species identity.",
+    "Every source form reference must be classified before it is imported into runtime tables."
+  ]
+}
