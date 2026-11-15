@@ -29,7 +29,7 @@ Os nomes foram limitados a 12 caracteres para respeitar `ABILITY_NAME_LENGTH` do
 
 - Os 165 efeitos novos de habilidade ainda precisam de implementação e testes de batalha. Ter constante, nome e descrição não torna a habilidade funcional.
 - A lógica de criação normal ainda não escolhe habilidade oculta. A API explícita de seleção já existe, mas precisa ser ligada aos métodos de captura, distribuição e criação que deverão oferecer esse slot.
-- Fairy ainda não está implementado na tabela de tipos.
+- O tipo Fairy foi integrado na fase seguinte; ver `docs/GEN8_FAIRY_TYPE.md` para as interações e limites.
 - Os 23 itens sem constante/registro, os movimentos ausentes, evoluções, gráficos e cries continuam pendentes.
 - As espécies #387–898 continuam fora de `gSpeciesInfo`; esta fase prepara o layout e os IDs de habilidade, sem alocar IDs internos de espécies.
 
@@ -44,6 +44,7 @@ O CI testa:
 - três slots na SpeciesInfo;
 - `expYield` de 16 bits;
 - seleção segura de slot e fallback;
+- tabela de efetividade, nome, ícones e busca para o tipo Fairy;
 - IDs de habilidade únicos e dentro de 8 bits;
 - nomes e descrições para as 165 habilidades importadas.
 
