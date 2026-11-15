@@ -1,4 +1,7 @@
 #include "global.h"
+
+STATIC_ASSERT(sizeof(struct BattlePokemon) == 0x58, BattlePokemon_ability_slot_extension_must_not_change_wire_size);
+
 #include "decompress.h"
 #include "gen8_species_map.h"
 #include "malloc.h"
@@ -3940,7 +3943,7 @@ u32 GetBoxMonData3(struct BoxPokemon *boxMon, s32 field, u8 *data)
         retVal = substruct3->isEgg;
         break;
     case MON_DATA_ABILITY_NUM:
-        retVal = substruct3->abilityNum;
+        retVal = substruct3->abilityNum | (boxMon->abilityNumHigh << 1);
         break;
     case MON_DATA_COOL_RIBBON:
         retVal = substruct3->coolRibbon;
@@ -4346,8 +4349,12 @@ void SetBoxMonData(struct BoxPokemon *boxMon, s32 field, const void *dataArg)
             boxMon->isEgg = FALSE;
         break;
     case MON_DATA_ABILITY_NUM:
-        SET8(substruct3->abilityNum);
+    {
+        u8 abilityNum = *data;
+        substruct3->abilityNum = abilityNum & 1;
+        boxMon->abilityNumHigh = (abilityNum >> 1) & 1;
         break;
+    }
     case MON_DATA_COOL_RIBBON:
         SET8(substruct3->coolRibbon);
         break;
@@ -4555,11 +4562,12 @@ u8 GetMonsStateToDoubles_2(void)
 
 u8 GetAbilityBySpecies(u16 species, u8 abilityNum)
 {
-    if (abilityNum)
-        gLastUsedAbility = GetSpeciesInfoSafe(species)->abilities[1];
-    else
-        gLastUsedAbility = GetSpeciesInfoSafe(species)->abilities[0];
+    const struct SpeciesInfo *info = GetSpeciesInfoSafe(species);
 
+    if (abilityNum >= NUM_ABILITY_SLOTS)
+        return ABILITY_NONE;
+
+    gLastUsedAbility = info->abilities[abilityNum];
     return gLastUsedAbility;
 }
 
@@ -4568,6 +4576,41 @@ u8 GetMonAbility(struct Pokemon *mon)
     u16 species = GetMonData(mon, MON_DATA_SPECIES, NULL);
     u8 abilityNum = GetMonData(mon, MON_DATA_ABILITY_NUM, NULL);
     return GetAbilityBySpecies(species, abilityNum);
+}
+
+// Select a real ability slot on an existing Pokémon. The slot is retained
+// in BoxPokemon, so it survives party/PC/daycare movement without changing
+// the size of any stored Pokémon record.
+bool8 SetMonAbilitySlot(struct Pokemon *mon, u8 abilitySlot)
+{
+    u16 species;
+
+    if (mon == NULL || abilitySlot >= NUM_ABILITY_SLOTS)
+        return FALSE;
+
+    species = GetMonData(mon, MON_DATA_SPECIES, NULL);
+    if (GetSpeciesInfoSafe(species)->abilities[abilitySlot] == ABILITY_NONE)
+        return FALSE;
+
+    SetMonData(mon, MON_DATA_ABILITY_NUM, &abilitySlot);
+    return TRUE;
+}
+
+// BattlePokemon retains the low ability-index bit in its original bitfield.
+// Its previously unused byte carries the high bit, preserving the existing
+// BattlePokemon size and controller-buffer layout.
+u8 GetBattleMonAbilityNum(const struct BattlePokemon *mon)
+{
+    return (mon->abilityNum & 1) | ((mon->unknown & 1) << 1);
+}
+
+void SetBattleMonAbilityNum(struct BattlePokemon *mon, u8 abilityNum)
+{
+    if (mon == NULL)
+        return;
+
+    mon->abilityNum = abilityNum & 1;
+    mon->unknown = (abilityNum >> 1) & 1;
 }
 
 void CreateSecretBaseEnemyParty(struct SecretBase *secretBaseRecord)
@@ -4710,11 +4753,15 @@ void CopyPlayerPartyMonToBattleData(u8 battler, u8 partyIndex)
     gBattleMons[battler].spAttack = GetMonData(&gPlayerParty[partyIndex], MON_DATA_SPATK, NULL);
     gBattleMons[battler].spDefense = GetMonData(&gPlayerParty[partyIndex], MON_DATA_SPDEF, NULL);
     gBattleMons[battler].isEgg = GetMonData(&gPlayerParty[partyIndex], MON_DATA_IS_EGG, NULL);
-    gBattleMons[battler].abilityNum = GetMonData(&gPlayerParty[partyIndex], MON_DATA_ABILITY_NUM, NULL);
+    SetBattleMonAbilityNum(
+        &gBattleMons[battler],
+        GetMonData(&gPlayerParty[partyIndex], MON_DATA_ABILITY_NUM, NULL));
     gBattleMons[battler].otId = GetMonData(&gPlayerParty[partyIndex], MON_DATA_OT_ID, NULL);
     gBattleMons[battler].types[0] = GetSpeciesInfoSafe(gBattleMons[battler].species)->types[0];
     gBattleMons[battler].types[1] = GetSpeciesInfoSafe(gBattleMons[battler].species)->types[1];
-    gBattleMons[battler].ability = GetAbilityBySpecies(gBattleMons[battler].species, gBattleMons[battler].abilityNum);
+    gBattleMons[battler].ability = GetAbilityBySpecies(
+        gBattleMons[battler].species,
+        GetBattleMonAbilityNum(&gBattleMons[battler]));
     GetMonData(&gPlayerParty[partyIndex], MON_DATA_NICKNAME, nickname);
     StringCopy_Nickname(gBattleMons[battler].nickname, nickname);
     GetMonData(&gPlayerParty[partyIndex], MON_DATA_OT_NAME, gBattleMons[battler].otName);
