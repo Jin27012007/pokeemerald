@@ -20,7 +20,7 @@ A função `target_item_constant_catalog` agora lê os membros da enum com o par
 - **Enums de habilidades e itens:** os IDs da Expansion não são IDs de Emerald. Habilidades sem constante-alvo, itens sem constante ou sem registro de dados e comportamentos ainda não auditados permanecem como lacunas explícitas.
 - **EVs:** os valores fornecidos estão dentro do limite de 2 bits do struct atual. Quando um EV não é declarado na fonte, o valor de inicialização é registrado como zero, que é o valor padrão de um campo omitido em um inicializador C.
 
-Os números deste documento descrevem o conjunto de dados analisado no CI #1017. Dos 57 itens segurados usados pelas espécies novas, 34 têm constante e registro-alvo no Emerald; 23 ainda não têm constante nem registro de dados. O ledger encontrou 92 referências de item resolvidas entre 138 referências comuns/raras analisadas; uma referência rara permanece sem ID numérico resolvido.
+Os números deste documento descrevem o conjunto de dados analisado no CI #1017. Dos 57 itens segurados usados pelas espécies novas, 34 têm constante e registro-alvo no Emerald; 23 ainda não têm constante nem registro de dados. O ledger encontrou 92 referências de item resolvidas entre 138 referências comuns/raras analisadas; uma referência rara permanece sem ID numérico resolvido. A migração de saves antigos está fora do escopo deste projeto.
 
 ## Saídas e limites
 
