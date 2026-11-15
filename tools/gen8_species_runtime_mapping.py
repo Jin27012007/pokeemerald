@@ -306,8 +306,6 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
                 blockers.append(f"held_item_data_missing:{label}:{item['symbol'] or 'UNKNOWN'}")
             if item["source_id"] not in (None, 0) and item.get("target_constant_present") and not item.get("target_behavior_audited"):
                 pending.append(f"held_item_behavior_not_audited:{item['symbol']}")
-        if exp_yield > 255:
-            blockers.append("exp_yield_exceeds_emerald_u8")
         if row.get("item_rare_source_id") is None:
             blockers.append("rare_held_item_source_id_unresolved")
 
@@ -369,7 +367,7 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
         "blocking_gates": [
             "No production Emerald internal IDs have been allocated for the 512 species.",
             "The three ability slots are represented in runtime storage; hidden-ability encounter, breeding and distribution flows still need implementation.",
-            "Emerald SpeciesInfo stores expYield as u8; source values above 255 cannot be copied without a runtime layout change.",
+            "SpeciesInfo expYield is now u16; future source values must remain within the unsigned 16-bit field.",
             "Missing abilities, Fairy type, held-item data, move/evolution tables and graphics remain incomplete or unaudited.",
             "In-game migration of persistent species IDs and old saves has not been validated.",
         ],
