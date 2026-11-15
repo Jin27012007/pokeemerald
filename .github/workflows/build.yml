@@ -98,6 +98,9 @@ jobs:
       - name: Test Gen 8 SpeciesInfo parsers and source mappings
         run: python3 tools/test_gen8_species_info.py
 
+      - name: Test expanded Gen 8 species fields and hidden ability selection
+        run: python3 tools/test_gen8_runtime_species_fields.py
+
       - name: Audit all Expansion SpeciesInfo candidates by National Dex
         run: python3 tools/audit_gen8_species_info_candidates.py
 

@@ -945,10 +945,6 @@ def parse_species_info(source_text: str, target_info_text: str,
         runtime_gaps = []
         if unresolved_ability_symbols:
             runtime_gaps.append("source_ability_enum_id_unresolved")
-        if hidden_ability is not None and hidden_ability > 255:
-            runtime_gaps.append("hidden_ability_id_exceeds_u8")
-        if len(ability_names) > 2 and hidden_ability not in (None, ability_values.get("NONE", 0)):
-            runtime_gaps.append("third_ability_slot_not_in_emerald_struct")
         species_type_names = set(
             re.findall(r"TYPE_([A-Z0-9_]+)", fields.get("types", ""))
         )
@@ -1384,17 +1380,31 @@ def generate(check: bool = False) -> dict:
         field: sum(1 for row in canonical_species_info if field in row.get("source_fields_present", []))
         for field in source_field_universe
     }
+    target_ability_ids = {
+        row["symbol"]: row["id"] for row in symbols(ability_text, "ABILITY_")
+    }
+    canonical_mapped_ability_ids = [
+        ability_id
+        for row in canonical_species_info
+        for ability_id in (row.get("abilities") or []) + [row.get("hidden_ability")]
+        if isinstance(ability_id, int)
+    ]
     emerald_compatibility = {
-        "struct_species_info_bytes": 0x1A,
+        "struct_species_info_bytes": 0x1E,
         "source_species_info_uses_three_ability_slots": True,
-        "emerald_species_info_has_two_ability_slots": True,
-        "ability_slot_3_runtime_compatible": False,
+        "emerald_species_info_has_two_ability_slots": False,
+        "emerald_species_info_has_three_ability_slots": True,
+        "ability_slot_3_runtime_compatible": True,
         "source_ability_enum_width_bits": 16,
         "emerald_ability_slot_width_bits": 8,
-        "all_source_ability_ids_fit_emerald_slot": all(
-            isinstance(value, int) and 0 <= value <= 255
-            for value in info_result["source_enum_domains"]["abilities"].values()
+        "all_mapped_ability_ids_fit_emerald_slot": all(
+            0 <= value <= 255 for value in canonical_mapped_ability_ids
         ),
+        "mapped_canonical_ability_count": len(canonical_mapped_ability_ids),
+        "mapped_target_ability_symbols": len({
+            symbol for symbol in info_result["source_enum_domains"]["abilities"]
+            if symbol in target_ability_ids
+        }),
         "source_item_enum_width_bits": 16,
         "emerald_item_slot_width_bits": 16,
         "all_source_item_ids_fit_emerald_slot": max(info_result["source_enum_domains"]["items"].values(), default=0) <= 65535,
@@ -1403,7 +1413,7 @@ def generate(check: bool = False) -> dict:
         "unsupported_canonical_types": sorted(
             {"FAIRY", "STELLAR"} - {x["symbol"] for x in symbols(type_text, "TYPE_")}
         ),
-        "source_only_fields_require_runtime_work": ["third_ability_slot", "new_abilities", "new_items", "fairy_type", "stellar_type"],
+        "source_only_fields_require_runtime_work": ["new_ability_battle_behaviors", "new_items", "fairy_type", "stellar_type"],
     }
     counts = {
         "canonical_dex_entries": len(species_map), "existing_species": existing_count,
