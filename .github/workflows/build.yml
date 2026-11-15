@@ -107,6 +107,9 @@ jobs:
       - name: Test imported Gen 4–8 item registry
         run: python3 tools/test_gen8_item_registry.py
 
+      - name: Test implemented Gen 4–8 held-item effects
+        run: python3 tools/test_gen8_item_behaviors.py
+
       - name: Audit all Expansion SpeciesInfo candidates by National Dex
         run: python3 tools/audit_gen8_species_info_candidates.py
 

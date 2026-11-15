@@ -3240,6 +3240,21 @@ enum
         effect = ITEM_STATS_CHANGE;                                                         \
     }
 
+static void SetMoveHitItemStatRaise(u8 battler, u8 stat)
+{
+    PREPARE_STAT_BUFFER(gBattleTextBuff1, stat);
+    PREPARE_STRING_BUFFER(gBattleTextBuff2, STRINGID_STATROSE);
+    gEffectBattler = battler;
+    SET_STATCHANGER(stat, 1, FALSE);
+    gBattleScripting.animArg1 = STAT_ANIM_PLUS1 + stat;
+    gBattleScripting.animArg2 = 0;
+    gBattleScripting.battler = battler;
+    gPotentialItemEffectBattler = battler;
+    gActiveBattler = gBattlerAttacker = battler;
+    BattleScriptPushCursor();
+    gBattlescriptCurrInstr = BattleScript_BerryStatRaiseEnd2;
+}
+
 u8 ItemBattleEffects(u8 caseID, u8 battler, bool8 moveTurn)
 {
     int i = 0;
@@ -3247,6 +3262,7 @@ u8 ItemBattleEffects(u8 caseID, u8 battler, bool8 moveTurn)
     u8 changedPP = 0;
     u8 battlerHoldEffect, atkHoldEffect, UNUSED defHoldEffect;
     u8 battlerHoldEffectParam, atkHoldEffectParam, UNUSED defHoldEffectParam;
+    u8 moveType;
     u16 atkItem, defItem;
 
     gLastUsedItem = gBattleMons[battler].item;
@@ -3609,6 +3625,7 @@ u8 ItemBattleEffects(u8 caseID, u8 battler, bool8 moveTurn)
     case ITEMEFFECT_DUMMY:
         break;
     case ITEMEFFECT_MOVE_END:
+        GET_MOVE_TYPE(gCurrentMove, moveType);
         for (battler = 0; battler < gBattlersCount; battler++)
         {
             gLastUsedItem = gBattleMons[battler].item;
@@ -3688,6 +3705,33 @@ u8 ItemBattleEffects(u8 caseID, u8 battler, bool8 moveTurn)
                     gBattleCommunication[MULTISTRING_CHOOSER] = B_MSG_CURED_PROBLEM;
                     gBattlescriptCurrInstr = BattleScript_BerryCureChosenStatusRet;
                     effect = ITEM_EFFECT_OTHER;
+                }
+                break;
+            case HOLD_EFFECT_ABSORB_BULB:
+                if ((gSpecialStatuses[battler].physicalDmg != 0 || gSpecialStatuses[battler].specialDmg != 0)
+                 && moveType == TYPE_WATER
+                 && gBattleMons[battler].statStages[STAT_SPATK] < MAX_STAT_STAGE)
+                {
+                    SetMoveHitItemStatRaise(battler, STAT_SPATK);
+                    effect = ITEM_STATS_CHANGE;
+                }
+                break;
+            case HOLD_EFFECT_CELL_BATTERY:
+                if ((gSpecialStatuses[battler].physicalDmg != 0 || gSpecialStatuses[battler].specialDmg != 0)
+                 && moveType == TYPE_ELECTRIC
+                 && gBattleMons[battler].statStages[STAT_ATK] < MAX_STAT_STAGE)
+                {
+                    SetMoveHitItemStatRaise(battler, STAT_ATK);
+                    effect = ITEM_STATS_CHANGE;
+                }
+                break;
+            case HOLD_EFFECT_SNOWBALL:
+                if ((gSpecialStatuses[battler].physicalDmg != 0 || gSpecialStatuses[battler].specialDmg != 0)
+                 && moveType == TYPE_ICE
+                 && gBattleMons[battler].statStages[STAT_ATK] < MAX_STAT_STAGE)
+                {
+                    SetMoveHitItemStatRaise(battler, STAT_ATK);
+                    effect = ITEM_STATS_CHANGE;
                 }
                 break;
             case HOLD_EFFECT_CURE_STATUS:
