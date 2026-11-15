@@ -5,6 +5,12 @@ UNUSEDGFXDIR := graphics/unused
 BATINTGFXDIR := graphics/battle_interface
 BATTRANSGFXDIR := graphics/battle_transitions
 TYPESGFXDIR := graphics/types
+
+# Explicit ordering for the summary-screen type sprite sheet. Fairy is appended
+# after Dark so its animation index matches TYPE_FAIRY == 18.
+types ?= normal fight flying poison ground rock bug ghost steel mystery fire water grass electric psychic ice dragon dark fairy
+types := $(filter-out fairy,$(types)) fairy
+contest_types ?= cool beauty cute smart tough
 RAYQUAZAGFXDIR := graphics/rayquaza_scene
 ROULETTEGFXDIR := graphics/roulette
 SLOTMACHINEGFXDIR := graphics/slot_machine
@@ -130,7 +136,7 @@ $(BTLANMSPRGFXDIR)/spark.4bpp: $(BTLANMSPRGFXDIR)/spark_0.4bpp \
                                $(BTLANMSPRGFXDIR)/spark_1.4bpp
 	@cat $^ >$@
 
-$(TYPESGFXDIR)/move_types.4bpp: $(types:%=$(TYPESGFXDIR)/%.4bpp) $(TYPESGFXDIR)/fairy.4bpp $(contest_types:%=$(TYPESGFXDIR)/contest_%.4bpp)
+$(TYPESGFXDIR)/move_types.4bpp: $(types:%=$(TYPESGFXDIR)/%.4bpp) $(contest_types:%=$(TYPESGFXDIR)/contest_%.4bpp)
 	@cat $^ >$@
 
 $(TYPESGFXDIR)/move_types.gbapal: $(TYPESGFXDIR)/move_types_1.gbapal \
