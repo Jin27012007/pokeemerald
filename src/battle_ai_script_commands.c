@@ -1347,6 +1347,53 @@ static void Cmd_get_considered_move_effect(void)
     gAIScriptPtr += 1;
 }
 
+static u8 GetFirstSpeciesAbility(u16 species)
+{
+    const struct SpeciesInfo *info = GetSpeciesInfoSafe(species);
+    u8 i;
+
+    for (i = 0; i < NUM_ABILITY_SLOTS; i++)
+    {
+        if (info->abilities[i] != ABILITY_NONE)
+            return info->abilities[i];
+    }
+
+    return ABILITY_NONE;
+}
+
+static u8 GetRandomSpeciesAbility(u16 species)
+{
+    const struct SpeciesInfo *info = GetSpeciesInfoSafe(species);
+    u8 available[NUM_ABILITY_SLOTS];
+    u8 count = 0;
+    u8 i;
+
+    for (i = 0; i < NUM_ABILITY_SLOTS; i++)
+    {
+        if (info->abilities[i] != ABILITY_NONE)
+            available[count++] = info->abilities[i];
+    }
+
+    if (count == 0)
+        return ABILITY_NONE;
+
+    return available[Random() % count];
+}
+
+static bool8 SpeciesCanHaveAbility(u16 species, u8 ability)
+{
+    const struct SpeciesInfo *info = GetSpeciesInfoSafe(species);
+    u8 i;
+
+    for (i = 0; i < NUM_ABILITY_SLOTS; i++)
+    {
+        if (info->abilities[i] == ability && ability != ABILITY_NONE)
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static void Cmd_get_ability(void)
 {
     u8 battler;
@@ -1375,25 +1422,9 @@ static void Cmd_get_ability(void)
             return;
         }
 
-        if (GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[0] != ABILITY_NONE)
-        {
-            if (GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[1] != ABILITY_NONE)
-            {
-                // AI has no knowledge of opponent, so it guesses which ability.
-                if (Random() & 1)
-                    AI_THINKING_STRUCT->funcResult = GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[0];
-                else
-                    AI_THINKING_STRUCT->funcResult = GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[1];
-            }
-            else
-            {
-                AI_THINKING_STRUCT->funcResult = GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[0]; // It's definitely ability 1.
-            }
-        }
-        else
-        {
-            AI_THINKING_STRUCT->funcResult = GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[1]; // AI can't actually reach this part since no Pokémon has ability 2 and no ability 1.
-        }
+        // AI has no knowledge of the opponent's selected slot, so it
+        // chooses uniformly from every ability defined for that species.
+        AI_THINKING_STRUCT->funcResult = GetRandomSpeciesAbility(gBattleMons[battler].species);
     }
     else
     {
@@ -1423,29 +1454,15 @@ static void Cmd_check_ability(void)
         {
             ability = gBattleMons[battler].ability;
         }
-        else if (GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[0] != ABILITY_NONE)
-        {
-            if (GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[1] != ABILITY_NONE)
-            {
-                u8 abilityDummyVariable = ability; // Needed to match.
-                if (GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[0] != abilityDummyVariable
-                && GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[1] != abilityDummyVariable)
-                {
-                    ability = GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[0];
-                }
-                else
-                {
-                    ability = ABILITY_NONE;
-                }
-            }
-            else
-            {
-                ability = GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[0];
-            }
-        }
         else
         {
-            ability = GetSpeciesInfoSafe(gBattleMons[battler].species)->abilities[1]; // AI can't actually reach this part since no Pokémon has ability 2 and no ability 1.
+            // If the species could have the requested ability, the AI cannot
+            // know whether that slot was selected. Otherwise use a known
+            // possible ability to answer that it is not the requested one.
+            if (SpeciesCanHaveAbility(gBattleMons[battler].species, ability))
+                ability = ABILITY_NONE;
+            else
+                ability = GetFirstSpeciesAbility(gBattleMons[battler].species);
         }
     }
     else

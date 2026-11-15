@@ -96,6 +96,12 @@ enum {
     MON_DATA_SPDEF2,
 };
 
+// SpeciesInfo ability slots: the third slot is the hidden ability.
+#define NUM_ABILITY_SLOTS 3
+#define ABILITY_SLOT_PRIMARY 0
+#define ABILITY_SLOT_SECONDARY 1
+#define ABILITY_SLOT_HIDDEN 2
+
 struct PokemonSubstruct0
 {
     u16 species;
@@ -203,7 +209,8 @@ struct BoxPokemon
     u8 hasSpecies:1;
     u8 isEgg:1;
     u8 blockBoxRS:1; // Unused, but Pokémon Box Ruby & Sapphire will refuse to deposit a Pokémon with this flag set
-    u8 unused:4;
+    u8 abilityNumHigh:1; // High bit of the 2-bit ability slot index (0-2).
+    u8 unused:3;
     u8 otName[PLAYER_NAME_LENGTH];
     u8 markings;
     u16 checksum;
@@ -273,11 +280,11 @@ struct BattlePokemon
     /*0x16*/ u32 spAttackIV:5;
     /*0x17*/ u32 spDefenseIV:5;
     /*0x17*/ u32 isEgg:1;
-    /*0x17*/ u32 abilityNum:1;
+    /*0x17*/ u32 abilityNum:1; // Low bit of the ability slot index.
     /*0x18*/ s8 statStages[NUM_BATTLE_STATS];
     /*0x20*/ u8 ability;
     /*0x21*/ u8 types[2];
-    /*0x23*/ u8 unknown;
+    /*0x23*/ u8 unknown; // Bit 0 stores the high bit of the ability slot index.
     /*0x24*/ u8 pp[MAX_MON_MOVES];
     /*0x28*/ u16 hp;
     /*0x2A*/ u8 level;
@@ -318,7 +325,7 @@ struct SpeciesInfo
  /* 0x12 */ u8 friendship;
  /* 0x13 */ u8 growthRate;
  /* 0x14 */ u8 eggGroups[2];
- /* 0x16 */ u8 abilities[2];
+ /* 0x16 */ u8 abilities[NUM_ABILITY_SLOTS];
  /* 0x18 */ u8 safariZoneFleeRate;
  /* 0x19 */ u8 bodyColor : 7;
             u8 noFlip : 1;
@@ -461,6 +468,9 @@ u8 GetMonsStateToDoubles(void);
 u8 GetMonsStateToDoubles_2(void);
 u8 GetAbilityBySpecies(u16 species, u8 abilityNum);
 u8 GetMonAbility(struct Pokemon *mon);
+bool8 SetMonAbilitySlot(struct Pokemon *mon, u8 abilitySlot);
+u8 GetBattleMonAbilityNum(const struct BattlePokemon *mon);
+void SetBattleMonAbilityNum(struct BattlePokemon *mon, u8 abilityNum);
 void CreateSecretBaseEnemyParty(struct SecretBase *secretBaseRecord);
 u8 GetSecretBaseTrainerPicIndex(void);
 u8 GetSecretBaseTrainerClass(void);

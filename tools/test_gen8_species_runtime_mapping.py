@@ -92,6 +92,67 @@ def fixture():
     return [batch], dependencies
 
 
+
+def test_runtime_three_slot_ability_storage_contract():
+    header = (ROOT / "include/pokemon.h").read_text(encoding="utf-8")
+    pokemon = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
+    battle_scripts = (ROOT / "src/battle_script_commands.c").read_text(encoding="utf-8")
+    battle_main = (ROOT / "src/battle_main.c").read_text(encoding="utf-8")
+    battle_ai = (ROOT / "src/battle_ai_script_commands.c").read_text(encoding="utf-8")
+    controller_paths = (
+        "src/battle_controller_opponent.c",
+        "src/battle_controller_link_opponent.c",
+        "src/battle_controller_link_partner.c",
+        "src/battle_controller_player.c",
+    )
+    controllers = [
+        (ROOT / path).read_text(encoding="utf-8")
+        for path in controller_paths
+    ]
+
+    assert "#define NUM_ABILITY_SLOTS 3" in header
+    assert "NUM_ABILITY_SLOTS = 3" in (ROOT / "tools/gen8_species_runtime_mapping.py").read_text(encoding="utf-8")
+    assert "u8 abilities[NUM_ABILITY_SLOTS];" in header
+    assert "u8 abilityNumHigh:1;" in header
+    assert "u8 unused:3;" in header
+    assert "u8 unknown; // Bit 0 stores the high bit of the ability slot index." in header
+
+    # The stored ability slot combines the original encrypted low bit with
+    # one spare public BoxPokemon bit. Both values are read/written by the
+    # normal MON_DATA_ABILITY_NUM path used by party and PC records.
+    assert "substruct3->abilityNum | (boxMon->abilityNumHigh << 1)" in pokemon
+    assert "substruct3->abilityNum = abilityNum & 1;" in pokemon
+    assert "boxMon->abilityNumHigh = (abilityNum >> 1) & 1;" in pokemon
+
+    assert "if (abilityNum >= NUM_ABILITY_SLOTS)" in pokemon
+    assert "gLastUsedAbility = info->abilities[abilityNum];" in pokemon
+    assert "bool8 SetMonAbilitySlot(struct Pokemon *mon, u8 abilitySlot)" in pokemon
+    assert "abilitySlot >= NUM_ABILITY_SLOTS" in pokemon
+    assert "GetSpeciesInfoSafe(species)->abilities[abilitySlot] == ABILITY_NONE" in pokemon
+
+    # The battle struct size does not grow: the high slot bit uses its
+    # previously unused byte. All reads go through the accessor.
+    assert "GetBattleMonAbilityNum(const struct BattlePokemon *mon)" in pokemon
+    assert "mon->unknown & 1" in pokemon
+    assert "SetBattleMonAbilityNum(" in pokemon
+    assert "SetBattleMonAbilityNum(\n        &gBattleMons[battler]" in pokemon
+    assert "GetBattleMonAbilityNum(&gBattleMons[gActiveBattler])" in battle_scripts
+    assert "GetBattleMonAbilityNum(&gBattleMons[gActiveBattler])" in battle_main
+    assert all("SetBattleMonAbilityNum(&battleMon, GetMonData(" in source for source in controllers)
+    assert all("battleMon.abilityNum = GetMonData(" not in source for source in controllers)
+
+    # The AI now treats all three non-empty slots as possible for an unknown
+    # opponent, both when guessing and when answering an ability query.
+    assert "for (i = 0; i < NUM_ABILITY_SLOTS; i++)" in battle_ai
+    assert "GetRandomSpeciesAbility(gBattleMons[battler].species)" in battle_ai
+    assert "SpeciesCanHaveAbility(gBattleMons[battler].species, ability)" in battle_ai
+
+    # Pickup used to collapse every nonzero ability index to slot 2 in C's
+    # zero-based terms (Emerald's second slot). It now asks the common getter.
+    assert battle_scripts.count("ability = GetMonAbility(&gPlayerParty[i]);") == 2
+    assert "GetSpeciesInfoSafe(species)->abilities[1]" not in battle_scripts
+
+
 def test_symbol_mappings_keep_source_and_emerald_ids_separate():
     batches, dependencies = fixture()
     mapping, audit = module.build_runtime_mapping(
@@ -122,9 +183,10 @@ def test_emerald_layout_blockers_are_explicit():
     row = mapping["species"][0]
     blockers = set(row["runtime_blockers"])
     assert "type_enum_unmapped:FAIRY" in blockers
-    assert "third_ability_slot_not_supported_by_emerald_struct" in blockers
+    assert "third_ability_slot_not_supported_by_emerald_struct" not in blockers
     assert "exp_yield_exceeds_emerald_u8" in blockers
-    assert row["abilities"][2]["emerald_struct_slot_supported"] is False
+    assert row["abilities"][2]["emerald_struct_slot_supported"] is True
+    assert "hidden_ability_acquisition_flow_not_implemented" in row["runtime_semantics_pending"]
     assert row["statistics_emerald_initializer_values"]["evYield_HP"] == 0
     assert row["statistics_emerald_initializer_values"]["evYield_Attack"] == 1
     assert audit["counts"]["species_with_hidden_ability"] == 1
@@ -155,6 +217,7 @@ def test_source_enum_id_mismatch_is_rejected():
 
 
 def main():
+    test_runtime_three_slot_ability_storage_contract()
     test_symbol_mappings_keep_source_and_emerald_ids_separate()
     test_emerald_layout_blockers_are_explicit()
     test_unmapped_held_item_is_not_guessed()

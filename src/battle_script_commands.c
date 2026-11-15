@@ -4636,7 +4636,9 @@ static void Cmd_switchindataupdate(void)
 
     gBattleMons[gActiveBattler].types[0] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[0];
     gBattleMons[gActiveBattler].types[1] = GetSpeciesInfoSafe(gBattleMons[gActiveBattler].species)->types[1];
-    gBattleMons[gActiveBattler].ability = GetAbilityBySpecies(gBattleMons[gActiveBattler].species, gBattleMons[gActiveBattler].abilityNum);
+    gBattleMons[gActiveBattler].ability = GetAbilityBySpecies(
+        gBattleMons[gActiveBattler].species,
+        GetBattleMonAbilityNum(&gBattleMons[gActiveBattler]));
 
     // check knocked off item
     i = GetBattlerSide(gActiveBattler);
@@ -9668,10 +9670,7 @@ static void Cmd_pickup(void)
             species = GetMonData(&gPlayerParty[i], MON_DATA_SPECIES_OR_EGG);
             heldItem = GetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM);
 
-            if (GetMonData(&gPlayerParty[i], MON_DATA_ABILITY_NUM))
-                ability = GetSpeciesInfoSafe(species)->abilities[1];
-            else
-                ability = GetSpeciesInfoSafe(species)->abilities[0];
+            ability = GetMonAbility(&gPlayerParty[i]);
 
             if (ability == ABILITY_PICKUP
                 && species != SPECIES_NONE
@@ -9691,10 +9690,7 @@ static void Cmd_pickup(void)
             species = GetMonData(&gPlayerParty[i], MON_DATA_SPECIES_OR_EGG);
             heldItem = GetMonData(&gPlayerParty[i], MON_DATA_HELD_ITEM);
 
-            if (GetMonData(&gPlayerParty[i], MON_DATA_ABILITY_NUM))
-                ability = GetSpeciesInfoSafe(species)->abilities[1];
-            else
-                ability = GetSpeciesInfoSafe(species)->abilities[0];
+            ability = GetMonAbility(&gPlayerParty[i]);
 
             if (ability == ABILITY_PICKUP
                 && species != SPECIES_NONE

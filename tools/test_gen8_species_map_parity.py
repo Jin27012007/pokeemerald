@@ -222,7 +222,11 @@ def main() -> int:
     assert not raw_species_info_indexes, (
         f"Unbounded SpeciesInfo indexes remain: {raw_species_info_indexes[:10]}"
     )
-    assert accessor_calls >= 150, f"Expected migrated call sites, got {accessor_calls}"
+    # Several new runtime paths now share helpers (ability-slot getter,
+    # battle controller marshalling and AI ability enumeration), so duplicate
+    # table reads are intentionally consolidated. Keep a broad floor while
+    # the zero-raw-index assertion above remains the actual safety contract.
+    assert accessor_calls >= 140, f"Expected migrated call sites, got {accessor_calls}"
     access_report = {
         "accessor_call_sites": accessor_calls,
         "files_using_accessor": len(accessor_files),

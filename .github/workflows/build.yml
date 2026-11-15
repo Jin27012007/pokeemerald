@@ -360,6 +360,7 @@ jobs:
             data/pokemon/gen8_species_info_batches/gen8_species_info.json
             data/pokemon/gen8_species_info_runtime_mapping.json
             docs/GEN8_RUNTIME_INTEGRATION_PHASE1.md
+            docs/GEN8_ABILITY_SLOT_SYSTEM_STEP1.md
             docs/GEN8_SPECIES_INFO_STEP3_BATCH1.md
             docs/GEN8_SPECIES_INFO_STEP4_BATCH2.md
             docs/GEN8_SPECIES_INFO_STEP5_BATCH3.md

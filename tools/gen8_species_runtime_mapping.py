@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data/pokemon"
 REPORTS = ROOT / "reports/gen8-conversion"
 GENERATIONS = (4, 5, 6, 7, 8)
+NUM_ABILITY_SLOTS = 3  # Must match include/pokemon.h.
 BATCH_RANGES = {
     4: (387, 493, 107),
     5: (494, 649, 156),
@@ -270,7 +271,7 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
             mapped.update({
                 "slot": slot,
                 "slot_role": ("primary" if slot == 1 else "secondary" if slot == 2 else "hidden"),
-                "emerald_struct_slot_supported": slot <= 2,
+                "emerald_struct_slot_supported": slot <= NUM_ABILITY_SLOTS,  # Ledger slots are 1-based.
                 "target_behavior_audited": bool(dependency.get("target_behavior_audited")),
             })
             abilities.append(mapped)
@@ -296,7 +297,7 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
             if mapped["emerald_id"] is None:
                 blockers.append(f"ability_enum_unmapped:{mapped['symbol']}")
             if mapped["slot"] == 3 and mapped["symbol"] != "NONE":
-                blockers.append("third_ability_slot_not_supported_by_emerald_struct")
+                pending.append("hidden_ability_acquisition_flow_not_implemented")
             if mapped["symbol"] != "NONE" and not mapped["target_behavior_audited"]:
                 pending.append(f"ability_behavior_not_audited:{mapped['symbol']}")
         for label, item in held_items.items():
@@ -368,7 +369,7 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
         "runtime_semantics_pending_counts": dict(sorted(semantic_counts.items())),
         "blocking_gates": [
             "No production Emerald internal IDs have been allocated for the 512 species.",
-            "Emerald SpeciesInfo stores two ability slots while the source records three.",
+            "The three ability slots are represented in runtime storage; hidden-ability encounter, breeding and distribution flows still need implementation.",
             "Emerald SpeciesInfo stores expYield as u8; source values above 255 cannot be copied without a runtime layout change.",
             "Missing abilities, Fairy type, held-item data, move/evolution tables and graphics remain incomplete or unaudited.",
             "In-game migration of persistent species IDs and old saves has not been validated.",
