@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the first reviewable, non-runtime Gen 4 SpeciesInfo import batch."""
+"""Build reviewable, non-runtime SpeciesInfo batches for Gen 4 through Gen 8."""
 from __future__ import annotations
 
 import argparse
@@ -52,6 +52,14 @@ BATCHES = {
         "national_dex_start": 722,
         "national_dex_end": 809,
         "expected_species_count": 88,
+        "source_generation_range": [1, 8],
+    },
+    8: {
+        "batch_id": "gen8_species_info",
+        "species_introduction_generation": 8,
+        "national_dex_start": 810,
+        "national_dex_end": 898,
+        "expected_species_count": 89,
         "source_generation_range": [1, 8],
     },
 }
