@@ -945,10 +945,6 @@ def parse_species_info(source_text: str, target_info_text: str,
         runtime_gaps = []
         if unresolved_ability_symbols:
             runtime_gaps.append("source_ability_enum_id_unresolved")
-        if hidden_ability is not None and hidden_ability > 255:
-            runtime_gaps.append("hidden_ability_id_exceeds_u8")
-        if len(ability_names) > 2 and hidden_ability not in (None, ability_values.get("NONE", 0)):
-            runtime_gaps.append("third_ability_slot_not_in_emerald_struct")
         species_type_names = set(
             re.findall(r"TYPE_([A-Z0-9_]+)", fields.get("types", ""))
         )
