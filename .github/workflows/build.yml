@@ -107,15 +107,17 @@ jobs:
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
-      - name: Generate and test Gen 4, Gen 5 and Gen 6 SpeciesInfo batches (staging only)
+      - name: Generate and test Gen 4 through Gen 7 SpeciesInfo batches (staging only)
         run: |
           python3 tools/gen8_species_info_batches.py --generation 4
           python3 tools/gen8_species_info_batches.py --generation 5
           python3 tools/gen8_species_info_batches.py --generation 6
+          python3 tools/gen8_species_info_batches.py --generation 7
           python3 tools/test_gen8_species_info_batches.py
           test -s data/pokemon/gen8_species_info_batches/gen4_species_info.json
           test -s data/pokemon/gen8_species_info_batches/gen5_species_info.json
           test -s data/pokemon/gen8_species_info_batches/gen6_species_info.json
+          test -s data/pokemon/gen8_species_info_batches/gen7_species_info.json
 
       - name: Verify canonical map against legacy Emerald Dex lookup
         run: python3 tools/test_gen8_species_map_parity.py
@@ -340,9 +342,11 @@ jobs:
             data/pokemon/gen8_species_info_batches/gen4_species_info.json
             data/pokemon/gen8_species_info_batches/gen5_species_info.json
             data/pokemon/gen8_species_info_batches/gen6_species_info.json
+            data/pokemon/gen8_species_info_batches/gen7_species_info.json
             docs/GEN8_SPECIES_INFO_STEP3_BATCH1.md
             docs/GEN8_SPECIES_INFO_STEP4_BATCH2.md
             docs/GEN8_SPECIES_INFO_STEP5_BATCH3.md
+            docs/GEN8_SPECIES_INFO_STEP6_BATCH4.md
             data/pokemon/gen8_species_pokedex_entries.json
             data/pokemon/gen8_species_cry_map.json
             data/pokemon/gen8_species_graphics_references.json
