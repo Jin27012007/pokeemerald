@@ -365,7 +365,6 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
         "blocking_gates": [
             "No production Emerald internal IDs have been allocated for the 512 species.",
             "Missing abilities, Fairy type, held-item data, move/evolution tables and graphics remain incomplete or unaudited.",
-            "In-game migration of persistent species IDs and old saves has not been validated.",
         ],
         "invariants": [
             "Expansion source IDs and Emerald target IDs are stored separately.",
