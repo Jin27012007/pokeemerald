@@ -321,6 +321,30 @@ def test_gen8_pokedex_runtime_tables():
     assert order_header.count("NATIONAL_DEX_") == 898 * 3
 
 
+def test_target_item_catalog_reads_implicit_item_enum_values():
+    source = """
+enum {
+    ITEM_NONE,
+    ITEM_POTION,
+    ITEM_ASPEAR_BERRY,
+    ITEM_BIG_MUSHROOM,
+};
+enum {
+    ITEM_USE_MAIL,
+    ITEM_USE_PARTY_MENU,
+};
+"""
+    items = module.target_item_constant_catalog(source)
+    assert items["NONE"] == 0
+    assert items["POTION"] == 1
+    assert items["ASPEAR_BERRY"] == 2
+    assert items["BIG_MUSHROOM"] == 3
+    # Other ITEM_* enums can also be present in the header, but do not
+    # collide with the primary item namespace.
+    assert items["USE_MAIL"] == 0
+    assert items["USE_PARTY_MENU"] == 1
+
+
 def test_enum_parser_preserves_full_constant_name():
     source = '''enum {
     NATIONAL_DEX_NONE,
@@ -351,6 +375,7 @@ def test_generated_text_writer_is_idempotent():
 
 
 def main():
+    test_target_item_catalog_reads_implicit_item_enum_values()
     test_enum_parser_preserves_full_constant_name()
     test_generated_text_writer_is_idempotent()
     test_nested_initializer_scan()
