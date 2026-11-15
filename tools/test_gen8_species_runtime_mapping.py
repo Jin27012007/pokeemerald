@@ -201,6 +201,18 @@ def test_emerald_layout_blockers_are_explicit():
     assert audit["counts"]["species_with_exp_yield_above_255"] == 1
 
 
+def test_real_gen8_dataset_base_exp_fits_species_and_battle_fields():
+    batches = [module.load_json(path) for path in module.BATCH_PATHS]
+    rows = [row for batch in batches for row in batch["species"]]
+    values = [int(row["statistics"]["expYield"]) for row in rows]
+    assert len(values) == 512
+    assert sum(value > 255 for value in values) == 105
+    assert max(values) == 390
+    max_level_reward = max(values) * module.MAX_LEVEL // 7
+    assert max_level_reward == 5571
+    assert max_level_reward <= 65535
+
+
 def test_exp_yield_unsigned_16_bit_and_battle_reward_bounds():
     batches, dependencies = fixture()
     batches[0]["species"][0]["statistics"]["expYield"] = 65535
@@ -251,6 +263,7 @@ def main():
     test_runtime_three_slot_ability_storage_contract()
     test_symbol_mappings_keep_source_and_emerald_ids_separate()
     test_emerald_layout_blockers_are_explicit()
+    test_real_gen8_dataset_base_exp_fits_species_and_battle_fields()
     test_exp_yield_unsigned_16_bit_and_battle_reward_bounds()
     test_unmapped_held_item_is_not_guessed()
     test_source_enum_id_mismatch_is_rejected()
