@@ -53,7 +53,7 @@ def test_fairy_chart_contains_all_gen6_matchups():
 
 def test_fairy_png_is_a_valid_4bpp_32x16_asset():
     data = (ROOT / "graphics/types/fairy.png").read_bytes()
-    assert data.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
+    assert data.startswith(b"\x89PNG\r\n\x1a\n")
     offset = 8
     chunks = {}
     while offset < len(data):
@@ -67,7 +67,7 @@ def test_fairy_png_is_a_valid_4bpp_32x16_asset():
     assert offset == len(data)
     assert chunks[b"IHDR"] == struct.pack(">IIBBBBB", 32, 16, 4, 3, 0, 0, 0)
     assert len(chunks[b"PLTE"]) == 16 * 3
-    assert chunks[b"tRNS"] == b"\\x00"
+    assert chunks[b"tRNS"] == b"\x00"
     assert chunks[b"IEND"] == b""
 
 
