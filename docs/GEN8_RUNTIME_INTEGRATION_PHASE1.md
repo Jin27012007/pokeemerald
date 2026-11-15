@@ -14,8 +14,8 @@ A função `target_item_constant_catalog` agora lê os membros da enum com o par
 
 ## Incompatibilidades de layout confirmadas
 
-- **Habilidades ocultas:** 409 das 512 espécies têm um terceiro slot de habilidade diferente de `NONE`. O `struct SpeciesInfo` de Emerald possui apenas dois slots. O ledger conserva o slot oculto, mas marca que ele não cabe na estrutura atual.
-- **Experiência base:** 105 espécies têm `expYield` acima de 255. O campo correspondente no `struct SpeciesInfo` atual é `u8`. Copiar esses valores diretamente causaria perda por truncamento; a integração precisa decidir uma representação maior e revisar os consumidores.
+- **Habilidades ocultas:** 409 das 512 espécies têm um terceiro slot diferente de `NONE`. O suporte estrutural a três slots já foi adicionado em uma etapa posterior, incluindo o armazenamento do índice no Pokémon e o roteamento em batalha. Os efeitos das novas habilidades e os fluxos de aquisição de habilidades ocultas continuam pendentes.
+- **Experiência base:** 105 espécies têm `expYield` acima de 255. O campo foi ampliado para `u16`. O maior valor nos dados Gen 4–8 é 390 (#531 Audino), que gera 5.571 pontos brutos no nível 100 pela fórmula atual, cabendo no acumulador de batalha `u16`. O ledger também bloqueia um conjunto futuro que exceda a faixa do acumulador.
 - **Tipo Fairy:** 36 slots de tipo nos registros novos usam `FAIRY`, sem enum-alvo em Emerald. Não basta adicionar um identificador: o cálculo e a tabela de efetividade de tipos também precisam ser adaptados.
 - **Enums de habilidades e itens:** os IDs da Expansion não são IDs de Emerald. Habilidades sem constante-alvo, itens sem constante ou sem registro de dados e comportamentos ainda não auditados permanecem como lacunas explícitas.
 - **EVs:** os valores fornecidos estão dentro do limite de 2 bits do struct atual. Quando um EV não é declarado na fonte, o valor de inicialização é registrado como zero, que é o valor padrão de um campo omitido em um inicializador C.
@@ -29,14 +29,14 @@ O CI gera:
 - `data/pokemon/gen8_species_info_runtime_mapping.json`: mapeamento por espécie, com IDs de origem e destino separados.
 - `reports/gen8-conversion/species_info_runtime_mapping_audit.json`: cobertura, lacunas de enum, limites de campos e pendências semânticas.
 
-O ledger permanece marcado como `explicit_symbol_mapping_staging_only`. Não é incluído em `gSpeciesInfo`, não aloca IDs internos, não altera `NUM_SPECIES`, não modifica tabelas de evolução/learnsets e não muda saves. Os IDs de produção das 386 espécies existentes permanecem intocados.
+O ledger permanece marcado como `explicit_symbol_mapping_staging_only`. Não é incluído em `gSpeciesInfo`, não aloca IDs internos, não altera `NUM_SPECIES` nem modifica tabelas de evolução/learnsets. A expansão estrutural de habilidades e `expYield` é feita em etapas separadas; as 512 espécies continuam sem IDs de produção.
 
 ## Próximas etapas de integração
 
-1. Fechar a implementação e os testes das habilidades ausentes, do terceiro slot e do comportamento dos itens.
-2. Definir a representação de `expYield` acima de 255 e auditar todos os consumidores antes de alterar o layout.
+1. Importar as constantes e os dados de habilidades ausentes e implementar seus efeitos de batalha, além de concluir a aquisição/distribuição de habilidades ocultas.
+2. Importar os itens ausentes e implementar seus efeitos e dados de uso.
 3. Implementar Fairy de ponta a ponta, incluindo efetividade de tipos, mensagens e interações de batalha.
 4. Integrar assets gráficos, ícones e cries e adaptar movimentos, efeitos de batalha e métodos/condições de evolução.
-5. Só então preparar a promoção dos 512 IDs e o plano de migração de todos os registros persistentes — party, PC, daycare e demais campos — com testes de compatibilidade e recuperação de saves interrompidos.
+5. Alocar e ativar os 512 IDs quando as dependências anteriores estiverem fechadas; a migração de saves antigos está fora do escopo do projeto.
 
 O critério de segurança desta fase é manter o runtime atual compilável e tornar cada incompatibilidade explícita. A conclusão do ledger não significa que as espécies estejam jogáveis.
