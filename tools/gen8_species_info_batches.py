@@ -19,11 +19,11 @@ OUTPUT = DATA / "gen8_species_info_batches/gen4_species_info.json"
 
 BATCH = {
     "batch_id": "gen4_species_info",
-    "generation": 4,
+    "species_introduction_generation": 4,
     "national_dex_start": 387,
     "national_dex_end": 493,
     "expected_species_count": 107,
-    "source_file": "src/data/pokemon/species_info/gen_4_families.h",
+    "source_generation_range": [1, 8],
 }
 
 REQUIRED_SOURCE_FIELDS = {
@@ -87,11 +87,11 @@ def build_batch(
         meta = canonical_by_dex[dex]
         if meta.get("record_provenance") != "expansion_source_initializer":
             raise RuntimeError(f"Dex {dex}: expected an Expansion source initializer")
-        if meta.get("source_generation") != batch["generation"]:
-            raise RuntimeError(
-                f"Dex {dex}: expected source generation {batch['generation']}, "
-                f"got {meta.get('source_generation')!r}"
-            )
+        source_generation = meta.get("source_generation")
+        if not isinstance(source_generation, int) or source_generation not in range(
+            batch["source_generation_range"][0], batch["source_generation_range"][1] + 1
+        ):
+            raise RuntimeError(f"Dex {dex}: invalid source file generation {source_generation!r}")
         if meta.get("source_national_dex_matches_selected") is not True:
             raise RuntimeError(f"Dex {dex}: source National Dex identity is not verified")
         if meta.get("source_complete") is not True or meta.get("source_fields_resolved") is not True:
@@ -106,7 +106,7 @@ def build_batch(
         source = compact_by_symbol.get(symbol)
         if source is None:
             raise RuntimeError(f"Dex {dex}: selected source initializer {symbol!r} was not parsed")
-        if source.get("generation") != batch["generation"]:
+        if source.get("generation") != source_generation:
             raise RuntimeError(f"Dex {dex}: parsed source generation disagrees with canonical metadata")
         if source.get("national_dex_symbol") != meta.get("source_national_dex_symbol"):
             raise RuntimeError(f"Dex {dex}: parsed initializer National Dex symbol mismatch")
@@ -159,7 +159,8 @@ def build_batch(
             "national_dex": dex,
             "national_symbol": meta["national_symbol"],
             "source_species_symbol": symbol,
-            "source_generation": batch["generation"],
+            "source_generation": source["generation"],
+            "source_file": f"src/data/pokemon/species_info/gen_{source['generation']}_families.h",
             "source_national_dex_symbol": source["national_dex_symbol"],
             "source_fields_present": meta["source_fields_present"],
             "statistics": source_statistics,
@@ -194,12 +195,15 @@ def build_batch(
         "status": "staging_only_not_runtime",
         "runtime_activation_allowed": False,
         "identity_domain": "national_dex",
-        "batch_generation": batch["generation"],
+        "species_introduction_generation": batch["species_introduction_generation"],
         "national_dex_range": [batch["national_dex_start"], batch["national_dex_end"]],
         "expected_species_count": batch["expected_species_count"],
         "species_count": len(selected),
         "source_snapshot": source_snapshot,
-        "source_file": batch["source_file"],
+        "source_files": sorted({
+            f"src/data/pokemon/species_info/gen_{row['source_generation']}_families.h"
+            for row in selected
+        }),
         "extractor": {
             "script": "tools/gen8_convert_emerald.py",
             "batch_builder": "tools/gen8_species_info_batches.py",
@@ -238,7 +242,7 @@ def main() -> int:
         )
         print(json.dumps({
             "batch_id": result["batch_id"],
-            "generation": result["batch_generation"],
+            "species_introduction_generation": result["species_introduction_generation"],
             "national_dex_range": result["national_dex_range"],
             "species_count": result["species_count"],
             "status": result["status"],
