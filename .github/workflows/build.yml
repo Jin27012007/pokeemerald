@@ -107,6 +107,12 @@ jobs:
       - name: Generate safe Gen 8 conversion package and C scaffolding
         run: python3 tools/gen8_convert_emerald.py
 
+      - name: Generate and test Gen 4 SpeciesInfo import batch (staging only)
+        run: |
+          python3 tools/gen8_species_info_batches.py
+          python3 tools/test_gen8_species_info_batches.py
+          test -s data/pokemon/gen8_species_info_batches/gen4_species_info.json
+
       - name: Verify canonical map against legacy Emerald Dex lookup
         run: python3 tools/test_gen8_species_map_parity.py
       - name: Audit Gen 8 species namespace readiness (read-only)
@@ -327,6 +333,8 @@ jobs:
             docs/GEN8_SPECIES_ID_SCHEME_STEP2.md
             data/pokemon/gen8_form_policy.json
             data/pokemon/gen8_species_evolutions.json
+            data/pokemon/gen8_species_info_batches/gen4_species_info.json
+            docs/GEN8_SPECIES_INFO_STEP3_BATCH1.md
             data/pokemon/gen8_species_pokedex_entries.json
             data/pokemon/gen8_species_cry_map.json
             data/pokemon/gen8_species_graphics_references.json
