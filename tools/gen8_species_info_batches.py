@@ -21,15 +21,29 @@ CANONICAL_PATH = REPORTS / "species_info_by_national_dex.json"
 COMPACT_PATH = DATA / "gen8_species_info_compact.json"
 ENUM_AUDIT_PATH = REPORTS / "species_info_compact.json"
 VENDOR_README = ROOT / "tools/vendor/pokeemerald-expansion/README.md"
-OUTPUT = DATA / "gen8_species_info_batches/gen4_species_info.json"
-
-BATCH = {
-    "batch_id": "gen4_species_info",
-    "species_introduction_generation": 4,
-    "national_dex_start": 387,
-    "national_dex_end": 493,
-    "expected_species_count": 107,
-    "source_generation_range": [1, 8],
+BATCHES = {
+    4: {
+        "batch_id": "gen4_species_info",
+        "species_introduction_generation": 4,
+        "national_dex_start": 387,
+        "national_dex_end": 493,
+        "expected_species_count": 107,
+        "source_generation_range": [1, 8],
+    },
+    5: {
+        "batch_id": "gen5_species_info",
+        "species_introduction_generation": 5,
+        "national_dex_start": 494,
+        "national_dex_end": 649,
+        "expected_species_count": 156,
+        "source_generation_range": [1, 8],
+    },
+}
+# Keep the original default for callers and tests that explicitly target Gen 4.
+BATCH = BATCHES[4]
+OUTPUTS = {
+    generation: DATA / f"gen8_species_info_batches/gen{generation}_species_info.json"
+    for generation in BATCHES
 }
 
 REQUIRED_SOURCE_FIELDS = {
@@ -321,8 +335,17 @@ def build_batch(
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--output", type=Path, default=OUTPUT)
+    parser.add_argument(
+        "--generation", type=int, choices=sorted(BATCHES), default=4,
+        help="Species introduction generation to export (default: 4).",
+    )
+    parser.add_argument(
+        "--output", type=Path,
+        help="Optional output path; otherwise the generation-specific staging path is used.",
+    )
     args = parser.parse_args()
+    batch = BATCHES[args.generation]
+    output = args.output or OUTPUTS[args.generation]
     try:
         canonical = load_json(CANONICAL_PATH)
         compact = load_json(COMPACT_PATH)
@@ -332,10 +355,11 @@ def main() -> int:
             compact,
             audit.get("source_enum_domains", {}),
             load_source_snapshot(),
+            batch,
         )
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(
-            json.dumps(result, indent=2, ensure_ascii=False) + "\n",
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(
+            json.dumps(result, indent=2, ensure_ascii=False) + "\\n",
             encoding="utf-8",
         )
         print(json.dumps({
@@ -344,11 +368,11 @@ def main() -> int:
             "national_dex_range": result["national_dex_range"],
             "species_count": result["species_count"],
             "status": result["status"],
-            "output": str(args.output.relative_to(ROOT)) if args.output.is_relative_to(ROOT) else str(args.output),
+            "output": str(output.relative_to(ROOT)) if output.is_relative_to(ROOT) else str(output),
         }, indent=2))
         return 0
     except (OSError, RuntimeError, ValueError, KeyError, TypeError) as error:
-        print(f"GEN 4 SPECIES INFO BATCH FAILED: {error}", file=sys.stderr)
+        print(f"GEN {args.generation} SPECIES INFO BATCH FAILED: {error}", file=sys.stderr)
         return 2
 
 
