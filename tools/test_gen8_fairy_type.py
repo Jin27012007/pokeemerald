@@ -18,14 +18,14 @@ def test_fairy_has_a_unique_emerald_type_id():
 
 
 def test_fairy_chart_contains_all_gen6_matchups():
-    start = BATTLE_MAIN.index("const u8 gTypeEffectiveness[372]")
+    start = BATTLE_MAIN.index("const u8 gTypeEffectiveness[366]")
     end = BATTLE_MAIN.index("\n};", start)
     chart = BATTLE_MAIN[start:end]
     triples = re.findall(
         r"(TYPE_[A-Z0-9_]+)\s*,\s*(TYPE_[A-Z0-9_]+)\s*,\s*(TYPE_MUL_[A-Z_]+)",
         chart,
     )
-    assert len(triples) == 124
+    assert len(triples) == 122
     expected = {
         ("TYPE_FAIRY", "TYPE_FIGHTING", "TYPE_MUL_SUPER_EFFECTIVE"),
         ("TYPE_FAIRY", "TYPE_DRAGON", "TYPE_MUL_SUPER_EFFECTIVE"),
@@ -42,6 +42,8 @@ def test_fairy_chart_contains_all_gen6_matchups():
     }
     assert expected.issubset(set(triples))
     assert ("TYPE_ENDTABLE", "TYPE_ENDTABLE", "TYPE_MUL_NO_EFFECT") in triples
+    assert ("TYPE_GHOST", "TYPE_STEEL", "TYPE_MUL_NOT_EFFECTIVE") not in triples
+    assert ("TYPE_DARK", "TYPE_STEEL", "TYPE_MUL_NOT_EFFECTIVE") not in triples
 
 
 def test_fairy_summary_icon_and_palette_are_registered():
@@ -63,12 +65,60 @@ def test_hidden_power_keeps_the_original_gen3_type_pool():
     assert "Fairy type are excluded" in BATTLE_SCRIPTS
 
 
+
+def test_fairy_battle_text_and_pokedex_filter():
+    battle_messages = (ROOT / "src/battle_message.c").read_text(encoding="utf-8")
+    assert '[TYPE_FAIRY]    = _("a FAIRY move")' in battle_messages
+    pokedex = (ROOT / "src/pokedex.c").read_text(encoding="utf-8")
+    assert "gTypeNames[TYPE_FAIRY]" in pokedex
+    assert re.search(r"static const u8 sDexSearchTypeIds\\[NUMBER_OF_MON_TYPES\\].*?TYPE_FAIRY", pokedex, re.S)
+
+
+def test_species_that_gained_fairy_keep_modern_types():
+    source = (ROOT / "src/data/pokemon/species_info.h").read_text(encoding="utf-8")
+    expected = {
+        "CLEFAIRY": ("TYPE_FAIRY", "TYPE_FAIRY"),
+        "CLEFABLE": ("TYPE_FAIRY", "TYPE_FAIRY"),
+        "JIGGLYPUFF": ("TYPE_NORMAL", "TYPE_FAIRY"),
+        "WIGGLYTUFF": ("TYPE_NORMAL", "TYPE_FAIRY"),
+        "MR_MIME": ("TYPE_PSYCHIC", "TYPE_FAIRY"),
+        "CLEFFA": ("TYPE_FAIRY", "TYPE_FAIRY"),
+        "IGGLYBUFF": ("TYPE_NORMAL", "TYPE_FAIRY"),
+        "TOGEPI": ("TYPE_FAIRY", "TYPE_FAIRY"),
+        "TOGETIC": ("TYPE_FAIRY", "TYPE_FAIRY"),
+        "SNUBBULL": ("TYPE_FAIRY", "TYPE_FAIRY"),
+        "GRANBULL": ("TYPE_FAIRY", "TYPE_FAIRY"),
+        "MARILL": ("TYPE_WATER", "TYPE_FAIRY"),
+        "AZUMARILL": ("TYPE_WATER", "TYPE_FAIRY"),
+        "AZURILL": ("TYPE_NORMAL", "TYPE_FAIRY"),
+        "MAWILE": ("TYPE_STEEL", "TYPE_FAIRY"),
+        "RALTS": ("TYPE_PSYCHIC", "TYPE_FAIRY"),
+        "KIRLIA": ("TYPE_PSYCHIC", "TYPE_FAIRY"),
+        "GARDEVOIR": ("TYPE_PSYCHIC", "TYPE_FAIRY"),
+    }
+    for species, pair in expected.items():
+        start = source.index(f"[SPECIES_{species}] =")
+        end = source.index("\\n    },", start)
+        block = source[start:end]
+        match = re.search(r"\\.types\\s*=\\s*\\{\\s*(TYPE_[A-Z0-9_]+)\\s*,\\s*(TYPE_[A-Z0-9_]+)\\s*\\}", block)
+        assert match and match.groups() == pair, f"{species}: expected {pair}"
+
+
+def test_gen8_converter_no_longer_treats_fairy_as_a_gap():
+    converter = (ROOT / "tools/gen8_convert_emerald.py").read_text(encoding="utf-8")
+    assert "fairy_type_not_in_emerald_enum" not in converter
+    assert '"fairy_type"' not in converter.split('"source_only_fields_require_runtime_work":', 1)[1].split("\\n", 1)[0]
+
+
 def main():
     test_fairy_has_a_unique_emerald_type_id()
     test_fairy_chart_contains_all_gen6_matchups()
     test_fairy_summary_icon_and_palette_are_registered()
     test_type_chart_random_probe_cannot_read_past_the_table()
     test_hidden_power_keeps_the_original_gen3_type_pool()
+    test_fairy_battle_text_and_pokedex_filter()
+    test_species_that_gained_fairy_keep_modern_types()
+    test_gen8_converter_no_longer_treats_fairy_as_a_gap()
     print("PASS: Fairy type ID, 12 matchup changes, summary icon, bounded chart access and legacy Hidden Power pool.")
 
 
