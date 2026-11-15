@@ -44,7 +44,12 @@ def make_fixture():
                 "species_symbol": symbol,
                 "generation": 4,
                 "national_dex_symbol": f"NATIONAL_DEX_{symbol}",
-                "source_raw": {"baseHP": "50"},
+                "source_raw": {
+                    "baseHP": "50",
+                    "types": "MON_TYPES(TYPE_GRASS, TYPE_POISON)",
+                    "eggGroups": "MON_EGG_GROUPS(EGG_GROUP_MONSTER, EGG_GROUP_GRASS)",
+                    "abilities": "{ ABILITY_OVERGROW, ABILITY_TEST_ALIAS, ABILITY_TEST_HIDDEN }",
+                },
                 "source_expanded_fields": {
                     "baseHP": "50",
                     "baseAttack": "60",
