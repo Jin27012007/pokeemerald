@@ -93,6 +93,49 @@ def fixture():
 
 
 
+def test_fairy_type_runtime_contract():
+    constants = (ROOT / "include/constants/pokemon.h").read_text(encoding="utf-8")
+    battle = (ROOT / "src/battle_main.c").read_text(encoding="utf-8")
+    messages = (ROOT / "src/battle_message.c").read_text(encoding="utf-8")
+    summary = (ROOT / "src/pokemon_summary_screen.c").read_text(encoding="utf-8")
+    graphics_rules = (ROOT / "graphics_file_rules.mk").read_text(encoding="utf-8")
+
+    assert "#define TYPE_MYSTERY          9" in constants
+    assert "#define TYPE_DARK             17" in constants
+    assert "#define TYPE_FAIRY            18" in constants
+    assert "#define NUMBER_OF_MON_TYPES   19" in constants
+
+    chart = battle.split("const u8 gTypeEffectiveness[372] =", 1)[1].split("};", 1)[0]
+    triples = module.re.findall(
+        r"(TYPE_[A-Z0-9_]+)\\s*,\\s*(TYPE_[A-Z0-9_]+)\\s*,\\s*(TYPE_MUL_[A-Z0-9_]+)",
+        chart,
+    )
+    assert len(triples) == 124, len(triples)
+    expected = {
+        ("TYPE_FAIRY", "TYPE_FIGHTING", "TYPE_MUL_SUPER_EFFECTIVE"),
+        ("TYPE_FAIRY", "TYPE_DRAGON", "TYPE_MUL_SUPER_EFFECTIVE"),
+        ("TYPE_FAIRY", "TYPE_DARK", "TYPE_MUL_SUPER_EFFECTIVE"),
+        ("TYPE_FAIRY", "TYPE_FIRE", "TYPE_MUL_NOT_EFFECTIVE"),
+        ("TYPE_FAIRY", "TYPE_POISON", "TYPE_MUL_NOT_EFFECTIVE"),
+        ("TYPE_FAIRY", "TYPE_STEEL", "TYPE_MUL_NOT_EFFECTIVE"),
+        ("TYPE_FIGHTING", "TYPE_FAIRY", "TYPE_MUL_NOT_EFFECTIVE"),
+        ("TYPE_BUG", "TYPE_FAIRY", "TYPE_MUL_NOT_EFFECTIVE"),
+        ("TYPE_DARK", "TYPE_FAIRY", "TYPE_MUL_NOT_EFFECTIVE"),
+        ("TYPE_DRAGON", "TYPE_FAIRY", "TYPE_MUL_NO_EFFECT"),
+        ("TYPE_POISON", "TYPE_FAIRY", "TYPE_MUL_SUPER_EFFECTIVE"),
+        ("TYPE_STEEL", "TYPE_FAIRY", "TYPE_MUL_SUPER_EFFECTIVE"),
+    }
+    assert expected.issubset(set(triples))
+    assert "TYPE_ENDTABLE, TYPE_ENDTABLE, TYPE_MUL_NO_EFFECT" in chart
+
+    assert '[TYPE_FAIRY] = _("FAIRY")' in battle
+    assert '[TYPE_FAIRY]    = _("a FAIRY move")' in messages
+    assert "sSpriteAnim_TypeFairy" in summary
+    assert "sSpriteAnim_TypeFairy," in summary
+    assert "[TYPE_FAIRY] = 14" in summary
+    assert "dark fairy" in graphics_rules.split("types :=", 1)[1].splitlines()[0]
+
+
 def test_runtime_three_slot_ability_storage_contract():
     header = (ROOT / "include/pokemon.h").read_text(encoding="utf-8")
     pokemon = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
@@ -260,6 +303,7 @@ def test_source_enum_id_mismatch_is_rejected():
 
 
 def main():
+    test_fairy_type_runtime_contract()
     test_runtime_three_slot_ability_storage_contract()
     test_symbol_mappings_keep_source_and_emerald_ids_separate()
     test_emerald_layout_blockers_are_explicit()
