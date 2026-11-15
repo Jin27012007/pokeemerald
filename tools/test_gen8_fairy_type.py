@@ -55,6 +55,16 @@ def test_fairy_summary_icon_and_palette_are_registered():
     assert "[TYPE_FAIRY] = 14" in SUMMARY
     assert "fairy" in GRAPHICS_RULES.split("types ?=", 1)[1].split("\n", 1)[0]
     assert (ROOT / "graphics/types/fairy.png").is_file()
+    type_assignments = [
+        line.strip()
+        for line in GRAPHICS_RULES.splitlines()
+        if re.match(r"^types\s*(?::=|\?=|=)", line.strip())
+    ]
+    assert type_assignments == [
+        "types ?= normal fight flying poison ground rock bug ghost steel mystery fire water grass electric psychic ice dragon dark fairy",
+        "types := $(filter-out fairy,$(types)) fairy",
+    ]
+    assert "$(types:%=$(TYPESGFXDIR)/%.4bpp)" in GRAPHICS_RULES
 
 
 def test_type_chart_random_probe_cannot_read_past_the_table():
