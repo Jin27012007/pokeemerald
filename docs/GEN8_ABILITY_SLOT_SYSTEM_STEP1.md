@@ -23,7 +23,7 @@ O acesso segue o caminho `MON_DATA_ABILITY_NUM`, portanto a escolha acompanha o 
 
 ## Batalha
 
-`BattlePokemon` continua com o mesmo tamanho e formato de buffer. O bit baixo permanece em seu bitfield existente; o bit alto usa o bit 0 do byte reservado `unknown`. Os helpers `GetBattleMonAbilityNum` e `SetBattleMonAbilityNum` centralizam a conversão.
+`BattlePokemon` continua com o mesmo tamanho e formato de buffer. O bit baixo permanece em seu bitfield existente; o bit alto usa o bit 0 do byte reservado `unknown`. Os helpers `GetBattleMonAbilityNum` e `SetBattleMonAbilityNum` centralizam a conversão. Os quatro controladores (jogador, oponente e link) agora serializam os dois bits; a atualização de troca no núcleo de batalha recupera o índice completo. O script de IA também considera todos os slots não vazios ao estimar a habilidade de um adversário.
 
 `GetAbilityBySpecies` agora indexa diretamente os três slots e rejeita índices fora de 0–2. `SetMonAbilitySlot` permite atribuir um slot existente a um Pokémon e rejeita slots vazios ou fora do intervalo. O Pickup agora consulta `GetMonAbility`, em vez de presumir que todo índice diferente de zero significa a segunda habilidade.
 
