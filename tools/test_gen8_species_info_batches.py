@@ -108,11 +108,11 @@ def make_fixture():
 def batch_spec():
     return {
         "batch_id": "test_batch",
-        "generation": 4,
+        "species_introduction_generation": 4,
         "national_dex_start": 387,
         "national_dex_end": 388,
         "expected_species_count": 2,
-        "source_file": "test/gen_4_families.h",
+        "source_generation_range": [1, 8],
     }
 
 
@@ -182,6 +182,16 @@ def test_source_file_generation_is_preserved_and_must_match():
 
     canonical, compact, domains = make_fixture()
     canonical[386]["source_generation"] = 5
+    try:
+        module.build_batch(canonical, compact, domains,
+            {"repository": "https://github.com/example/source", "commit": "a" * 40},
+            batch_spec())
+    except RuntimeError as error:
+        assert "parsed source generation disagrees" in str(error)
+    else:
+        raise AssertionError("mismatched source file generation was accepted")
+
+    canonical, compact, domains = make_fixture()
     canonical[386]["source_national_dex_matches_selected"] = False
     try:
         module.build_batch(canonical, compact, domains,
