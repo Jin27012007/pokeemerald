@@ -145,7 +145,7 @@ struct PokemonSubstruct3
  /* 0x05 */ u32 spAttackIV:5;
  /* 0x06 */ u32 spDefenseIV:5;
  /* 0x07 */ u32 isEgg:1;
- /* 0x07 */ u32 abilityNum:2;
+ /* 0x07 */ u32 unusedAbilityPadding:1;
 
  /* 0x08 */ u32 coolRibbon:CONTEST_RIBBON_BITS;   // Stores the highest contest rank achieved in the Cool category.
  /* 0x08 */ u32 beautyRibbon:CONTEST_RIBBON_BITS; // Stores the highest contest rank achieved in the Beauty category.
@@ -164,7 +164,8 @@ struct PokemonSubstruct3
  /* 0x0B */ u32 nationalRibbon:1;           // Given to purified Shadow Pokémon in Colosseum/XD.
  /* 0x0B */ u32 earthRibbon:1;              // Given to teams that have beaten Mt. Battle's 100-battle challenge in Colosseum/XD.
  /* 0x0B */ u32 worldRibbon:1;              // Distributed during Pokémon Festa '04 and '05 to tournament winners.
- /* 0x0B */ u32 unusedRibbons:3;            // Discarded in Gen 4.
+ /* 0x0B */ u32 abilityNum:2;               // 0/1 are regular abilities; 2 is the hidden ability.
+ /* 0x0B */ u32 unusedRibbons:2;            // Discarded in Gen 4.
 
  // The functionality of this bit changed in FRLG:
  // In RS, this bit does nothing, is never set, & is accidentally unset when hatching Eggs.
@@ -273,11 +274,11 @@ struct BattlePokemon
     /*0x16*/ u32 spAttackIV:5;
     /*0x17*/ u32 spDefenseIV:5;
     /*0x17*/ u32 isEgg:1;
-    /*0x17*/ u32 abilityNum:2;
+    /*0x17*/ u32 unusedAbilityPadding:1;
     /*0x18*/ s8 statStages[NUM_BATTLE_STATS];
     /*0x20*/ u8 ability;
     /*0x21*/ u8 types[2];
-    /*0x23*/ u8 unknown;
+    /*0x23*/ u8 abilityNum;
     /*0x24*/ u8 pp[MAX_MON_MOVES];
     /*0x28*/ u16 hp;
     /*0x2A*/ u8 level;
