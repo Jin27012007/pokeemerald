@@ -1557,116 +1557,116 @@ static const u8 sOldSeaMapDesc[] = _(
 
 // Gen 4–8 held and evolution items
 static const u8 sGen8AbsorbBulbDesc[] = _(
-    "Ups Sp. Atk if the\\n"
-    "holder is hurt by\\n"
+    "Ups Sp. Atk if the\n"
+    "holder is hurt by\n"
     "a Water-type move.");
 
 static const u8 sGen8BlackSludgeDesc[] = _(
-    "Gradually restores\\n"
-    "Poison-types' HP.\\n"
+    "Gradually restores\n"
+    "Poison-types' HP.\n"
     "Damages all others.");
 
 static const u8 sGen8CellBatteryDesc[] = _(
-    "Ups Attack if the\\n"
-    "holder is hurt by\\n"
+    "Ups Attack if the\n"
+    "holder is hurt by\n"
     "an Electric move.");
 
 static const u8 sGen8ElectirizerDesc[] = _(
-    "A box of electric\\n"
-    "energy loved by\\n"
+    "A box of electric\n"
+    "energy loved by\n"
     "a certain Pokémon.");
 
 static const u8 sGen8ElectricSeedDesc[] = _(
-    "Raises Defense on\\n"
-    "Electric Terrain,\\n"
+    "Raises Defense on\n"
+    "Electric Terrain,\n"
     "but only once.");
 
 static const u8 sGen8GrassySeedDesc[] = _(
-    "Raises Defense on\\n"
-    "Grassy Terrain,\\n"
+    "Raises Defense on\n"
+    "Grassy Terrain,\n"
     "but only once.");
 
 static const u8 sGen8HoneyDesc[] = _(
-    "A sweet honey that\\n"
-    "attracts wild\\n"
+    "A sweet honey that\n"
+    "attracts wild\n"
     "Pokémon when used.");
 
 static const u8 sGen8LaggingTailDesc[] = _(
-    "An item that makes\\n"
-    "the holder move\\n"
+    "An item that makes\n"
+    "the holder move\n"
     "slower than usual.");
 
 static const u8 sGen8LeadersCrestDesc[] = _(
-    "A shard of a blade.\\n"
-    "Bisharp that head\\n"
+    "A shard of a blade.\n"
+    "Bisharp that head\n"
     "a group hold it.");
 
 static const u8 sGen8LeekDesc[] = _(
-    "Raises Farfetch'd\\n"
-    "or Sirfetch'd's\\n"
+    "Raises Farfetch'd\n"
+    "or Sirfetch'd's\n"
     "critical-hit ratio.");
 
 static const u8 sGen8LightClayDesc[] = _(
-    "Barrier moves\\n"
-    "like Light Screen\\n"
+    "Barrier moves\n"
+    "like Light Screen\n"
     "last longer.");
 
 static const u8 sGen8MagmarizerDesc[] = _(
-    "A box of magma\\n"
-    "energy loved by\\n"
+    "A box of magma\n"
+    "energy loved by\n"
     "a certain Pokémon.");
 
 static const u8 sGen8MetronomeDesc[] = _(
-    "Boosts the power\\n"
-    "of a move that is\\n"
+    "Boosts the power\n"
+    "of a move that is\n"
     "used repeatedly.");
 
 static const u8 sGen8MistySeedDesc[] = _(
-    "Raises Sp. Def on\\n"
-    "Misty Terrain,\\n"
+    "Raises Sp. Def on\n"
+    "Misty Terrain,\n"
     "but only once.");
 
 static const u8 sGen8OvalStoneDesc[] = _(
-    "Makes certain\\n"
-    "species of Pokémon\\n"
+    "Makes certain\n"
+    "species of Pokémon\n"
     "evolve.");
 
 static const u8 sGen8PsychicSeedDesc[] = _(
-    "Raises Sp. Def on\\n"
-    "Psychic Terrain,\\n"
+    "Raises Sp. Def on\n"
+    "Psychic Terrain,\n"
     "but only once.");
 
 static const u8 sGen8RazorClawDesc[] = _(
-    "A held item that\\n"
-    "improves the\\n"
+    "A held item that\n"
+    "improves the\n"
     "critical-hit rate.");
 
 static const u8 sGen8RazorFangDesc[] = _(
-    "A held item that\\n"
-    "may cause flinching\\n"
+    "A held item that\n"
+    "may cause flinching\n"
     "when the foe is hit.");
 
 static const u8 sGen8RedNectarDesc[] = _(
-    "Flower nectar that\\n"
-    "changes the form\\n"
+    "Flower nectar that\n"
+    "changes the form\n"
     "of certain Pokémon.");
 
 static const u8 sGen8ShedShellDesc[] = _(
-    "Enables the holder\\n"
-    "to switch out\\n"
+    "Enables the holder\n"
+    "to switch out\n"
     "without fail.");
 
 static const u8 sGen8SnowballDesc[] = _(
-    "Ups Attack if the\\n"
-    "holder is hurt by\\n"
+    "Ups Attack if the\n"
+    "holder is hurt by\n"
     "an Ice-type move.");
 
 static const u8 sGen8StickyBarbDesc[] = _(
-    "Damages the holder\\n"
-    "each turn. Latches\\n"
+    "Damages the holder\n"
+    "each turn. Latches\n"
     "on from contact.");
 
 static const u8 sGen8WideLensDesc[] = _(
-    "A magnifying lens\\n"
-    "that boosts the\\n"
+    "A magnifying lens\n"
+    "that boosts the\n"
     "accuracy of moves.");
