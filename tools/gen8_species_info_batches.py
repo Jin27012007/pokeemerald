@@ -164,7 +164,7 @@ def build_batch(
                 if not raw:
                     continue
                 if macro_name:
-                    macro_match = re.fullmatch(rf"{macro_name}\\((.*)\\)", raw, re.S)
+                    macro_match = re.fullmatch(rf"{macro_name}\((.*)\)", raw, re.S)
                     if not macro_match:
                         continue
                     arguments = split_c_arguments(macro_match.group(1))
