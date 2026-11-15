@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for deterministic and isolated Gen 4–Gen 6 SpeciesInfo batches."""
+"""Regression tests for deterministic and isolated Gen 4–Gen 8 SpeciesInfo batches."""
 from __future__ import annotations
 
 import importlib.util
