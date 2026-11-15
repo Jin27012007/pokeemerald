@@ -51,7 +51,7 @@ def test_fairy_summary_icon_and_palette_are_registered():
     assert "ANIMCMD_FRAME(TYPE_FAIRY * 8, 0, FALSE, FALSE)" in SUMMARY
     assert "sSpriteAnim_TypeFairy,\n    sSpriteAnim_CategoryCool" in SUMMARY
     assert "[TYPE_FAIRY] = 14" in SUMMARY
-    assert "fairy" in GRAPHICS_RULES.split("types :=", 1)[1].split("\n", 1)[0]
+    assert "fairy" in GRAPHICS_RULES.split("types ?=", 1)[1].split("\n", 1)[0]
     assert (ROOT / "graphics/types/fairy.png").is_file()
 
 
