@@ -380,7 +380,7 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
             "The three ability slots are represented in runtime storage; hidden-ability encounter, breeding and distribution flows still need implementation.",
             "SpeciesInfo expYield is u16; the level-100 raw battle EXP reward must also fit the existing u16 battle accumulator.",
             "Missing abilities, Fairy type, held-item data, move/evolution tables and graphics remain incomplete or unaudited.",
-            "In-game migration of persistent species IDs and old saves has not been validated.",
+            "Production SpeciesInfo rows and species IDs are still staging-only.",
         ],
         "invariants": [
             "Expansion source IDs and Emerald target IDs are stored separately.",
