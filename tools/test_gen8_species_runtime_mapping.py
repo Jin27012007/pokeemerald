@@ -64,8 +64,8 @@ def fixture():
         "types": [
             {"type_symbol": "NORMAL", "source_type_id": 1, "emerald_type_id": 0,
              "type_chart_runtime_audited": True},
-            {"type_symbol": "FAIRY", "source_type_id": 19, "emerald_type_id": None,
-             "type_chart_runtime_audited": False},
+            {"type_symbol": "FAIRY", "source_type_id": 19, "emerald_type_id": 18,
+             "type_chart_runtime_audited": True},
         ],
         "egg_groups": [
             {"egg_group_symbol": "FIELD", "source_egg_group_id": 5,
@@ -103,7 +103,8 @@ def test_symbol_mappings_keep_source_and_emerald_ids_separate():
     assert row["types"][0]["source_id"] == 1
     assert row["types"][0]["emerald_id"] == 0
     assert row["types"][1]["source_id"] == 19
-    assert row["types"][1]["emerald_id"] is None
+    assert row["types"][1]["emerald_id"] == 18
+    assert row["types"][1]["mapping_status"] == "mapped"
     assert row["growth_rate"]["source_id"] == 0
     assert row["growth_rate"]["emerald_id"] == 0
     assert row["held_items"]["common"]["source_id"] == 1
@@ -121,7 +122,8 @@ def test_emerald_layout_blockers_are_explicit():
     )
     row = mapping["species"][0]
     blockers = set(row["runtime_blockers"])
-    assert "type_enum_unmapped:FAIRY" in blockers
+    assert "type_enum_unmapped:FAIRY" not in blockers
+    assert "type_chart_not_audited:FAIRY" not in blockers
     assert "third_ability_slot_not_supported_by_emerald_struct" not in blockers
     assert "exp_yield_exceeds_emerald_u8" not in blockers
     assert row["abilities"][2]["emerald_struct_slot_supported"] is True
