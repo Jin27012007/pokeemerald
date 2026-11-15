@@ -1,9 +1,5 @@
 #include "global.h"
 
-STATIC_ASSERT(sizeof(struct PokemonSubstruct3) == 12, PokemonSubstruct3_ability_slot_storage_must_remain_12_bytes);
-STATIC_ASSERT(sizeof(struct BoxPokemon) == 80, BoxPokemon_ability_slot_extension_must_not_change_record_size);
-STATIC_ASSERT(sizeof(struct BattlePokemon) == 0x58, BattlePokemon_ability_slot_extension_must_not_change_wire_size);
-
 #include "decompress.h"
 #include "gen8_species_map.h"
 #include "malloc.h"
@@ -29,6 +25,11 @@ STATIC_ASSERT(sizeof(struct BattlePokemon) == 0x58, BattlePokemon_ability_slot_e
 #include "pokedex.h"
 #include "pokeblock.h"
 #include "pokemon.h"
+
+STATIC_ASSERT(sizeof(struct PokemonSubstruct3) == 12, PokemonSubstruct3_ability_slot_storage_must_remain_12_bytes);
+STATIC_ASSERT(sizeof(struct BoxPokemon) == 80, BoxPokemon_ability_slot_extension_must_not_change_record_size);
+STATIC_ASSERT(sizeof(struct BattlePokemon) == 0x58, BattlePokemon_ability_slot_extension_must_not_change_wire_size);
+
 #include "pokemon_animation.h"
 #include "pokemon_summary_screen.h"
 #include "pokemon_storage_system.h"
