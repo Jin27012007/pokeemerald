@@ -10,7 +10,7 @@ A geração de estreia da espécie não deve ser confundida com a geração do a
 
 Cada registro conserva a identidade Nacional, símbolo de origem, geração da fonte, estatísticas base, taxa de captura, experiência, valores de EV, proporção de gênero, amizade, crescimento, tipos, grupos de ovos, habilidades, habilidade oculta, itens segurados e cor do corpo. Também conserva os campos expandidos e o inicializador bruto original para auditoria.
 
-Os IDs numéricos de tipos, grupos, crescimento, habilidades e itens pertencem ao domínio da fonte Expansion. O arquivo inclui os catálogos dessas enums; esses números não são IDs de Emerald. Quando a fonte usa um alias simbólico que o parser ainda não consegue reduzir a inteiro (por exemplo, uma habilidade definida por outro contador de enum), o lote preserva o símbolo original e marca o ID numérico como não resolvido (`null`). Não substitui aliases por zero nem por IDs presumidos.
+Os IDs numéricos de tipos, grupos, crescimento, habilidades e itens pertencem ao domínio da fonte Expansion. O arquivo inclui os catálogos dessas enums; esses números não são IDs de Emerald. Para campos condicionais, a seleção dos símbolos segue a declaração expandida e resolvida para a política Gen8 usada pelo conversor, evitando misturar ramos alternativos `#if/#else`; a declaração bruta continua preservada integralmente para auditoria. Quando a fonte usa um alias simbólico que o parser ainda não consegue reduzir a inteiro (por exemplo, uma habilidade definida por outro contador de enum), o lote preserva o símbolo original e marca o ID numérico como não resolvido (`null`). Não substitui aliases por zero nem por IDs presumidos.
 
 ## Isolamento
 
