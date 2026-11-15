@@ -81,7 +81,7 @@ def fixture():
             {"ability_symbol": "OVERGROW", "source_ability_id": 65,
              "emerald_ability_id": 65, "target_behavior_audited": True},
             {"ability_symbol": "HIDDEN_TEST", "source_ability_id": 101,
-             "emerald_ability_id": None, "target_behavior_audited": False},
+             "emerald_ability_id": 66, "target_behavior_audited": False},
         ],
         "items": [
             {"item_symbol": "POTION", "source_item_id": 1,
@@ -122,9 +122,10 @@ def test_emerald_layout_blockers_are_explicit():
     row = mapping["species"][0]
     blockers = set(row["runtime_blockers"])
     assert "type_enum_unmapped:FAIRY" in blockers
-    assert "third_ability_slot_not_supported_by_emerald_struct" in blockers
-    assert "exp_yield_exceeds_emerald_u8" in blockers
-    assert row["abilities"][2]["emerald_struct_slot_supported"] is False
+    assert "third_ability_slot_not_supported_by_emerald_struct" not in blockers
+    assert "exp_yield_exceeds_emerald_u8" not in blockers
+    assert row["abilities"][2]["emerald_struct_slot_supported"] is True
+    assert row["abilities"][2]["emerald_id"] == 66
     assert row["statistics_emerald_initializer_values"]["evYield_HP"] == 0
     assert row["statistics_emerald_initializer_values"]["evYield_Attack"] == 1
     assert audit["counts"]["species_with_hidden_ability"] == 1
