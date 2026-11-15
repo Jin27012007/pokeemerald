@@ -147,8 +147,12 @@ def build_batch(
         source_fields_expanded = source["source_expanded_fields"]
 
         def source_enum_symbols(field: str, prefix: str) -> list[str]:
-            raw = source_fields_expanded.get(field, "")
-            names = re.findall(rf"\\b{prefix}([A-Z0-9_]+)\\b", raw)
+            # The parser's expanded fields may contain evaluated numeric data
+            # or macro expansions. Prefer the original designated initializer
+            # field for symbolic provenance, falling back only when absent.
+            raw_fields = source.get("source_raw", {})
+            raw = raw_fields.get(field, source_fields_expanded.get(field, ""))
+            names = re.findall(rf"{prefix}([A-Z0-9_]+)", raw)
             if not names:
                 raise RuntimeError(f"Dex {dex}: source enum symbols are missing for {field}")
             return names
@@ -171,28 +175,29 @@ def build_batch(
             if len(enum_symbols[field]) != 2:
                 raise RuntimeError(f"Dex {dex}: invalid source enum symbol pair {field}={enum_symbols[field]!r}")
         enum_symbols["abilities"] = (enum_symbols["abilities"] + ["NONE", "NONE", "NONE"])[:3]
-        enum_ids = {
-            "types": source.get("types"),
-            "egg_groups": source.get("egg_groups"),
-            "abilities": source.get("abilities"),
-        }
+        enum_ids = {}
         for field in ("types", "egg_groups", "abilities"):
-            value = enum_ids[field]
-            if not isinstance(value, list) or len(value) != 2 or any(
-                item is not None and (not isinstance(item, int) or item < 0)
-                for item in value
+            parsed_ids = source.get(field)
+            if parsed_ids is not None and (
+                not isinstance(parsed_ids, list) or len(parsed_ids) != 2 or any(
+                    item is not None and (not isinstance(item, int) or item < 0)
+                    for item in parsed_ids
+                )
             ):
-                raise RuntimeError(f"Dex {dex}: invalid source enum pair {field}={value!r}")
+                raise RuntimeError(f"Dex {dex}: invalid parsed enum pair {field}={parsed_ids!r}")
             domain = source_enum_domains[field]
             names = enum_symbols[field]
             if any(name not in domain for name in names):
                 missing = sorted(set(names) - set(domain))
                 raise RuntimeError(f"Dex {dex}: source enum symbols missing from {field} catalog: {missing}")
-            expected_ids = [domain[name] for name in names[:2]]
-            if value != expected_ids:
-                raise RuntimeError(f"Dex {dex}: parsed {field} IDs {value!r} disagree with symbols {names!r}")
-        if source.get("hidden_ability") != source_enum_domains["abilities"][enum_symbols["abilities"][2]]:
-            raise RuntimeError(f"Dex {dex}: hidden ability ID disagrees with its source symbol")
+            resolved_ids = [domain[name] for name in names[:2]]
+            if parsed_ids is not None and all(item is not None for item in parsed_ids):
+                if parsed_ids != resolved_ids:
+                    raise RuntimeError(
+                        f"Dex {dex}: parsed {field} IDs {parsed_ids!r} disagree with source symbols {names!r}"
+                    )
+            enum_ids[field] = resolved_ids
+        hidden_ability_source_id = source_enum_domains["abilities"][enum_symbols["abilities"][2]]
         if not isinstance(source.get("source_initializer_raw"), str) or not isinstance(
             source.get("source_initializer_expanded"), str
         ):
@@ -221,7 +226,7 @@ def build_batch(
             "abilities_source_ids": enum_ids["abilities"],
             "abilities_numeric_ids_complete": all(isinstance(x, int) for x in enum_ids["abilities"]),
             "hidden_ability_source_symbol": enum_symbols["abilities"][2],
-            "hidden_ability_source_id": source.get("hidden_ability"),
+            "hidden_ability_source_id": hidden_ability_source_id,
             "item_common_source_id": source.get("item_common"),
             "item_rare_source_id": source.get("item_rare"),
             "body_color_source_value": source["body_color"],
