@@ -112,6 +112,9 @@ def test_runtime_three_slot_ability_storage_contract():
 
     assert "#define NUM_ABILITY_SLOTS 3" in header
     assert "u8 abilities[NUM_ABILITY_SLOTS];" in header
+    assert "u16 expYield;" in header
+    assert "SpeciesInfo) == 0x1E" in pokemon
+
     assert "u8 abilityNumHigh:1;" in header
     assert "u8 unused:3;" in header
     assert "u8 unknown; // Bit 0 stores the high bit of the ability slot index." in header
@@ -183,8 +186,9 @@ def test_emerald_layout_blockers_are_explicit():
     blockers = set(row["runtime_blockers"])
     assert "type_enum_unmapped:FAIRY" in blockers
     assert "third_ability_slot_not_supported_by_emerald_struct" not in blockers
-    assert "exp_yield_exceeds_emerald_u8" in blockers
+    assert "exp_yield_exceeds_emerald_u8" not in blockers
     assert row["abilities"][2]["emerald_struct_slot_supported"] is True
+    assert row["statistics_emerald_initializer_values"]["expYield"] == 300
     assert "hidden_ability_acquisition_flow_not_implemented" in row["runtime_semantics_pending"]
     assert row["statistics_emerald_initializer_values"]["evYield_HP"] == 0
     assert row["statistics_emerald_initializer_values"]["evYield_Attack"] == 1
