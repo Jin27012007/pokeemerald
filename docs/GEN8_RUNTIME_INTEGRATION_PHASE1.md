@@ -35,7 +35,7 @@ O ledger permanece marcado como `explicit_symbol_mapping_staging_only`. Não é 
 
 1. Fechar a implementação e os testes das habilidades ausentes, do terceiro slot e do comportamento dos itens.
 2. Definir a representação de `expYield` acima de 255 e auditar todos os consumidores antes de alterar o layout.
-3. Implementar Fairy de ponta a ponta, incluindo efetividade de tipos, mensagens e interações de batalha.
+3. Implementado em `docs/GEN8_FAIRY_TYPE.md`: tipo Fairy com efetividade de batalha, nomes, mensagens, busca da Pokédex e ícones.
 4. Integrar os efeitos de batalha das habilidades novas e os dados/efeitos dos itens ausentes.
 5. Integrar assets gráficos, ícones e cries e adaptar movimentos, efeitos de batalha e métodos/condições de evolução.
 6. Promover os 512 IDs numa ROM de jogo novo, sem exigir migração de saves antigos.
