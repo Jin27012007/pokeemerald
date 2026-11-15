@@ -147,11 +147,13 @@ def build_batch(
         source_fields_expanded = source["source_expanded_fields"]
 
         def source_enum_symbols(field: str, prefix: str) -> list[str]:
-            # Prefer the original designated field so source aliases remain
-            # visible. If that form is indirect or macro-based, inspect the
-            # parser's expanded field as a second, independent representation.
+            # Use the parser's Gen 8-resolved field first. Raw source may
+            # contain mutually exclusive #if/#else branches; extracting symbols
+            # from that text can combine alternatives or select the wrong branch.
+            # Fall back to raw text only when macro expansion leaves no symbols,
+            # preserving aliases that the converter cannot expand.
             raw_fields = source.get("source_raw", {})
-            candidates = (raw_fields.get(field, ""), source_fields_expanded.get(field, ""))
+            candidates = (source_fields_expanded.get(field, ""), raw_fields.get(field, ""))
             for raw in candidates:
                 names = re.findall(rf"{prefix}([A-Z0-9_]+)", raw or "")
                 if names:
