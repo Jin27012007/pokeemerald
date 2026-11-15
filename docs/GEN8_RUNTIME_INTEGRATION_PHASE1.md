@@ -14,10 +14,10 @@ A função `target_item_constant_catalog` agora lê os membros da enum com o par
 
 ## Incompatibilidades de layout confirmadas
 
-- **Habilidades ocultas:** 409 das 512 espécies têm um terceiro slot de habilidade diferente de `NONE`. O `struct SpeciesInfo` de Emerald possui apenas dois slots. O ledger conserva o slot oculto, mas marca que ele não cabe na estrutura atual.
-- **Experiência base:** 105 espécies têm `expYield` acima de 255. O campo correspondente no `struct SpeciesInfo` atual é `u8`. Copiar esses valores diretamente causaria perda por truncamento; a integração precisa decidir uma representação maior e revisar os consumidores.
+- **Habilidades ocultas:** 409 das 512 espécies têm um terceiro slot diferente de `NONE`. A fase 2 ampliou `SpeciesInfo` para três slots e o seletor persistente para dois bits; a escolha de slot 2 pode ser definida por `SetMonAbilityNum` ou `SetBoxMonAbilityNum`.
+- **Experiência base:** 105 espécies têm `expYield` acima de 255. A fase 2 ampliou o campo de `u8` para `u16`, evitando truncamento desses valores.
 - **Tipo Fairy:** 36 slots de tipo nos registros novos usam `FAIRY`, sem enum-alvo em Emerald. Não basta adicionar um identificador: o cálculo e a tabela de efetividade de tipos também precisam ser adaptados.
-- **Enums de habilidades e itens:** os IDs da Expansion não são IDs de Emerald. Habilidades sem constante-alvo, itens sem constante ou sem registro de dados e comportamentos ainda não auditados permanecem como lacunas explícitas.
+- **Enums de habilidades e itens:** os IDs da Expansion não são IDs de Emerald. A fase 2 alocou IDs locais 78–242 para as 165 habilidades adicionais usadas pelas espécies novas e importou seus nomes/descrições; o comportamento de batalha de cada habilidade ainda precisa ser implementado e testado. Itens sem constante ou sem registro de dados permanecem como lacunas explícitas.
 - **EVs:** os valores fornecidos estão dentro do limite de 2 bits do struct atual. Quando um EV não é declarado na fonte, o valor de inicialização é registrado como zero, que é o valor padrão de um campo omitido em um inicializador C.
 
 Os números deste documento descrevem o conjunto de dados analisado no CI #1017. Dos 57 itens segurados usados pelas espécies novas, 34 têm constante e registro-alvo no Emerald; 23 ainda não têm constante nem registro de dados. O ledger encontrou 92 referências de item resolvidas entre 138 referências comuns/raras analisadas; uma referência rara permanece sem ID numérico resolvido.
@@ -36,7 +36,8 @@ O ledger permanece marcado como `explicit_symbol_mapping_staging_only`. Não é 
 1. Fechar a implementação e os testes das habilidades ausentes, do terceiro slot e do comportamento dos itens.
 2. Definir a representação de `expYield` acima de 255 e auditar todos os consumidores antes de alterar o layout.
 3. Implementar Fairy de ponta a ponta, incluindo efetividade de tipos, mensagens e interações de batalha.
-4. Integrar assets gráficos, ícones e cries e adaptar movimentos, efeitos de batalha e métodos/condições de evolução.
-5. Só então preparar a promoção dos 512 IDs e o plano de migração de todos os registros persistentes — party, PC, daycare e demais campos — com testes de compatibilidade e recuperação de saves interrompidos.
+4. Integrar os efeitos de batalha das habilidades novas e os dados/efeitos dos itens ausentes.
+5. Integrar assets gráficos, ícones e cries e adaptar movimentos, efeitos de batalha e métodos/condições de evolução.
+6. Promover os 512 IDs numa ROM de jogo novo, sem exigir migração de saves antigos.
 
 O critério de segurança desta fase é manter o runtime atual compilável e tornar cada incompatibilidade explícita. A conclusão do ledger não significa que as espécies estejam jogáveis.
