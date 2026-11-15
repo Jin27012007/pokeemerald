@@ -120,8 +120,24 @@ def build_batch(
             raise RuntimeError(f"Dex {dex}: missing numeric statistics")
         for field in REQUIRED_STATS:
             value = statistics.get(field)
-            if not isinstance(value, int) or not 0 <= value <= 255:
+            upper = 65535 if field == "expYield" else 255
+            if not isinstance(value, int) or not 0 <= value <= upper:
                 raise RuntimeError(f"Dex {dex}: invalid or unresolved {field}={value!r}")
+        # The upstream parser stores omitted EV yields as zero for comparison.
+        # Do not export those synthetic zeros as source data: include an EV
+        # field only when the initializer actually supplied that field.
+        source_fields_expanded = source.get("source_expanded_fields", {})
+        source_statistics = {field: statistics[field] for field in REQUIRED_STATS}
+        ev_fields = (
+            "evYield_HP", "evYield_Attack", "evYield_Defense", "evYield_Speed",
+            "evYield_SpAttack", "evYield_SpDefense",
+        )
+        for field in ev_fields:
+            if field in source_fields_expanded:
+                value = statistics.get(field)
+                if not isinstance(value, int) or value < 0:
+                    raise RuntimeError(f"Dex {dex}: invalid or unresolved {field}={value!r}")
+                source_statistics[field] = value
         for field in ("gender_ratio", "friendship", "growth_rate", "body_color"):
             value = source.get(field)
             if not isinstance(value, int) or value < 0:
@@ -146,7 +162,8 @@ def build_batch(
             "source_generation": batch["generation"],
             "source_national_dex_symbol": source["national_dex_symbol"],
             "source_fields_present": meta["source_fields_present"],
-            "statistics": statistics,
+            "statistics": source_statistics,
+            "statistics_source_fields": sorted(source_statistics),
             "gender_ratio_source_value": source["gender_ratio"],
             "friendship_source_value": source["friendship"],
             "growth_rate_source_id": source["growth_rate"],
