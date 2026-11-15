@@ -189,11 +189,38 @@ def test_emerald_layout_blockers_are_explicit():
     assert "exp_yield_exceeds_emerald_u8" not in blockers
     assert row["abilities"][2]["emerald_struct_slot_supported"] is True
     assert row["statistics_emerald_initializer_values"]["expYield"] == 300
+    assert row["max_level_raw_exp_reward"] == 300 * 100 // 7
+    assert "max_level_exp_reward_exceeds_battle_u16" not in blockers
+    assert audit["counts"]["maximum_exp_yield"] == 300
+    assert audit["counts"]["maximum_level_exp_reward_fits_u16"] is True
     assert "hidden_ability_acquisition_flow_not_implemented" in row["runtime_semantics_pending"]
     assert row["statistics_emerald_initializer_values"]["evYield_HP"] == 0
     assert row["statistics_emerald_initializer_values"]["evYield_Attack"] == 1
     assert audit["counts"]["species_with_hidden_ability"] == 1
     assert audit["counts"]["species_with_exp_yield_above_255"] == 1
+
+
+def test_exp_yield_unsigned_16_bit_and_battle_reward_bounds():
+    batches, dependencies = fixture()
+    batches[0]["species"][0]["statistics"]["expYield"] = 65535
+    mapping, audit = module.build_runtime_mapping(
+        batches, dependencies, expected_species_count=1, strict_batch_contract=False
+    )
+    row = mapping["species"][0]
+    assert row["statistics_emerald_initializer_values"]["expYield"] == 65535
+    assert row["max_level_raw_exp_reward"] == 65535 * 100 // 7
+    assert "max_level_exp_reward_exceeds_battle_u16" in row["runtime_blockers"]
+    assert audit["counts"]["maximum_level_exp_reward_fits_u16"] is False
+
+    batches[0]["species"][0]["statistics"]["expYield"] = 65536
+    try:
+        module.build_runtime_mapping(
+            batches, dependencies, expected_species_count=1, strict_batch_contract=False
+        )
+    except RuntimeError as error:
+        assert "invalid source value for expYield" in str(error)
+    else:
+        raise AssertionError("expYield above the unsigned 16-bit limit was accepted")
 
 
 def test_unmapped_held_item_is_not_guessed():
@@ -223,6 +250,7 @@ def main():
     test_runtime_three_slot_ability_storage_contract()
     test_symbol_mappings_keep_source_and_emerald_ids_separate()
     test_emerald_layout_blockers_are_explicit()
+    test_exp_yield_unsigned_16_bit_and_battle_reward_bounds()
     test_unmapped_held_item_is_not_guessed()
     test_source_enum_id_mismatch_is_rejected()
     print("PASS: explicit source-to-Emerald enum mappings, field limits and runtime blockers.")
