@@ -23,6 +23,7 @@ def test_box_and_battle_pokemon_can_store_three_ability_slots():
     assert re.search(r"u32\s+unusedRibbons\s*:\s*2\s*;", substruct)
     assert re.search(r"u32\s+unusedAbilityPadding\s*:\s*1\s*;", substruct)
     assert re.search(r"u8\s+abilityNum\s*;", battle)
+    assert "/*0x23*/ u8 abilityNum;" in battle
     assert re.search(r"u32\s+unusedAbilityPadding\s*:\s*1\s*;", battle)
 
 
