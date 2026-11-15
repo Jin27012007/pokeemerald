@@ -8,6 +8,12 @@ import re
 import sys
 from pathlib import Path
 
+# Reuse the converter's balanced C-argument parser and target-generation
+# conditional evaluator so extracted enum symbols match the numeric source IDs.
+from gen8_convert_emerald import resolve_c_ternary_expression, split_c_arguments
+
+SOURCE_TARGET_GENERATION = 8
+
 ROOT = Path(__file__).resolve().parents[1]
 REPORTS = ROOT / "reports/gen8-conversion"
 DATA = ROOT / "data/pokemon"
@@ -146,28 +152,54 @@ def build_batch(
             raise RuntimeError(f"Dex {dex}: expanded source fields are missing")
         source_fields_expanded = source["source_expanded_fields"]
 
-        def source_enum_symbols(field: str, prefix: str) -> list[str]:
-            # Use the parser's Gen 8-resolved field first. Raw source may
-            # contain mutually exclusive #if/#else branches; extracting symbols
-            # from that text can combine alternatives or select the wrong branch.
-            # Fall back to raw text only when macro expansion leaves no symbols,
-            # preserving aliases that the converter cannot expand.
+        def source_enum_symbols(field: str, prefix: str, macro_name: str | None = None) -> list[str]:
+            # Use the parser's Gen 8-expanded field first. Macro arguments may
+            # still contain a P_UPDATED_* ternary (e.g. Togekiss' type 1), so
+            # resolve each argument independently before collecting symbols.
+            # Raw source remains a fallback for unresolved symbolic aliases.
             raw_fields = source.get("source_raw", {})
             candidates = (source_fields_expanded.get(field, ""), raw_fields.get(field, ""))
             for raw in candidates:
-                names = re.findall(rf"{prefix}([A-Z0-9_]+)", raw or "")
+                raw = (raw or "").strip()
+                if not raw:
+                    continue
+                if macro_name:
+                    macro_match = re.fullmatch(rf"{macro_name}\\((.*)\\)", raw, re.S)
+                    if not macro_match:
+                        continue
+                    arguments = split_c_arguments(macro_match.group(1))
+                elif raw.startswith("{") and raw.endswith("}"):
+                    arguments = split_c_arguments(raw[1:-1])
+                else:
+                    names = re.findall(rf"{prefix}([A-Z0-9_]+)", raw)
+                    if names:
+                        return names
+                    continue
+
+                names = []
+                for argument in arguments:
+                    selected = resolve_c_ternary_expression(argument, SOURCE_TARGET_GENERATION)
+                    if selected is not None:
+                        argument = selected
+                    argument_names = re.findall(rf"{prefix}([A-Z0-9_]+)", argument)
+                    # One symbol per enum slot is expected. If an expression
+                    # remains ambiguous, try the original initializer below.
+                    if len(argument_names) != 1:
+                        names = []
+                        break
+                    names.append(argument_names[0])
                 if names:
                     return names
             raise RuntimeError(f"Dex {dex}: source enum symbols are missing for {field}")
 
         enum_symbol_fields = {
-            "types": ("types", "TYPE_"),
-            "egg_groups": ("eggGroups", "EGG_GROUP_"),
-            "abilities": ("abilities", "ABILITY_"),
+            "types": ("types", "TYPE_", "MON_TYPES"),
+            "egg_groups": ("eggGroups", "EGG_GROUP_", "MON_EGG_GROUPS"),
+            "abilities": ("abilities", "ABILITY_", None),
         }
         enum_symbols = {
-            field: source_enum_symbols(source_field, prefix)
-            for field, (source_field, prefix) in enum_symbol_fields.items()
+            field: source_enum_symbols(source_field, prefix, macro_name)
+            for field, (source_field, prefix, macro_name) in enum_symbol_fields.items()
         }
         # Expansion's parser can retain symbolic aliases whose enum expression
         # is not a literal integer (e.g. ABILITY_TANGLED_FEET = ABILITIES_COUNT_GEN3).
