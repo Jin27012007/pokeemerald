@@ -20,8 +20,10 @@ def test_box_and_battle_pokemon_can_store_three_ability_slots():
     substruct = struct_body("PokemonSubstruct3")
     battle = struct_body("BattlePokemon")
     assert re.search(r"u32\s+abilityNum\s*:\s*2\s*;", substruct)
-    assert re.search(r"u32\s+unusedRibbons\s*:\s*3\s*;", substruct)
-    assert re.search(r"u32\s+abilityNum\s*:\s*2\s*;", battle)
+    assert re.search(r"u32\s+unusedRibbons\s*:\s*2\s*;", substruct)
+    assert re.search(r"u32\s+unusedAbilityPadding\s*:\s*1\s*;", substruct)
+    assert re.search(r"u8\s+abilityNum\s*;", battle)
+    assert re.search(r"u32\s+unusedAbilityPadding\s*:\s*1\s*;", battle)
 
 
 def test_species_info_has_wide_exp_yield_and_three_abilities():
