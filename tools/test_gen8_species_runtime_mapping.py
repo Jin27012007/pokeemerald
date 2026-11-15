@@ -92,6 +92,45 @@ def fixture():
     return [batch], dependencies
 
 
+
+def test_runtime_three_slot_ability_storage_contract():
+    header = (ROOT / "include/pokemon.h").read_text(encoding="utf-8")
+    pokemon = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
+    battle_scripts = (ROOT / "src/battle_script_commands.c").read_text(encoding="utf-8")
+
+    assert "#define NUM_ABILITY_SLOTS 3" in header
+    assert "u8 abilities[NUM_ABILITY_SLOTS];" in header
+    assert "u8 abilityNumHigh:1;" in header
+    assert "u8 unused:3;" in header
+    assert "u8 unknown; // Bit 0 stores the high bit of the ability slot index." in header
+
+    # The stored ability slot combines the original encrypted low bit with
+    # one spare public BoxPokemon bit. Both values are read/written by the
+    # normal MON_DATA_ABILITY_NUM path used by party and PC records.
+    assert "substruct3->abilityNum | (boxMon->abilityNumHigh << 1)" in pokemon
+    assert "substruct3->abilityNum = abilityNum & 1;" in pokemon
+    assert "boxMon->abilityNumHigh = (abilityNum >> 1) & 1;" in pokemon
+
+    assert "if (abilityNum >= NUM_ABILITY_SLOTS)" in pokemon
+    assert "gLastUsedAbility = info->abilities[abilityNum];" in pokemon
+    assert "bool8 SetMonAbilitySlot(struct Pokemon *mon, u8 abilitySlot)" in pokemon
+    assert "abilitySlot >= NUM_ABILITY_SLOTS" in pokemon
+    assert "GetSpeciesInfoSafe(species)->abilities[abilitySlot] == ABILITY_NONE" in pokemon
+
+    # The battle struct size does not grow: the high slot bit uses its
+    # previously unused byte. All reads go through the accessor.
+    assert "GetBattleMonAbilityNum(const struct BattlePokemon *mon)" in pokemon
+    assert "mon->unknown & 1" in pokemon
+    assert "SetBattleMonAbilityNum(" in pokemon
+    assert "SetBattleMonAbilityNum(\n        &gBattleMons[battler]" in pokemon
+    assert "GetBattleMonAbilityNum(&gBattleMons[gActiveBattler])" in battle_scripts
+
+    # Pickup used to collapse every nonzero ability index to slot 2 in C's
+    # zero-based terms (Emerald's second slot). It now asks the common getter.
+    assert battle_scripts.count("ability = GetMonAbility(&gPlayerParty[i]);") == 2
+    assert "GetSpeciesInfoSafe(species)->abilities[1]" not in battle_scripts
+
+
 def test_symbol_mappings_keep_source_and_emerald_ids_separate():
     batches, dependencies = fixture()
     mapping, audit = module.build_runtime_mapping(
@@ -156,6 +195,7 @@ def test_source_enum_id_mismatch_is_rejected():
 
 
 def main():
+    test_runtime_three_slot_ability_storage_contract()
     test_symbol_mappings_keep_source_and_emerald_ids_separate()
     test_emerald_layout_blockers_are_explicit()
     test_unmapped_held_item_is_not_guessed()
