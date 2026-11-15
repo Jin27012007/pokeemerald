@@ -47,10 +47,10 @@ def make_fixture():
                 "source_raw": {
                     "baseHP": "50",
                     "types": (
-                        "#if P_UPDATED_TYPES >= GEN_6\\n"
-                        "MON_TYPES(TYPE_GRASS, TYPE_POISON)\\n"
-                        "#else\\n"
-                        "MON_TYPES(TYPE_GRASS)\\n"
+                        "#if P_UPDATED_TYPES >= GEN_6\n"
+                        "MON_TYPES(TYPE_GRASS, TYPE_POISON)\n"
+                        "#else\n"
+                        "MON_TYPES(TYPE_GRASS)\n"
                         "#endif"
                     ),
                     "eggGroups": "MON_EGG_GROUPS(EGG_GROUP_MONSTER, EGG_GROUP_GRASS)",
