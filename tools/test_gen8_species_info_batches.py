@@ -121,7 +121,7 @@ def make_fixture(batch=None):
 
 
 def batch_spec(generation=4):
-    start, introduction_generation = {4: (387, 4), 5: (494, 5), 6: (650, 6)}[generation]
+    start, introduction_generation = {4: (387, 4), 5: (494, 5), 6: (650, 6), 7: (722, 7)}[generation]
     return {
         "batch_id": "test_batch",
         "species_introduction_generation": introduction_generation,
@@ -178,6 +178,30 @@ def test_gen6_batch_configuration_and_generation():
     assert result["runtime_activation_allowed"] is False
     assert result["species"][0]["source_generation"] == 6
     assert result["species"][0]["source_file"].endswith("gen_6_families.h")
+
+
+def test_gen7_batch_configuration_and_generation():
+    configured = module.BATCHES[7]
+    assert configured["batch_id"] == "gen7_species_info"
+    assert configured["species_introduction_generation"] == 7
+    assert configured["national_dex_start"] == 722
+    assert configured["national_dex_end"] == 809
+    assert configured["expected_species_count"] == 88
+
+    fixture_spec = batch_spec(7)
+    canonical, compact, domains = make_fixture(fixture_spec)
+    result = module.build_batch(
+        canonical, compact, domains,
+        {"repository": "https://github.com/example/source", "commit": "d" * 40},
+        fixture_spec,
+    )
+    assert result["national_dex_range"] == [722, 723]
+    assert result["species_introduction_generation"] == 7
+    assert result["species_count"] == 2
+    assert [row["national_dex"] for row in result["species"]] == [722, 723]
+    assert result["runtime_activation_allowed"] is False
+    assert result["species"][0]["source_generation"] == 7
+    assert result["species"][0]["source_file"].endswith("gen_7_families.h")
 
 
 def test_batch_is_complete_and_staging_only():
@@ -325,6 +349,7 @@ def test_raw_and_expanded_source_are_both_preserved():
 def main():
     test_gen5_batch_configuration_and_generation()
     test_gen6_batch_configuration_and_generation()
+    test_gen7_batch_configuration_and_generation()
     test_batch_is_complete_and_staging_only()
     test_family_macro_brace_initializer_is_preserved()
     test_batch_is_deterministic()
@@ -332,7 +357,7 @@ def main():
     test_source_file_generation_is_preserved_and_must_match()
     test_unresolved_source_record_is_rejected()
     test_raw_and_expanded_source_are_both_preserved()
-    print("PASS: Gen 4/Gen 5/Gen 6 batch identity, field coverage, provenance, determinism and runtime isolation.")
+    print("PASS: Gen 4/Gen 5/Gen 6/Gen 7 batch identity, field coverage, provenance, determinism and runtime isolation.")
 
 
 if __name__ == "__main__":
