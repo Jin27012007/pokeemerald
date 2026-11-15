@@ -43,7 +43,7 @@ def make_fixture(batch=None):
             })
             compact.append({
                 "species_symbol": symbol,
-                "generation": 4,
+                "generation": batch["species_introduction_generation"],
                 "national_dex_symbol": f"NATIONAL_DEX_{symbol}",
                 "source_raw": {
                     "baseHP": "50",
