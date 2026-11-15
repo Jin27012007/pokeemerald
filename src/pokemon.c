@@ -4568,7 +4568,10 @@ u8 GetAbilityBySpecies(u16 species, u8 abilityNum)
     const struct SpeciesInfo *info = GetSpeciesInfoSafe(species);
 
     if (abilityNum >= NUM_ABILITY_SLOTS)
-        return ABILITY_NONE;
+    {
+        gLastUsedAbility = ABILITY_NONE;
+        return gLastUsedAbility;
+    }
 
     gLastUsedAbility = info->abilities[abilityNum];
     return gLastUsedAbility;
@@ -4613,7 +4616,7 @@ void SetBattleMonAbilityNum(struct BattlePokemon *mon, u8 abilityNum)
         return;
 
     mon->abilityNum = abilityNum & 1;
-    mon->unknown = (mon->unknown & 0xFE) | ((abilityNum >> 1) & 1);
+    mon->unknown = (abilityNum >> 1) & 1;
 }
 
 void CreateSecretBaseEnemyParty(struct SecretBase *secretBaseRecord)
