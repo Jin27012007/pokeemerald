@@ -20,6 +20,23 @@ SPEC.loader.exec_module(module)
 
 
 
+
+def check_exp_yield_and_ability_slot_runtime_layout():
+    header = (ROOT / "include/pokemon.h").read_text(encoding="utf-8")
+    converter = (ROOT / "tools/gen8_convert_emerald.py").read_text(encoding="utf-8")
+    assert "/* 0x0A */ u16 expYield;" in header
+    assert "/* 0x0C */ u16 evYield_HP:2;" in header
+    assert "/* 0x1B */ u8 safariZoneFleeRate;" in header
+    assert "/* 0x1C */ u8 bodyColor : 7;" in header
+    assert "sizeof(struct SpeciesInfo) == 0x1E" in (
+        ROOT / "src/pokemon.c"
+    ).read_text(encoding="utf-8")
+    assert '"struct_species_info_bytes": 0x1E' in converter
+    assert '"emerald_species_info_has_three_ability_slots": True' in converter
+    assert '"ability_slot_3_runtime_compatible": True' in converter
+    assert '"third_ability_slot"' not in converter
+
+
 def check_species_mapping_api_executes_as_c():
     compiler = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
     assert compiler, "A C compiler is required to execute the generated species-map test"
@@ -744,6 +761,7 @@ def check_source_completeness_is_independent_of_target_mapping():
 
 def main():
     check_species_mapping_api_generation()
+    check_exp_yield_and_ability_slot_runtime_layout()
     check_species_mapping_api_executes_as_c()
     check_enum_implicit_and_explicit_values()
     check_unresolved_enum_aliases_are_preserved_without_guessing()
