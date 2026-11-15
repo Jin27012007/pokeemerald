@@ -13,7 +13,8 @@ A ROM passa a ter estrutura suficiente para representar os três slots de habili
 
 ### Pokémon armazenado e em batalha
 
-- O seletor `abilityNum` passou de 1 para 2 bits em `PokemonSubstruct3` e em `BattlePokemon`.
+- O seletor `abilityNum` passou de 1 para 2 bits em `PokemonSubstruct3`. O segundo bit reutiliza um bit reservado de ribbons; o substruct continua com 12 bytes, sem aumentar cada Pokémon armazenado.
+- Em `BattlePokemon`, o seletor usa o byte anteriormente não utilizado em `0x23`, preservando os offsets seguintes.
 - Um slot vazio ou um índice fora do intervalo retorna a primeira habilidade, em vez de ler uma posição inválida.
 - `SetBoxMonAbilityNum` e `SetMonAbilityNum` permitem selecionar explicitamente os slots 0, 1 ou 2, desde que o slot exista para a espécie.
 - A criação normal continua escolhendo entre os dois slots regulares; esta alteração não distribui habilidade oculta aleatoriamente. Sistemas de captura, criação e eventos poderão escolher o slot oculto explicitamente.
