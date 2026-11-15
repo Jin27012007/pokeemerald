@@ -191,6 +191,14 @@ jobs:
         run: python3 tools/validate_gen8_intake.py
           
 
+      - name: Build and test explicit Gen 8 SpeciesInfo compatibility ledger (staging only)
+        run: |
+          python3 tools/gen8_species_runtime_mapping.py
+          python3 tools/test_gen8_species_runtime_mapping.py
+          test -s data/pokemon/gen8_species_info_runtime_mapping.json
+          test -s reports/gen8-conversion/species_info_runtime_mapping_audit.json
+
+
       - name: Verify generated staging sources are tracked and complete
         run: |
           test -s include/gen8_species_map.h
@@ -216,6 +224,8 @@ jobs:
           test -s data/pokemon/gen8_type_source_dependencies.json
           test -s data/pokemon/gen8_egg_group_source_dependencies.json
           test -s data/pokemon/gen8_growth_rate_source_dependencies.json
+          test -s data/pokemon/gen8_species_info_runtime_mapping.json
+          test -s reports/gen8-conversion/species_info_runtime_mapping_audit.json
           test -s data/pokemon/gen8_evolution_method_dependencies.json
           test -s data/pokemon/gen8_evolution_condition_dependencies.json
           test -s data/pokemon/gen8_pokedex_orders.json
@@ -246,6 +256,8 @@ jobs:
               "data/pokemon/gen8_type_source_dependencies.json",
               "data/pokemon/gen8_egg_group_source_dependencies.json",
               "data/pokemon/gen8_growth_rate_source_dependencies.json",
+              "data/pokemon/gen8_species_info_runtime_mapping.json",
+              "reports/gen8-conversion/species_info_runtime_mapping_audit.json",
               "data/pokemon/gen8_evolution_method_dependencies.json",
               "data/pokemon/gen8_evolution_condition_dependencies.json",
               "data/pokemon/gen8_pokedex_orders.json",
@@ -346,6 +358,8 @@ jobs:
             data/pokemon/gen8_species_info_batches/gen6_species_info.json
             data/pokemon/gen8_species_info_batches/gen7_species_info.json
             data/pokemon/gen8_species_info_batches/gen8_species_info.json
+            data/pokemon/gen8_species_info_runtime_mapping.json
+            docs/GEN8_RUNTIME_INTEGRATION_PHASE1.md
             docs/GEN8_SPECIES_INFO_STEP3_BATCH1.md
             docs/GEN8_SPECIES_INFO_STEP4_BATCH2.md
             docs/GEN8_SPECIES_INFO_STEP5_BATCH3.md
