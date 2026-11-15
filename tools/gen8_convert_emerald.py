@@ -69,7 +69,8 @@ def read(path: Path) -> str:
         raise RuntimeError(f"Missing input: {path.relative_to(ROOT)}")
     return path.read_text(encoding="utf-8")
 
-def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
+def symbols(text: str, prefix: str, enum: bool = False,
+            preserve_unresolved_aliases: bool = False) -> list[dict]:
     if not enum:
         pattern = rf"^#define\s+{re.escape(prefix)}([A-Z0-9_]+)\s+(\d+)\s*$"
         return [{"symbol": m.group(1), "id": int(m.group(2))}
@@ -93,10 +94,15 @@ def symbols(text: str, prefix: str, enum: bool = False) -> list[dict]:
                 if re.fullmatch(r"(?:0x[0-9A-Fa-f]+|\d+)", raw):
                     next_value = int(raw, 0)
                 else:
-                    # Do not invent values for expressions or symbolic aliases.
+                    # Keep the name when explicitly requested, but never infer
+                    # a numeric value from another enum sentinel or expression.
+                    if preserve_unresolved_aliases:
+                        result.append({"symbol": symbol, "id": None})
+                        next_value = None
                     continue
             result.append({"symbol": symbol, "id": next_value})
-            next_value += 1
+            if next_value is not None:
+                next_value += 1
     return result
 
 def balanced_species_records(text: str) -> list[dict]:
@@ -673,7 +679,9 @@ def parse_species_info(source_text: str, target_info_text: str,
     type_values = {x["symbol"]: x["id"] for x in symbols(source_pokemon_text, "TYPE_", enum=True)}
     egg_values = {x["symbol"]: x["id"] for x in symbols(source_pokemon_text, "EGG_GROUP_", enum=True)}
     growth_values = {x["symbol"]: x["id"] for x in symbols(source_pokemon_text, "GROWTH_", enum=True)}
-    ability_values = {x["symbol"]: x["id"] for x in symbols(source_ability_text, "ABILITY_", enum=True)}
+    ability_values = {x["symbol"]: x["id"] for x in symbols(
+        source_ability_text, "ABILITY_", enum=True, preserve_unresolved_aliases=True
+    )}
     item_values = {x["symbol"]: x["id"] for x in symbols(source_item_text, "ITEM_", enum=True)}
     if not all((type_values, egg_values, growth_values, ability_values, item_values)):
         missing_catalogs = [
@@ -874,6 +882,7 @@ def parse_species_info(source_text: str, target_info_text: str,
         ability_names = re.findall(r"ABILITY_([A-Z0-9_]+)", ability_raw)
         ability_pair = None
         hidden_ability = None
+        unresolved_ability_symbols = []
         if not ability_names:
             problems.append(f"unresolved_abilities:{ability_raw or None}")
         else:
@@ -883,6 +892,9 @@ def parse_species_info(source_text: str, target_info_text: str,
             else:
                 ability_pair = [ability_values[name] for name in ability_names[:2]]
                 hidden_ability = ability_values[ability_names[2]]
+                unresolved_ability_symbols = [
+                    name for name in ability_names if ability_values[name] is None
+                ]
 
         rare_raw = fields.get("itemRare")
         common_raw = fields.get("itemCommon")
@@ -931,6 +943,8 @@ def parse_species_info(source_text: str, target_info_text: str,
             source_unresolved_fields.append("natDexNum")
         source_complete = not source_missing_fields and not source_unresolved_fields
         runtime_gaps = []
+        if unresolved_ability_symbols:
+            runtime_gaps.append("source_ability_enum_id_unresolved")
         if hidden_ability is not None and hidden_ability > 255:
             runtime_gaps.append("hidden_ability_id_exceeds_u8")
         if len(ability_names) > 2 and hidden_ability not in (None, ability_values.get("NONE", 0)):
@@ -1377,7 +1391,10 @@ def generate(check: bool = False) -> dict:
         "ability_slot_3_runtime_compatible": False,
         "source_ability_enum_width_bits": 16,
         "emerald_ability_slot_width_bits": 8,
-        "all_source_ability_ids_fit_emerald_slot": max(info_result["source_enum_domains"]["abilities"].values(), default=0) <= 255,
+        "all_source_ability_ids_fit_emerald_slot": all(
+            isinstance(value, int) and 0 <= value <= 255
+            for value in info_result["source_enum_domains"]["abilities"].values()
+        ),
         "source_item_enum_width_bits": 16,
         "emerald_item_slot_width_bits": 16,
         "all_source_item_ids_fit_emerald_slot": max(info_result["source_enum_domains"]["items"].values(), default=0) <= 65535,

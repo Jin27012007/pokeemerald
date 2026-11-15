@@ -147,6 +147,37 @@ def check_enum_implicit_and_explicit_values():
     assert growth == {"MEDIUM_FAST": 0, "ERRATIC": 1, "SLOW": 5}, growth
 
 
+def check_unresolved_enum_aliases_are_preserved_without_guessing():
+    source = """
+    enum Ability
+    {
+        ABILITY_AIR_LOCK = 76,
+        ABILITIES_COUNT_GEN3,
+        ABILITY_TANGLED_FEET = ABILITIES_COUNT_GEN3,
+        ABILITY_MOTOR_DRIVE = 78,
+        ABILITY_FOLLOWUP,
+    };
+    """
+    default_domain = {
+        x["symbol"]: x["id"]
+        for x in module.symbols(source, "ABILITY_", enum=True)
+    }
+    assert "TANGLED_FEET" not in default_domain
+
+    source_domain = {
+        x["symbol"]: x["id"]
+        for x in module.symbols(
+            source, "ABILITY_", enum=True, preserve_unresolved_aliases=True
+        )
+    }
+    assert source_domain == {
+        "AIR_LOCK": 76,
+        "TANGLED_FEET": None,
+        "MOTOR_DRIVE": 78,
+        "FOLLOWUP": 79,
+    }, source_domain
+
+
 def check_nested_designated_initializers():
     body = """
         .baseHP = 55,
@@ -715,6 +746,7 @@ def main():
     check_species_mapping_api_generation()
     check_species_mapping_api_executes_as_c()
     check_enum_implicit_and_explicit_values()
+    check_unresolved_enum_aliases_are_preserved_without_guessing()
     check_nested_designated_initializers()
     check_balanced_species_record_strings()
     check_expansion_brace_on_next_line()
