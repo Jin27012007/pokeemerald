@@ -77,6 +77,29 @@ STAT_FIELDS = (
 )
 
 
+def target_item_constant_catalog(text: str) -> dict[str, int]:
+    """Read Emerald item IDs from the ITEM_* enum, not #define macros.
+
+    items.h declares the main item namespace inside an enum. Parsing it as
+    numeric preprocessor defines silently produced an empty target item map.
+    Keep only resolvable enum values and reject duplicate symbol definitions.
+    """
+    result: dict[str, int] = {}
+    for row in conv.symbols(text, "ITEM_", enum=True):
+        symbol = row["symbol"]
+        value = row["id"]
+        if value is None:
+            continue
+        previous = result.get(symbol)
+        if previous is not None and previous != value:
+            raise RuntimeError(
+                f"Conflicting Emerald item enum values for ITEM_{symbol}: "
+                f"{previous} and {value}"
+            )
+        result[symbol] = int(value)
+    return result
+
+
 def read(path: Path) -> str:
     if not path.is_file():
         raise RuntimeError(f"Missing input: {path.relative_to(ROOT)}")
@@ -922,10 +945,9 @@ def source_table_inventory() -> dict:
         row["symbol"]: row["id"]
         for row in conv.symbols(read(ROOT / "include/constants/abilities.h"), "ABILITY_")
     }
-    target_item_ids = {
-        row["symbol"]: row["id"]
-        for row in conv.symbols(read(ROOT / "include/constants/items.h"), "ITEM_")
-    }
+    target_item_ids = target_item_constant_catalog(
+        read(ROOT / "include/constants/items.h")
+    )
     source_ability_records = indexed_records(read(VENDOR / "src/data/abilities.h"), "ABILITY_")
     source_item_records = indexed_records(read(VENDOR / "src/data/items.h"), "ITEM_")
     target_item_records = indexed_records(read(ROOT / "src/data/items.h"), "ITEM_")
