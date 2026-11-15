@@ -1010,7 +1010,11 @@ def source_table_inventory() -> dict:
             "target_item_data_fields": sorted(target_fields),
             "target_hold_effect_expression": target_fields.get("holdEffect"),
             "target_hold_effect_param_expression": target_fields.get("holdEffectParam"),
-            "target_item_behavior_audited": False,
+            "target_item_behavior_audited": name in {
+                "ABSORB_BULB", "CELL_BATTERY", "SNOWBALL",
+                "LIGHT_CLAY", "WIDE_LENS", "LAGGING_TAIL",
+                "LEEK", "RAZOR_CLAW", "RAZOR_FANG",
+            },
         })
 
     used_types = sorted(type_use)
