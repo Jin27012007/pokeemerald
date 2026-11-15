@@ -48,7 +48,7 @@ def test_boxed_and_party_mon_hidden_ability_selection():
 
 
 def test_gen8_ability_registry_has_unique_u8_ids_and_text():
-    rows = re.findall(r"#define ABILITY_([A-Z0-9_]+) (\\d+)", ABILITIES)
+    rows = re.findall(r"#define ABILITY_([A-Z0-9_]+) ([0-9]+)", ABILITIES)
     values = [int(value) for _, value in rows]
     assert len(values) == len(set(values))
     assert max(values) <= 255
