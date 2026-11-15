@@ -42,6 +42,7 @@ def test_fairy_chart_contains_all_gen6_matchups():
     }
     assert expected.issubset(set(triples))
     assert ("TYPE_ENDTABLE", "TYPE_ENDTABLE", "TYPE_MUL_NO_EFFECT") in triples
+    # Steel no longer resists Ghost and Dark from Generation VI onward.
     assert ("TYPE_GHOST", "TYPE_STEEL", "TYPE_MUL_NOT_EFFECTIVE") not in triples
     assert ("TYPE_DARK", "TYPE_STEEL", "TYPE_MUL_NOT_EFFECTIVE") not in triples
 
@@ -50,7 +51,7 @@ def test_fairy_summary_icon_and_palette_are_registered():
     assert "ANIMCMD_FRAME(TYPE_FAIRY * 8, 0, FALSE, FALSE)" in SUMMARY
     assert "sSpriteAnim_TypeFairy,\n    sSpriteAnim_CategoryCool" in SUMMARY
     assert "[TYPE_FAIRY] = 14" in SUMMARY
-    assert "fairy" in GRAPHICS_RULES.split("types ?=", 1)[1].split("\n", 1)[0]
+    assert "fairy" in GRAPHICS_RULES.split("types :=", 1)[1].split("\n", 1)[0]
     assert (ROOT / "graphics/types/fairy.png").is_file()
 
 
@@ -65,13 +66,14 @@ def test_hidden_power_keeps_the_original_gen3_type_pool():
     assert "Fairy type are excluded" in BATTLE_SCRIPTS
 
 
-
 def test_fairy_battle_text_and_pokedex_filter():
     battle_messages = (ROOT / "src/battle_message.c").read_text(encoding="utf-8")
     assert '[TYPE_FAIRY]    = _("a FAIRY move")' in battle_messages
     pokedex = (ROOT / "src/pokedex.c").read_text(encoding="utf-8")
     assert "gTypeNames[TYPE_FAIRY]" in pokedex
-    assert re.search(r"static const u8 sDexSearchTypeIds\\[NUMBER_OF_MON_TYPES\\].*?TYPE_FAIRY", pokedex, re.S)
+    start = pokedex.index("static const u8 sDexSearchTypeIds[NUMBER_OF_MON_TYPES]")
+    end = pokedex.index("\n};", start)
+    assert "TYPE_FAIRY," in pokedex[start:end]
 
 
 def test_species_that_gained_fairy_keep_modern_types():
@@ -85,7 +87,7 @@ def test_species_that_gained_fairy_keep_modern_types():
         "CLEFFA": ("TYPE_FAIRY", "TYPE_FAIRY"),
         "IGGLYBUFF": ("TYPE_NORMAL", "TYPE_FAIRY"),
         "TOGEPI": ("TYPE_FAIRY", "TYPE_FAIRY"),
-        "TOGETIC": ("TYPE_FAIRY", "TYPE_FAIRY"),
+        "TOGETIC": ("TYPE_FAIRY", "TYPE_FLYING"),
         "SNUBBULL": ("TYPE_FAIRY", "TYPE_FAIRY"),
         "GRANBULL": ("TYPE_FAIRY", "TYPE_FAIRY"),
         "MARILL": ("TYPE_WATER", "TYPE_FAIRY"),
@@ -98,16 +100,20 @@ def test_species_that_gained_fairy_keep_modern_types():
     }
     for species, pair in expected.items():
         start = source.index(f"[SPECIES_{species}] =")
-        end = source.index("\\n    },", start)
+        end = source.index("\n    },", start)
         block = source[start:end]
-        match = re.search(r"\\.types\\s*=\\s*\\{\\s*(TYPE_[A-Z0-9_]+)\\s*,\\s*(TYPE_[A-Z0-9_]+)\\s*\\}", block)
-        assert match and match.groups() == pair, f"{species}: expected {pair}"
+        expected_field = f".types = {{ {pair[0]}, {pair[1]} }}"
+        assert expected_field in block, f"{species}: expected {expected_field}"
 
 
 def test_gen8_converter_no_longer_treats_fairy_as_a_gap():
     converter = (ROOT / "tools/gen8_convert_emerald.py").read_text(encoding="utf-8")
     assert "fairy_type_not_in_emerald_enum" not in converter
-    assert '"fairy_type"' not in converter.split('"source_only_fields_require_runtime_work":', 1)[1].split("\\n", 1)[0]
+    source_only_line = next(
+        line for line in converter.splitlines()
+        if '"source_only_fields_require_runtime_work"' in line
+    )
+    assert '"fairy_type"' not in source_only_line
 
 
 def main():
@@ -119,7 +125,7 @@ def main():
     test_fairy_battle_text_and_pokedex_filter()
     test_species_that_gained_fairy_keep_modern_types()
     test_gen8_converter_no_longer_treats_fairy_as_a_gap()
-    print("PASS: Fairy type ID, 12 matchup changes, summary icon, bounded chart access and legacy Hidden Power pool.")
+    print("PASS: Fairy type, modern chart, UI, Pokédex, legacy species and Gen 8 conversion.")
 
 
 if __name__ == "__main__":
