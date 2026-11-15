@@ -161,6 +161,24 @@ def test_batch_is_complete_and_staging_only():
     assert "species_internal_id" not in first
 
 
+def test_family_macro_brace_initializer_is_preserved():
+    canonical, compact, domains = make_fixture()
+    compact[0]["source_raw"]["types"] = "ROTOM_FAMILY_TYPES"
+    compact[0]["source_expanded_fields"]["types"] = "{ TYPE_ELECTRIC, TYPE_GHOST }"
+    compact[0]["types"] = [14, 8]
+    domains["types"].update({"ELECTRIC": 14, "GHOST": 8})
+
+    result = module.build_batch(
+        canonical, compact, domains,
+        {"repository": "https://github.com/example/source", "commit": "a" * 40},
+        batch_spec(),
+    )
+    first = result["species"][0]
+    assert first["types_source_symbols"] == ["ELECTRIC", "GHOST"]
+    assert first["types_source_ids"] == [14, 8]
+    assert first["source_fields_raw"]["types"] == "ROTOM_FAMILY_TYPES"
+
+
 def test_batch_is_deterministic():
     canonical, compact, domains = make_fixture()
     args = (
@@ -256,6 +274,7 @@ def test_raw_and_expanded_source_are_both_preserved():
 
 def main():
     test_batch_is_complete_and_staging_only()
+    test_family_macro_brace_initializer_is_preserved()
     test_batch_is_deterministic()
     test_missing_canonical_row_is_rejected()
     test_source_file_generation_is_preserved_and_must_match()
