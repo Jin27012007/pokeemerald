@@ -114,6 +114,11 @@ jobs:
           python3 tools/audit_gen8_species_namespace_readiness.py
           python3 tools/test_gen8_species_namespace_readiness.py
 
+      - name: Generate and test proposed Gen 8 species ID and form scheme (non-runtime)
+        run: |
+          python3 tools/gen8_species_id_scheme.py
+          python3 tools/test_gen8_species_id_scheme.py
+
       - name: Verify clean build can regenerate the species map
         run: |
           rm -f include/gen8_species_map.h src/data/gen8/species_map.c
@@ -319,6 +324,8 @@ jobs:
           path: |
             reports/gen8-conversion/
             docs/GEN8_CANONICAL_INTAKE_CONTRACT.md
+            docs/GEN8_SPECIES_ID_SCHEME_STEP2.md
+            data/pokemon/gen8_form_policy.json
             data/pokemon/gen8_species_evolutions.json
             data/pokemon/gen8_species_pokedex_entries.json
             data/pokemon/gen8_species_cry_map.json
