@@ -2,7 +2,9 @@
 
 ## Escopo deste lote
 
-Esta primeira entrega organiza os dados básicos das 107 espécies introduzidas na Geração 4, correspondentes aos números da Pokédex Nacional 387–493. O lote é derivado dos inicializadores da árvore vendorizada de Pokémon Emerald Expansion, usando o snapshot identificado em `tools/vendor/pokeemerald-expansion/README.md`.
+Esta primeira entrega organiza os dados básicos das 107 espécies que estrearam na Geração 4, correspondentes aos números da Pokédex Nacional 387–493. O lote é derivado dos inicializadores da árvore vendorizada de Pokémon Emerald Expansion, usando o snapshot identificado em `tools/vendor/pokeemerald-expansion/README.md`.
+
+A geração de estreia da espécie não deve ser confundida com a geração do arquivo onde a fonte mantém o inicializador. Por isso, cada registro preserva seu `source_generation` real e o caminho `gen_N_families.h` correspondente. Uma espécie da Gen4 pode estar declarada em um arquivo de família mais antigo — por exemplo, o registro #406 foi localizado no arquivo de Gen3. O lote continua sendo Gen4 pelo intervalo Nacional; a proveniência do arquivo nunca é reescrita para fazer parecer que veio de Gen4.
 
 ## Conteúdo importado para staging
 
@@ -17,7 +19,8 @@ O resultado é gerado em `data/pokemon/gen8_species_info_batches/gen4_species_in
 ## Critérios de aceitação
 
 - O catálogo nacional de entrada contém exatamente 898 identidades únicas (1–898).
-- O lote contém exatamente 107 registros, sem lacunas ou duplicatas, todos na geração 4 e no intervalo 387–493.
+- O lote contém exatamente 107 registros, sem lacunas ou duplicatas, no intervalo 387–493, correspondente à geração de estreia 4.
+- Cada registro preserva a geração e o arquivo de origem efetivamente encontrados no parser (1–8), sem pressupor que a pasta de origem coincide com a geração de estreia.
 - Cada registro aponta para um inicializador Expansion cujo `natDexNum` confere com a identidade nacional selecionada.
 - Os campos básicos exigidos são resolvidos; nenhum valor ausente é preenchido silenciosamente por este gerador.
 - O inicializador bruto e a expansão de macros são preservados separadamente.
