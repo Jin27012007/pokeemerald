@@ -281,6 +281,9 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
         }
 
         blockers, pending = [], []
+        max_level_raw_exp_reward = exp_yield * MAX_LEVEL // 7
+        if max_level_raw_exp_reward > 65535:
+            blockers.append("max_level_exp_reward_exceeds_battle_u16")
         for mapped in types:
             if mapped["emerald_id"] is None:
                 blockers.append(f"type_enum_unmapped:{mapped['symbol']}")
@@ -335,6 +338,7 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
             "production_emerald_species_id": None,
             "statistics_source_values": dict(stats),
             "statistics_emerald_initializer_values": initializer_stats,
+            "max_level_raw_exp_reward": max_level_raw_exp_reward,
             "types": types,
             "egg_groups": egg_groups,
             "growth_rate": growth,
@@ -348,6 +352,9 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
             "runtime_activation_allowed": False,
         })
 
+    maximum_exp_yield = max(int(row["statistics"]["expYield"]) for row in rows)
+    maximum_level_raw_exp_reward = maximum_exp_yield * MAX_LEVEL // 7
+
     audit = {
         "schema_version": 1,
         "status": "explicit_symbol_mapping_staging_only",
@@ -358,6 +365,9 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
             "species": len(mapped_rows),
             "species_with_hidden_ability": hidden_ability_species,
             "species_with_exp_yield_above_255": exp_yield_overflow_species,
+            "maximum_exp_yield": maximum_exp_yield,
+            "maximum_level_raw_exp_reward": maximum_level_raw_exp_reward,
+            "maximum_level_exp_reward_fits_u16": maximum_level_raw_exp_reward <= 65535,
             "species_with_runtime_blockers": sum(bool(row["runtime_blockers"]) for row in mapped_rows),
             "runtime_ready_species": 0,
             **dict(field_counts),
@@ -367,7 +377,7 @@ def build_runtime_mapping(batches: list[dict], dependencies: dict[str, list[dict
         "blocking_gates": [
             "No production Emerald internal IDs have been allocated for the 512 species.",
             "The three ability slots are represented in runtime storage; hidden-ability encounter, breeding and distribution flows still need implementation.",
-            "SpeciesInfo expYield is now u16; future source values must remain within the unsigned 16-bit field.",
+            "SpeciesInfo expYield is u16; the level-100 raw battle EXP reward must also fit the existing u16 battle accumulator.",
             "Missing abilities, Fairy type, held-item data, move/evolution tables and graphics remain incomplete or unaudited.",
             "In-game migration of persistent species IDs and old saves has not been validated.",
         ],
