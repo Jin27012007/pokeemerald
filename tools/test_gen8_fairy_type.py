@@ -2,6 +2,8 @@
 """Regression tests for the Gen 8 Fairy type integration."""
 from pathlib import Path
 import re
+import struct
+import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
 POKEMON_CONSTANTS = (ROOT / "include/constants/pokemon.h").read_text(encoding="utf-8")
@@ -47,6 +49,26 @@ def test_fairy_chart_contains_all_gen6_matchups():
     # Steel no longer resists Ghost and Dark from Generation VI onward.
     assert ("TYPE_GHOST", "TYPE_STEEL", "TYPE_MUL_NOT_EFFECTIVE") not in triples
     assert ("TYPE_DARK", "TYPE_STEEL", "TYPE_MUL_NOT_EFFECTIVE") not in triples
+
+
+def test_fairy_png_is_a_valid_4bpp_32x16_asset():
+    data = (ROOT / "graphics/types/fairy.png").read_bytes()
+    assert data.startswith(b"\\x89PNG\\r\\n\\x1a\\n")
+    offset = 8
+    chunks = {}
+    while offset < len(data):
+        length = struct.unpack(">I", data[offset : offset + 4])[0]
+        kind = data[offset + 4 : offset + 8]
+        payload = data[offset + 8 : offset + 8 + length]
+        stored_crc = struct.unpack(">I", data[offset + 8 + length : offset + 12 + length])[0]
+        assert zlib.crc32(kind + payload) & 0xFFFFFFFF == stored_crc
+        chunks[kind] = payload
+        offset += length + 12
+    assert offset == len(data)
+    assert chunks[b"IHDR"] == struct.pack(">IIBBBBB", 32, 16, 4, 3, 0, 0, 0)
+    assert len(chunks[b"PLTE"]) == 16 * 3
+    assert chunks[b"tRNS"] == b"\\x00"
+    assert chunks[b"IEND"] == b""
 
 
 def test_fairy_summary_icon_and_palette_are_registered():
@@ -137,6 +159,7 @@ def test_gen8_converter_no_longer_treats_fairy_as_a_gap():
 def main():
     test_fairy_has_a_unique_emerald_type_id()
     test_fairy_chart_contains_all_gen6_matchups()
+    test_fairy_png_is_a_valid_4bpp_32x16_asset()
     test_fairy_summary_icon_and_palette_are_registered()
     test_type_chart_random_probe_cannot_read_past_the_table()
     test_hidden_power_keeps_the_original_gen3_type_pool()
