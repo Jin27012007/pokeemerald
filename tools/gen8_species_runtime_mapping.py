@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data/pokemon"
 REPORTS = ROOT / "reports/gen8-conversion"
 GENERATIONS = (4, 5, 6, 7, 8)
+NUM_ABILITY_SLOTS = 3  # Must match include/pokemon.h.
 MAX_LEVEL = 100
 BATCH_RANGES = {
     4: (387, 493, 107),
