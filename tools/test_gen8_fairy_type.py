@@ -6,6 +6,7 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 POKEMON_CONSTANTS = (ROOT / "include/constants/pokemon.h").read_text(encoding="utf-8")
 BATTLE_MAIN = (ROOT / "src/battle_main.c").read_text(encoding="utf-8")
+BATTLE_MAIN_HEADER = (ROOT / "include/battle_main.h").read_text(encoding="utf-8")
 SUMMARY = (ROOT / "src/pokemon_summary_screen.c").read_text(encoding="utf-8")
 BATTLE_SCRIPTS = (ROOT / "src/battle_script_commands.c").read_text(encoding="utf-8")
 GRAPHICS_RULES = (ROOT / "graphics_file_rules.mk").read_text(encoding="utf-8")
@@ -15,6 +16,7 @@ def test_fairy_has_a_unique_emerald_type_id():
     assert "#define TYPE_FAIRY            18" in POKEMON_CONSTANTS
     assert "#define NUMBER_OF_MON_TYPES   19" in POKEMON_CONSTANTS
     assert '[TYPE_FAIRY] = _("FAIRY")' in BATTLE_MAIN
+    assert "extern const u8 gTypeEffectiveness[366];" in BATTLE_MAIN_HEADER
 
 
 def test_fairy_chart_contains_all_gen6_matchups():
@@ -64,6 +66,12 @@ def test_hidden_power_keeps_the_original_gen3_type_pool():
     assert "NUMBER_OF_MON_TYPES - 4" in BATTLE_SCRIPTS
     assert "NUMBER_OF_MON_TYPES - 3) * typeBits" not in BATTLE_SCRIPTS
     assert "Fairy type are excluded" in BATTLE_SCRIPTS
+    # All 16 Gen 3 Hidden Power types remain reachable; Fairy stays excluded.
+    legacy_pool = set((15 * bits) // 63 + 1 for bits in range(64))
+    legacy_pool = {value + 1 if value >= 9 else value for value in legacy_pool}
+    assert len(legacy_pool) == 16
+    assert min(legacy_pool) == 1 and max(legacy_pool) == 17
+    assert 18 not in legacy_pool
 
 
 def test_fairy_battle_text_and_pokedex_filter():
