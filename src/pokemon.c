@@ -4555,12 +4555,29 @@ u8 GetMonsStateToDoubles_2(void)
 
 u8 GetAbilityBySpecies(u16 species, u8 abilityNum)
 {
-    if (abilityNum)
-        gLastUsedAbility = GetSpeciesInfoSafe(species)->abilities[1];
-    else
-        gLastUsedAbility = GetSpeciesInfoSafe(species)->abilities[0];
+    const struct SpeciesInfo *speciesInfo = GetSpeciesInfoSafe(species);
 
+    // Ability slot 2 is the hidden ability. Invalid or empty slots fall back
+    // to the species' first regular ability rather than returning garbage.
+    if (abilityNum >= ARRAY_COUNT(speciesInfo->abilities)
+     || speciesInfo->abilities[abilityNum] == ABILITY_NONE)
+        abilityNum = 0;
+
+    gLastUsedAbility = speciesInfo->abilities[abilityNum];
     return gLastUsedAbility;
+}
+
+bool8 SetMonAbilityNum(struct Pokemon *mon, u8 abilityNum)
+{
+    u16 species = GetMonData(mon, MON_DATA_SPECIES, NULL);
+    const struct SpeciesInfo *speciesInfo = GetSpeciesInfoSafe(species);
+
+    if (abilityNum >= ARRAY_COUNT(speciesInfo->abilities)
+     || speciesInfo->abilities[abilityNum] == ABILITY_NONE)
+        return FALSE;
+
+    SetMonData(mon, MON_DATA_ABILITY_NUM, &abilityNum);
+    return TRUE;
 }
 
 u8 GetMonAbility(struct Pokemon *mon)
