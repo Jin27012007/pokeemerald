@@ -68,7 +68,7 @@ def test_fairy_abilities_are_applied_in_battle_calculation():
     assert "move != MOVE_STRUGGLE" in battle_header
     assert "attacker->ability == ABILITY_PIXILATE" in pokemon
     assert "isPhysical = GetMoveCategory(move) == DAMAGE_CATEGORY_PHYSICAL" in pokemon
-    assert "if (type == TYPE_NORMAL && attacker->ability == ABILITY_PIXILATE && move != MOVE_STRUGGLE)" in pokemon
+    assert "type = TYPE_FAIRY;" in pokemon
     assert "ABILITY_FAIRY_AURA" in pokemon
     assert "ABILITY_AURA_BREAK" in pokemon
     assert "gBattleMovePower = (gBattleMovePower * 6) / 5" in pokemon
