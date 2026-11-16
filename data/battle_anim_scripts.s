@@ -429,7 +429,8 @@ gBattleAnims_Moves::
 	.4byte Move_TACKLE @ Power Up Punch
 	.4byte Move_SING @ Struggle Bug
 	.4byte Move_FLASH @ Flash Cannon
-	.4byte Move_COUNT @ cannot be reached, because last move is Flash Cannon
+	.4byte Move_ABSORB @ Acid Spray
+	.4byte Move_COUNT @ cannot be reached, because last move is Acid Spray
 
 	.align 2
 gBattleAnims_StatusConditions::
