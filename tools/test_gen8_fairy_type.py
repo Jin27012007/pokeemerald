@@ -45,6 +45,22 @@ def test_fairy_moves_are_registered_and_battle_ready():
     assert ".target = MOVE_TARGET_BOTH" in moves[moves.index("[MOVE_DAZZLING_GLEAM] ="):]
 
 
+def test_existing_fairy_species_can_learn_fairy_moves():
+    learnsets = (ROOT / "src/data/pokemon/level_up_learnsets.h").read_text(encoding="utf-8")
+    expected = {
+        "sClefairyLevelUpLearnset": "MOVE_MOONBLAST",
+        "sJigglypuffLevelUpLearnset": "MOVE_DISARMING_VOICE",
+        "sMarillLevelUpLearnset": "MOVE_PLAY_ROUGH",
+        "sRaltsLevelUpLearnset": "MOVE_MOONBLAST",
+        "sTogepiLevelUpLearnset": "MOVE_DRAINING_KISS",
+        "sSnubbullLevelUpLearnset": "MOVE_PLAY_ROUGH",
+    }
+    for symbol, move in expected.items():
+        start = learnsets.index(f"static const u16 {symbol}[]")
+        end = learnsets.index("\n};", start)
+        assert move in learnsets[start:end], f"{symbol} is missing {move}"
+
+
 def test_fairy_abilities_are_applied_in_battle_calculation():
     battle_header = (ROOT / "include/battle.h").read_text(encoding="utf-8")
     pokemon = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
@@ -201,6 +217,7 @@ def test_gen8_converter_no_longer_treats_fairy_as_a_gap():
 
 def main():
     test_fairy_moves_are_registered_and_battle_ready()
+    test_existing_fairy_species_can_learn_fairy_moves()
     test_fairy_abilities_are_applied_in_battle_calculation()
     test_fairy_has_a_unique_emerald_type_id()
     test_fairy_chart_contains_all_gen6_matchups()
