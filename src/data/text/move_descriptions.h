@@ -1418,23 +1418,23 @@ static const u8 sPsychoBoostDescription[] = _(
     "but sharply lowers SP. ATK.");
 
 
-static const u8 sFairyWindDescription[] = _("A gentle but forceful\\n"
+static const u8 sFairyWindDescription[] = _("A gentle but forceful\n"
                                              "fairy wind strikes the foe.");
-static const u8 sPlayRoughDescription[] = _("Plays rough with the foe.\\n"
+static const u8 sPlayRoughDescription[] = _("Plays rough with the foe.\n"
                                             "May lower its ATTACK.");
-static const u8 sMoonblastDescription[] = _("Attacks with moonlight.\\n"
+static const u8 sMoonblastDescription[] = _("Attacks with moonlight.\n"
                                             "May lower SP. ATK.");
-static const u8 sDazzlingGleamDescription[] = _("Foes are hit by a bright\\n"
+static const u8 sDazzlingGleamDescription[] = _("Foes are hit by a bright\n"
                                                  "and dazzling flash.");
-static const u8 sFleurCannonDescription[] = _("Unleashes a strong beam,\\n"
+static const u8 sFleurCannonDescription[] = _("Unleashes a strong beam,\n"
                                                "but lowers SP. ATK.");
-static const u8 sNaturesMadnessDescription[] = _("Nature's power halves\\n"
+static const u8 sNaturesMadnessDescription[] = _("Nature's power halves\n"
                                                   "the foe's remaining HP.");
-static const u8 sSpiritBreakDescription[] = _("Attacks with spirit force.\\n"
+static const u8 sSpiritBreakDescription[] = _("Attacks with spirit force.\n"
                                               "Lowers SP. ATK.");
-static const u8 sStrangeSteamDescription[] = _("Strange steam may\\n"
+static const u8 sStrangeSteamDescription[] = _("Strange steam may\n"
                                                "confuse the target.");
-static const u8 sSpringtideStormDescription[] = _("Unleashes fierce winds.\\n"
+static const u8 sSpringtideStormDescription[] = _("Unleashes fierce winds.\n"
                                                   "May lower ATTACK.");
 
 // MOVE_NONE is ignored in this table. Make sure to always subtract 1 before getting the right pointer.
