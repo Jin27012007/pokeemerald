@@ -65,6 +65,7 @@ def test_fairy_abilities_are_applied_in_battle_calculation():
     battle_header = (ROOT / "include/battle.h").read_text(encoding="utf-8")
     pokemon = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
     assert "ABILITY_PIXILATE" in battle_header
+    assert "move != MOVE_STRUGGLE" in battle_header
     assert "attacker->ability == ABILITY_PIXILATE" in pokemon
     assert "ABILITY_FAIRY_AURA" in pokemon
     assert "ABILITY_AURA_BREAK" in pokemon
