@@ -416,8 +416,9 @@
 #define MOVE_STRUGGLE_BUG 411
 
 #define MOVE_FLASH_CANNON 412
+#define MOVE_ACID_SPRAY 413
 
-#define MOVES_COUNT 413
+#define MOVES_COUNT 414
 
 // Used for checks for moves affected by Disable, Mimic, etc.
 #define MOVE_UNAVAILABLE 0xFFFF
