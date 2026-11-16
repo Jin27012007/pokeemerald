@@ -138,7 +138,10 @@ def audit(
         {
             "national_dex": dex,
             "species": row["species_symbol"],
-            "missing_assets": row.get("missing_assets", []),
+            "missing_assets": [
+                asset for asset, present in row.get("target_asset_presence", {}).items()
+                if not present
+            ],
         }
         for dex, row in graphics_rows.items()
         if not row.get("target_graphics_assets_complete", False)
