@@ -63,9 +63,9 @@ def test_metronome_item_accumulates_repeated_move_power():
     assert "#define HOLD_EFFECT_METRONOME      70" in hold
     assert ".holdEffect = HOLD_EFFECT_METRONOME" in item
     assert "u16 metronomeMove;" in battle_h and "u8 metronomeCount;" in battle_h
-    assert "100 + 20 * repeats" in pokemon
+    assert "100 + 10 * repeats" in pokemon
     assert "gBattleMons[gBattlerAttacker].item == ITEM_METRONOME" in commands
-    assert "gDisableStructs[gBattlerAttacker].metronomeCount < 5" in commands
+    assert "gDisableStructs[gBattlerAttacker].metronomeCount < 10" in commands
 
 
 def test_honey_uses_its_own_sweet_scent_field_behavior():
@@ -130,6 +130,7 @@ def test_oval_stone_and_trade_evolution_paths_are_implemented():
     assert "DAY_EVO_HOUR_BEGIN" in pokemon and "DAY_EVO_HOUR_END" in pokemon
     oval = pokemon.split("case EVO_LEVEL_HOLD_ITEM_DAY:", 1)[1].split("break;", 1)[0]
     assert "heldItem = ITEM_NONE" in oval
+    assert "SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem)" in oval
     assert "case EVO_TRADE_ITEM:" in pokemon
     assert "heldItem = ITEM_NONE;" in pokemon
 
