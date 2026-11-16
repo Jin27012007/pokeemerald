@@ -101,8 +101,10 @@ def test_lagging_tail_and_wide_lens_battle_paths_are_wired():
     assert "calc = (calc * 110) / 100" in accuracy
     hold = read("include/constants/hold_effects.h")
     items = read("src/data/items.h")
-    assert "#define HOLD_EFFECT_LAGGING_TAIL 67" in hold
-    assert "#define HOLD_EFFECT_WIDE_LENS    68" in hold
+    lagging = next(line for line in hold.splitlines() if line.startswith("#define HOLD_EFFECT_LAGGING_TAIL"))
+    wide = next(line for line in hold.splitlines() if line.startswith("#define HOLD_EFFECT_WIDE_LENS"))
+    assert lagging.split()[-1] == "67"
+    assert wide.split()[-1] == "68"
     assert ".holdEffect = HOLD_EFFECT_LAGGING_TAIL" in items
     assert ".holdEffect = HOLD_EFFECT_WIDE_LENS" in items
 
