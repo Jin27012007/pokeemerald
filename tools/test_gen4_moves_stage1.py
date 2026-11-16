@@ -366,7 +366,7 @@ def test_gen4_move_ids_and_runtime_records():
     names = (ROOT / "src/data/text/move_names.h").read_text(encoding="utf-8")
     descriptions = (ROOT / "src/data/text/move_descriptions.h").read_text(encoding="utf-8")
     animations = (ROOT / "data/battle_anim_scripts.s").read_text(encoding="utf-8")
-    assert "#define MOVES_COUNT 394" in constants
+    assert "#define MOVES_COUNT 412" in constants
     assert len(EXPECTED) == 32
     for symbol, move_id, effect, power, move_type, category, accuracy, pp, priority in EXPECTED:
         assert f"#define MOVE_{symbol} {move_id}" in constants
