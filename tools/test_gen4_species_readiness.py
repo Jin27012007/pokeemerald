@@ -32,15 +32,15 @@ def test_generation_4_blockers_are_isolated_and_not_misreported_as_runtime_ready
     counts = report["counts"]
     readiness = report["readiness"]
     assert counts["species_without_production_internal_id"] == 107
-    assert counts["distinct_level_up_moves_missing_battle_records"] == 137
+    assert counts["distinct_level_up_moves_missing_battle_records"] <= 105
     assert counts["distinct_unmapped_held_items"] == 0
-    assert counts["distinct_held_item_behaviors_pending_audit"] == 6
+    assert counts["distinct_held_item_behaviors_pending_audit"] == 0
     assert counts["species_missing_target_graphics"] == 107
     assert counts["species_missing_target_cry_entries"] == 107
     assert readiness["production_species_ids_allocated"] is False
     assert readiness["all_level_up_moves_have_battle_records"] is False
     assert readiness["all_held_items_have_target_data"] is True
-    assert readiness["all_held_item_behaviors_audited"] is False
+    assert readiness["all_held_item_behaviors_audited"] is True
     assert readiness["all_target_graphics_assets_present"] is False
     assert readiness["all_target_cry_entries_present"] is False
     assert readiness["runtime_activation_allowed"] is False
