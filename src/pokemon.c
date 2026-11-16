@@ -5636,7 +5636,10 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 mode, u16 evolutionItem)
                 {
                     RtcCalcLocalTime();
                     if (gLocalTime.hours >= DAY_EVO_HOUR_BEGIN && gLocalTime.hours < DAY_EVO_HOUR_END)
+                    {
                         targetSpecies = evolutions[i].targetSpecies;
+                        heldItem = ITEM_NONE; // The Oval Stone is consumed by the evolution.
+                    }
                 }
                 break;
             case EVO_LEVEL_ATK_GT_DEF:
