@@ -1417,6 +1417,26 @@ static const u8 sPsychoBoostDescription[] = _(
     "Allows a full-power attack,\n"
     "but sharply lowers SP. ATK.");
 
+
+static const u8 sFairyWindDescription[] = _("A gentle but forceful\n"
+                                             "fairy wind strikes the foe.");
+static const u8 sPlayRoughDescription[] = _("Plays rough with the foe.\n"
+                                            "May lower its ATTACK.");
+static const u8 sMoonblastDescription[] = _("Attacks with moonlight.\n"
+                                            "May lower SP. ATK.");
+static const u8 sDazzlingGleamDescription[] = _("Foes are hit by a bright\n"
+                                                 "and dazzling flash.");
+static const u8 sFleurCannonDescription[] = _("Unleashes a strong beam,\n"
+                                               "but lowers SP. ATK.");
+static const u8 sNaturesMadnessDescription[] = _("Nature's power halves\n"
+                                                  "the foe's remaining HP.");
+static const u8 sSpiritBreakDescription[] = _("Attacks with spirit force.\n"
+                                              "Lowers SP. ATK.");
+static const u8 sStrangeSteamDescription[] = _("Strange steam may\n"
+                                               "confuse the target.");
+static const u8 sSpringtideStormDescription[] = _("Unleashes fierce winds.\n"
+                                                  "May lower ATTACK.");
+
 // MOVE_NONE is ignored in this table. Make sure to always subtract 1 before getting the right pointer.
 const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
 {
@@ -1774,4 +1794,15 @@ const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
     [MOVE_WATER_PULSE - 1] = sWaterPulseDescription,
     [MOVE_DOOM_DESIRE - 1] = sDoomDesireDescription,
     [MOVE_PSYCHO_BOOST - 1] = sPsychoBoostDescription,
+
+    [MOVE_FAIRY_WIND - 1] = sFairyWindDescription,
+    [MOVE_PLAY_ROUGH - 1] = sPlayRoughDescription,
+    [MOVE_MOONBLAST - 1] = sMoonblastDescription,
+    [MOVE_DAZZLING_GLEAM - 1] = sDazzlingGleamDescription,
+    [MOVE_FLEUR_CANNON - 1] = sFleurCannonDescription,
+    [MOVE_NATURES_MADNESS - 1] = sNaturesMadnessDescription,
+    [MOVE_SPIRIT_BREAK - 1] = sSpiritBreakDescription,
+    [MOVE_STRANGE_STEAM - 1] = sStrangeSteamDescription,
+    [MOVE_SPRINGTIDE_STORM - 1] = sSpringtideStormDescription,
+
 };

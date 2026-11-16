@@ -104,6 +104,9 @@ jobs:
       - name: Test Gen 8 Fairy type chart, icon and battle access
         run: python3 tools/test_gen8_fairy_type.py
 
+      - name: Test Fairy moves, physical categories, Aura and Pixilate
+        run: python3 tools/test_gen8_fairy_moves_abilities.py
+
       - name: Audit all Expansion SpeciesInfo candidates by National Dex
         run: python3 tools/audit_gen8_species_info_candidates.py
 

@@ -371,7 +371,16 @@ gBattleAnims_Moves::
 	.4byte Move_WATER_PULSE
 	.4byte Move_DOOM_DESIRE
 	.4byte Move_PSYCHO_BOOST
-	.4byte Move_COUNT @ cannot be reached, because last move is Psycho Boost
+	.4byte Move_SILVER_WIND @ MOVE_FAIRY_WIND
+	.4byte Move_DOUBLE_EDGE @ MOVE_PLAY_ROUGH
+	.4byte Move_PSYCHIC @ MOVE_MOONBLAST
+	.4byte Move_SWIFT @ MOVE_DAZZLING_GLEAM
+	.4byte Move_HYPER_BEAM @ MOVE_FLEUR_CANNON
+	.4byte Move_SUPER_FANG @ MOVE_NATURES_MADNESS
+	.4byte Move_BRICK_BREAK @ MOVE_SPIRIT_BREAK
+	.4byte Move_SIGNAL_BEAM @ MOVE_STRANGE_STEAM
+	.4byte Move_GUST @ MOVE_SPRINGTIDE_STORM
+	.4byte Move_COUNT @ cannot be reached, because last move is Springtide Storm
 
 	.align 2
 gBattleAnims_StatusConditions::
