@@ -3397,6 +3397,38 @@ u8 ItemBattleEffects(u8 caseID, u8 battler, bool8 moveTurn)
                     RecordItemEffectBattle(battler, battlerHoldEffect);
                 }
                 break;
+            case HOLD_EFFECT_BLACK_SLUDGE:
+                if (!moveTurn && gBattleMons[battler].hp != 0)
+                {
+                    if (gBattleMons[battler].type1 == TYPE_POISON || gBattleMons[battler].type2 == TYPE_POISON)
+                    {
+                        if (gBattleMons[battler].hp < gBattleMons[battler].maxHP)
+                        {
+                            gBattleMoveDamage = gBattleMons[battler].maxHP / 16;
+                            if (gBattleMoveDamage == 0)
+                                gBattleMoveDamage = 1;
+                            if (gBattleMons[battler].hp + gBattleMoveDamage > gBattleMons[battler].maxHP)
+                                gBattleMoveDamage = gBattleMons[battler].maxHP - gBattleMons[battler].hp;
+                            gBattleMoveDamage *= -1;
+                            BattleScriptExecute(BattleScript_ItemHealHP_End2);
+                            effect = ITEM_HP_CHANGE;
+                        }
+                    }
+                    else
+                    {
+                        gBattleMoveDamage = gBattleMons[battler].maxHP / 8;
+                        if (gBattleMoveDamage == 0)
+                            gBattleMoveDamage = 1;
+                        if (gBattleMoveDamage > gBattleMons[battler].hp)
+                            gBattleMoveDamage = gBattleMons[battler].hp;
+                        PREPARE_ITEM_BUFFER(gBattleTextBuff1, ITEM_BLACK_SLUDGE);
+                        BattleScriptExecute(BattleScript_ItemHurtByBlackSludge_End2);
+                        effect = ITEM_HP_CHANGE;
+                    }
+                    if (effect != ITEM_NO_EFFECT)
+                        RecordItemEffectBattle(battler, battlerHoldEffect);
+                }
+                break;
             case HOLD_EFFECT_CONFUSE_SPICY:
                 TRY_EAT_CONFUSE_BERRY(FLAVOR_SPICY);
                 break;
