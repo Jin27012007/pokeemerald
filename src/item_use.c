@@ -867,6 +867,8 @@ static void Task_UsedBlackWhiteFlute(u8 taskId)
     if(++gTasks[taskId].data[8] > 7)
     {
         PlaySE(SE_GLASS_FLUTE);
+        if (gSpecialVar_ItemId == ITEM_HONEY)
+            RemoveUsedItem();
         if (CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE)
             DisplayItemMessage(taskId, FONT_NORMAL, gStringVar4, CloseItemMessage);
         else
@@ -877,7 +879,7 @@ static void Task_UsedBlackWhiteFlute(u8 taskId)
 void ItemUseOutOfBattle_BlackWhiteFlute(u8 taskId)
 {
     CopyItemName(gSpecialVar_ItemId, gStringVar2);
-    if (gSpecialVar_ItemId == ITEM_WHITE_FLUTE)
+    if (gSpecialVar_ItemId == ITEM_WHITE_FLUTE || gSpecialVar_ItemId == ITEM_HONEY)
     {
         FlagSet(FLAG_SYS_ENC_UP_ITEM);
         FlagClear(FLAG_SYS_ENC_DOWN_ITEM);
