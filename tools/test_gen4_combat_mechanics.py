@@ -48,6 +48,7 @@ def test_black_sludge_heals_poison_and_hurts_other_types():
     assert "BattleScript_ItemHurtByBlackSludge_End2::" in scripts
     assert "extern const u8 BattleScript_ItemHurtByBlackSludge_End2[];" in headers
     assert "printstring STRINGID_PKMNHURTBY" in scripts
+    assert "tryfaintmon BS_ATTACKER" in scripts
 
 
 def test_metronome_item_accumulates_repeated_move_power():
