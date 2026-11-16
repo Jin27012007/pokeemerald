@@ -463,7 +463,7 @@ STATIC_ASSERT(sizeof(((struct BattleStruct *)0)->palaceFlags) * 8 >= MAX_BATTLER
     else                                                              \
     {                                                                 \
         typeArg = gBattleMoves[move].type;                            \
-        if (typeArg == TYPE_NORMAL && gBattlerAttacker < gBattlersCount && gBattleMons[gBattlerAttacker].ability == ABILITY_PIXILATE) \
+        if (typeArg == TYPE_NORMAL && move != MOVE_STRUGGLE && gBattlerAttacker < gBattlersCount && gBattleMons[gBattlerAttacker].ability == ABILITY_PIXILATE) \
             typeArg = TYPE_FAIRY;                                     \
     }                                                                 \
 }
