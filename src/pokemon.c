@@ -3183,7 +3183,7 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
         if (attackerHoldEffect == sHoldEffectToType[i][0]
             && type == sHoldEffectToType[i][1])
         {
-            if (IS_TYPE_PHYSICAL(type))
+            if (IS_MOVE_PHYSICAL(move, type))
                 attack = (attack * (attackerHoldEffectParam + 100)) / 100;
             else
                 spAttack = (spAttack * (attackerHoldEffectParam + 100)) / 100;
@@ -3235,11 +3235,39 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     if (type == TYPE_BUG && attacker->ability == ABILITY_SWARM && attacker->hp <= (attacker->maxHP / 3))
         gBattleMovePower = (150 * gBattleMovePower) / 100;
 
+    // Pixilate converts Normal attacks to Fairy and boosts their power.
+    if (type == TYPE_FAIRY && attacker->ability == ABILITY_PIXILATE
+     && gBattleMoves[move].type == TYPE_NORMAL)
+        gBattleMovePower = (120 * gBattleMovePower) / 100;
+
+    // Fairy Aura boosts all Fairy attacks on the field. Aura Break reverses
+    // that boost while an Aura Break user is active.
+    if (type == TYPE_FAIRY)
+    {
+        bool8 fairyAura = FALSE;
+        bool8 auraBreak = FALSE;
+
+        for (i = 0; i < gBattlersCount; i++)
+        {
+            if (gBattleMons[i].hp == 0)
+                continue;
+            if (gBattleMons[i].ability == ABILITY_FAIRY_AURA)
+                fairyAura = TRUE;
+            if (gBattleMons[i].ability == ABILITY_AURA_BREAK)
+                auraBreak = TRUE;
+        }
+
+        if (fairyAura)
+            gBattleMovePower = (4 * gBattleMovePower) / 3;
+        if (fairyAura && auraBreak)
+            gBattleMovePower = (3 * gBattleMovePower) / 4;
+    }
+
     // Self-destruct / Explosion cut defense in half
     if (gBattleMoves[gCurrentMove].effect == EFFECT_EXPLOSION)
         defense /= 2;
 
-    if (IS_TYPE_PHYSICAL(type))
+    if (IS_MOVE_PHYSICAL(move, type))
     {
         if (gCritMultiplier == 2)
         {
@@ -3294,7 +3322,7 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     if (type == TYPE_MYSTERY)
         damage = 0; // is ??? type. does 0 damage.
 
-    if (IS_TYPE_SPECIAL(type))
+    if (IS_MOVE_SPECIAL(move, type))
     {
         if (gCritMultiplier == 2)
         {
