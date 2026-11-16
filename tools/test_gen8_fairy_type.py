@@ -14,6 +14,49 @@ BATTLE_SCRIPTS = (ROOT / "src/battle_script_commands.c").read_text(encoding="utf
 GRAPHICS_RULES = (ROOT / "graphics_file_rules.mk").read_text(encoding="utf-8")
 
 
+def test_fairy_moves_are_registered_and_battle_ready():
+    constants = (ROOT / "include/constants/moves.h").read_text(encoding="utf-8")
+    moves = (ROOT / "src/data/battle_moves.h").read_text(encoding="utf-8")
+    names = (ROOT / "src/data/text/move_names.h").read_text(encoding="utf-8")
+    descriptions = (ROOT / "src/data/text/move_descriptions.h").read_text(encoding="utf-8")
+    animations = (ROOT / "data/battle_anim_scripts.s").read_text(encoding="utf-8")
+    expected = {
+        "DISARMING_VOICE": (355, "EFFECT_ALWAYS_HIT", 40, 0, 15),
+        "DRAINING_KISS": (356, "EFFECT_ABSORB", 50, 100, 10),
+        "FAIRY_WIND": (357, "EFFECT_HIT", 40, 100, 30),
+        "PLAY_ROUGH": (358, "EFFECT_ATTACK_DOWN_HIT", 90, 90, 10),
+        "MOONBLAST": (359, "EFFECT_SPECIAL_ATTACK_DOWN_HIT", 95, 100, 15),
+        "DAZZLING_GLEAM": (360, "EFFECT_HIT", 80, 100, 10),
+        "BABY_DOLL_EYES": (361, "EFFECT_ATTACK_DOWN", 0, 100, 30),
+    }
+    for name, (move_id, effect, power, accuracy, pp) in expected.items():
+        assert f"#define MOVE_{name} {move_id}" in constants
+        start = moves.index(f"[MOVE_{name}] =")
+        entry = moves[start:moves.index("\n    },", start) + 7]
+        assert f".effect = {effect}" in entry
+        assert f".power = {power}" in entry
+        assert ".type = TYPE_FAIRY" in entry
+        assert f".accuracy = {accuracy}" in entry
+        assert f".pp = {pp}" in entry
+        assert f"[MOVE_{name}] = " in names
+        assert f"[MOVE_{name} - 1] =" in descriptions
+        assert f"@ {name.replace('_', ' ').title()}" in animations
+    assert ".priority = 1" in moves[moves.index("[MOVE_BABY_DOLL_EYES] ="):]
+    assert ".target = MOVE_TARGET_BOTH" in moves[moves.index("[MOVE_DAZZLING_GLEAM] ="):]
+
+
+def test_fairy_abilities_are_applied_in_battle_calculation():
+    battle_header = (ROOT / "include/battle.h").read_text(encoding="utf-8")
+    pokemon = (ROOT / "src/pokemon.c").read_text(encoding="utf-8")
+    assert "ABILITY_PIXILATE" in battle_header
+    assert "attacker->ability == ABILITY_PIXILATE" in pokemon
+    assert "ABILITY_FAIRY_AURA" in pokemon
+    assert "ABILITY_AURA_BREAK" in pokemon
+    assert "gBattleMovePower = (gBattleMovePower * 6) / 5" in pokemon
+    assert "gBattleMovePower = (gBattleMovePower * 4) / 3" in pokemon
+    assert "gBattleMovePower = (gBattleMovePower * 3) / 4" in pokemon
+
+
 def test_fairy_has_a_unique_emerald_type_id():
     assert "#define TYPE_FAIRY            18" in POKEMON_CONSTANTS
     assert "#define NUMBER_OF_MON_TYPES   19" in POKEMON_CONSTANTS
@@ -157,6 +200,8 @@ def test_gen8_converter_no_longer_treats_fairy_as_a_gap():
 
 
 def main():
+    test_fairy_moves_are_registered_and_battle_ready()
+    test_fairy_abilities_are_applied_in_battle_calculation()
     test_fairy_has_a_unique_emerald_type_id()
     test_fairy_chart_contains_all_gen6_matchups()
     test_fairy_png_is_a_valid_4bpp_32x16_asset()
