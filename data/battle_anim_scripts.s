@@ -378,7 +378,59 @@ gBattleAnims_Moves::
 	.4byte Move_PSYBEAM @ Moonblast
 	.4byte Move_FLASH @ Dazzling Gleam
 	.4byte Move_CHARM @ Baby-Doll Eyes
-	.4byte Move_COUNT @ cannot be reached, because last move is Baby-Doll Eyes
+	.4byte Move_GUST @ Aqua Jet
+	.4byte Move_PSYBEAM @ Aura Sphere
+	.4byte Move_GUST @ Brave Bird
+	.4byte Move_SING @ Bug Buzz
+	.4byte Move_PSYBEAM @ Dark Pulse
+	.4byte Move_ABSORB @ Drain Punch
+	.4byte Move_PSYBEAM @ Dragon Pulse
+	.4byte Move_TACKLE @ Earth Power
+	.4byte Move_ABSORB @ Energy Ball
+	.4byte Move_TACKLE @ Giga Impact
+	.4byte Move_GUST @ Grass Knot
+	.4byte Move_PSYBEAM @ Ice Shard
+	.4byte Move_TACKLE @ Iron Head
+	.4byte Move_GUST @ Leaf Storm
+	.4byte Move_FLASH @ Magma Storm
+	.4byte Move_CHARM @ Nasty Plot
+	.4byte Move_TACKLE @ Night Slash
+	.4byte Move_TACKLE @ Poison Jab
+	.4byte Move_FLASH @ Power Gem
+	.4byte Move_GUST @ Power Whip
+	.4byte Move_PSYBEAM @ Psycho Cut
+	.4byte Move_PSYBEAM @ Roar Of Time
+	.4byte Move_CHARM @ Rock Polish
+	.4byte Move_TACKLE @ Rock Wrecker
+	.4byte Move_ABSORB @ Seed Bomb
+	.4byte Move_TACKLE @ Shadow Claw
+	.4byte Move_PSYBEAM @ Shadow Sneak
+	.4byte Move_PSYBEAM @ Spacial Rend
+	.4byte Move_TACKLE @ Stone Edge
+	.4byte Move_TACKLE @ Wood Hammer
+	.4byte Move_TACKLE @ X Scissor
+	.4byte Move_TACKLE @ Zen Headbutt
+	.4byte Move_GUST @ Air Slash
+	.4byte Move_GUST @ Aqua Tail
+	.4byte Move_TACKLE @ Attack Order
+	.4byte Move_TACKLE @ Bulldoze
+	.4byte Move_SING @ Chatter
+	.4byte Move_PSYBEAM @ Discharge
+	.4byte Move_TACKLE @ Double Hit
+	.4byte Move_GUST @ Dragon Rush
+	.4byte Move_TACKLE @ Drill Run
+	.4byte Move_TACKLE @ Force Palm
+	.4byte Move_FLASH @ Lava Plume
+	.4byte Move_ABSORB @ Leafage
+	.4byte Move_GUST @ Leaf Tornado
+	.4byte Move_FLASH @ Mystical Fire
+	.4byte Move_FLASH @ Nuzzle
+	.4byte Move_GUST @ Petal Blizzard
+	.4byte Move_TACKLE @ Power Up Punch
+	.4byte Move_SING @ Struggle Bug
+	.4byte Move_FLASH @ Flash Cannon
+	.4byte Move_ABSORB @ Acid Spray
+	.4byte Move_COUNT @ cannot be reached, because last move is Acid Spray
 
 	.align 2
 gBattleAnims_StatusConditions::

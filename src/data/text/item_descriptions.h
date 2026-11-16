@@ -1566,9 +1566,9 @@ static const u8 sElectirizerDesc[] = _(
     "cause evolution.");
 
 static const u8 sHoneyDesc[] = _(
-    "A sweet honey with\n"
-    "a soothing aroma.\n"
-    "Field use is pending.");
+    "A sweet lure that\n"
+    "attracts wild\n"
+    "POKéMON.");
 
 static const u8 sLaggingTailDesc[] = _(
     "A held item that\n"

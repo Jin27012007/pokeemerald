@@ -1431,6 +1431,110 @@ static const u8 sDazzlingGleamDescription[] = _("Damages nearby foes with a brig
 
 static const u8 sBabyDollEyesDescription[] = _("Lowers the target's Attack with priority.");
 
+static const u8 sAquaJetDescription[] = _("A fast, watery strike that moves before most attacks.");
+
+static const u8 sAuraSphereDescription[] = _("Fires a blast of aura that never misses.");
+
+static const u8 sBraveBirdDescription[] = _("A reckless charge that also hurts the user.");
+
+static const u8 sBugBuzzDescription[] = _("A damaging buzz that may lower Sp. Def.");
+
+static const u8 sDarkPulseDescription[] = _("A pulse of darkness that may make the target flinch.");
+
+static const u8 sDrainPunchDescription[] = _("A punch that steals HP from the target.");
+
+static const u8 sDragonPulseDescription[] = _("Attacks with a shock wave of draconic energy.");
+
+static const u8 sEarthPowerDescription[] = _("The ground erupts beneath the target. May lower Sp. Def.");
+
+static const u8 sEnergyBallDescription[] = _("Fires a ball of natural energy. May lower Sp. Def.");
+
+static const u8 sGigaImpactDescription[] = _("A full-power charge that leaves the user recharging.");
+
+static const u8 sGrassKnotDescription[] = _("Trips the target. Heavier targets take more damage.");
+
+static const u8 sIceShardDescription[] = _("A quick hurl of ice that strikes first.");
+
+static const u8 sIronHeadDescription[] = _("Slams the target with a steel-hard head. May flinch.");
+
+static const u8 sLeafStormDescription[] = _("Whips up a storm of leaves, sharply lowering Sp. Atk.");
+
+static const u8 sMagmaStormDescription[] = _("Traps the target in a storm of molten magma.");
+
+static const u8 sNastyPlotDescription[] = _("Thinks bad thoughts to sharply raise Sp. Atk.");
+
+static const u8 sNightSlashDescription[] = _("Slashes with claws. This move has a high critical-hit rate.");
+
+static const u8 sPoisonJabDescription[] = _("A poisonous jab that may poison the target.");
+
+static const u8 sPowerGemDescription[] = _("Fires rays of light that sparkle like gemstones.");
+
+static const u8 sPowerWhipDescription[] = _("Violently lashes the target with vines or tentacles.");
+
+static const u8 sPsychoCutDescription[] = _("Cuts with psychic blades. High critical-hit rate.");
+
+static const u8 sRoarOfTimeDescription[] = _("Distorts time. The user must recharge next turn.");
+
+static const u8 sRockPolishDescription[] = _("Polishes its body to sharply raise Speed.");
+
+static const u8 sRockWreckerDescription[] = _("Fires a huge rock blast. The user must recharge.");
+
+static const u8 sSeedBombDescription[] = _("Hurls a barrage of explosive seeds.");
+
+static const u8 sShadowClawDescription[] = _("Slashes with sharp shadows. High critical-hit rate.");
+
+static const u8 sShadowSneakDescription[] = _("Extends a shadow to strike before the target.");
+
+static const u8 sSpacialRendDescription[] = _("Tears through space. High critical-hit rate.");
+
+static const u8 sStoneEdgeDescription[] = _("Stabs with stone blades. High critical-hit rate.");
+
+static const u8 sWoodHammerDescription[] = _("Slams the target with a hard wooden body. The user takes recoil.");
+
+static const u8 sXScissorDescription[] = _("Slashes the target with crossed scythes.");
+
+static const u8 sZenHeadbuttDescription[] = _("Strikes with a focused headbutt. May make the target flinch.");
+
+static const u8 sAirSlashDescription[] = _("Cuts the target with a blade of air. May cause flinching.");
+
+static const u8 sAquaTailDescription[] = _("Attacks by swinging its tail like a powerful wave.");
+
+static const u8 sAttackOrderDescription[] = _("Commands underlings to attack. This move has a high critical-hit rate.");
+
+static const u8 sBulldozeDescription[] = _("Stomps the ground, damaging nearby Pokémon and lowering their Speed.");
+
+static const u8 sChatterDescription[] = _("Attacks with a sound wave that confuses the target.");
+
+static const u8 sDischargeDescription[] = _("Shocks nearby Pokémon with electricity. May cause paralysis.");
+
+static const u8 sDoubleHitDescription[] = _("Strikes the target twice in quick succession.");
+
+static const u8 sDragonRushDescription[] = _("Charges at the target with overwhelming force. May cause flinching.");
+
+static const u8 sDrillRunDescription[] = _("Spins like a drill to attack. This move has a high critical-hit rate.");
+
+static const u8 sForcePalmDescription[] = _("Strikes with a shockwave from the palm. May cause paralysis.");
+
+static const u8 sLavaPlumeDescription[] = _("Scorches nearby Pokémon with molten rock. May cause a burn.");
+
+static const u8 sLeafageDescription[] = _("Pelts the target with leaves.");
+
+static const u8 sLeafTornadoDescription[] = _("Circles the target with leaves. May lower its accuracy.");
+
+static const u8 sMysticalFireDescription[] = _("Attacks with a special flame that always lowers the target's Sp. Atk.");
+
+static const u8 sNuzzleDescription[] = _("Rubs electrified cheeks against the target, paralyzing it.");
+
+static const u8 sPetalBlizzardDescription[] = _("Attacks with a storm of petals that strikes nearby Pokémon.");
+
+static const u8 sPowerUpPunchDescription[] = _("A punch that boosts the user's Attack when it hits.");
+
+static const u8 sStruggleBugDescription[] = _("Attacks opposing Pokémon while resisting, lowering their Sp. Atk.");
+
+static const u8 sFlashCannonDescription[] = _("Fires a blast of light that may lower the target's Sp. Def.");
+
+static const u8 sAcidSprayDescription[] = _("Sprays a corrosive acid that harshly lowers the target's Sp. Def.");
+
 // MOVE_NONE is ignored in this table. Make sure to always subtract 1 before getting the right pointer.
 const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
 {
@@ -1795,4 +1899,56 @@ const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
     [MOVE_MOONBLAST - 1] = sMoonblastDescription,
     [MOVE_DAZZLING_GLEAM - 1] = sDazzlingGleamDescription,
     [MOVE_BABY_DOLL_EYES - 1] = sBabyDollEyesDescription,
+    [MOVE_AQUA_JET - 1] = sAquaJetDescription,
+    [MOVE_AURA_SPHERE - 1] = sAuraSphereDescription,
+    [MOVE_BRAVE_BIRD - 1] = sBraveBirdDescription,
+    [MOVE_BUG_BUZZ - 1] = sBugBuzzDescription,
+    [MOVE_DARK_PULSE - 1] = sDarkPulseDescription,
+    [MOVE_DRAIN_PUNCH - 1] = sDrainPunchDescription,
+    [MOVE_DRAGON_PULSE - 1] = sDragonPulseDescription,
+    [MOVE_EARTH_POWER - 1] = sEarthPowerDescription,
+    [MOVE_ENERGY_BALL - 1] = sEnergyBallDescription,
+    [MOVE_GIGA_IMPACT - 1] = sGigaImpactDescription,
+    [MOVE_GRASS_KNOT - 1] = sGrassKnotDescription,
+    [MOVE_ICE_SHARD - 1] = sIceShardDescription,
+    [MOVE_IRON_HEAD - 1] = sIronHeadDescription,
+    [MOVE_LEAF_STORM - 1] = sLeafStormDescription,
+    [MOVE_MAGMA_STORM - 1] = sMagmaStormDescription,
+    [MOVE_NASTY_PLOT - 1] = sNastyPlotDescription,
+    [MOVE_NIGHT_SLASH - 1] = sNightSlashDescription,
+    [MOVE_POISON_JAB - 1] = sPoisonJabDescription,
+    [MOVE_POWER_GEM - 1] = sPowerGemDescription,
+    [MOVE_POWER_WHIP - 1] = sPowerWhipDescription,
+    [MOVE_PSYCHO_CUT - 1] = sPsychoCutDescription,
+    [MOVE_ROAR_OF_TIME - 1] = sRoarOfTimeDescription,
+    [MOVE_ROCK_POLISH - 1] = sRockPolishDescription,
+    [MOVE_ROCK_WRECKER - 1] = sRockWreckerDescription,
+    [MOVE_SEED_BOMB - 1] = sSeedBombDescription,
+    [MOVE_SHADOW_CLAW - 1] = sShadowClawDescription,
+    [MOVE_SHADOW_SNEAK - 1] = sShadowSneakDescription,
+    [MOVE_SPACIAL_REND - 1] = sSpacialRendDescription,
+    [MOVE_STONE_EDGE - 1] = sStoneEdgeDescription,
+    [MOVE_WOOD_HAMMER - 1] = sWoodHammerDescription,
+    [MOVE_X_SCISSOR - 1] = sXScissorDescription,
+    [MOVE_ZEN_HEADBUTT - 1] = sZenHeadbuttDescription,
+    [MOVE_AIR_SLASH - 1] = sAirSlashDescription,
+    [MOVE_AQUA_TAIL - 1] = sAquaTailDescription,
+    [MOVE_ATTACK_ORDER - 1] = sAttackOrderDescription,
+    [MOVE_BULLDOZE - 1] = sBulldozeDescription,
+    [MOVE_CHATTER - 1] = sChatterDescription,
+    [MOVE_DISCHARGE - 1] = sDischargeDescription,
+    [MOVE_DOUBLE_HIT - 1] = sDoubleHitDescription,
+    [MOVE_DRAGON_RUSH - 1] = sDragonRushDescription,
+    [MOVE_DRILL_RUN - 1] = sDrillRunDescription,
+    [MOVE_FORCE_PALM - 1] = sForcePalmDescription,
+    [MOVE_LAVA_PLUME - 1] = sLavaPlumeDescription,
+    [MOVE_LEAFAGE - 1] = sLeafageDescription,
+    [MOVE_LEAF_TORNADO - 1] = sLeafTornadoDescription,
+    [MOVE_MYSTICAL_FIRE - 1] = sMysticalFireDescription,
+    [MOVE_NUZZLE - 1] = sNuzzleDescription,
+    [MOVE_PETAL_BLIZZARD - 1] = sPetalBlizzardDescription,
+    [MOVE_POWER_UP_PUNCH - 1] = sPowerUpPunchDescription,
+    [MOVE_STRUGGLE_BUG - 1] = sStruggleBugDescription,
+    [MOVE_FLASH_CANNON - 1] = sFlashCannonDescription,
+    [MOVE_ACID_SPRAY - 1] = sAcidSprayDescription,
 };

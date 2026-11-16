@@ -3113,6 +3113,15 @@ void DeleteFirstMoveAndGiveMoveToBoxMon(struct BoxPokemon *boxMon, u16 move)
     (var) /= (gStatStageRatios)[(mon)->statStages[(statIndex)]][1];                 \
 }
 
+u8 GetMoveCategory(u16 move)
+{
+    if (move >= MOVES_COUNT)
+        return DAMAGE_CATEGORY_STATUS;
+    if (gBattleMoves[move].category != DAMAGE_CATEGORY_AUTO)
+        return gBattleMoves[move].category;
+    return IS_TYPE_PHYSICAL(gBattleMoves[move].type) ? DAMAGE_CATEGORY_PHYSICAL : DAMAGE_CATEGORY_SPECIAL;
+}
+
 s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *defender, u32 move, u16 sideStatus, u16 powerOverride, u8 typeOverride, u8 battlerIdAtk, u8 battlerIdDef)
 {
     u32 i;
@@ -3137,14 +3146,9 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     else
         type = typeOverride & DYNAMIC_TYPE_MASK;
 
-    isPhysical = IS_TYPE_PHYSICAL(type);
+    isPhysical = GetMoveCategory(move) == DAMAGE_CATEGORY_PHYSICAL;
     if (!typeOverride && type == TYPE_NORMAL && attacker->ability == ABILITY_PIXILATE && move != MOVE_STRUGGLE)
-    {
         type = TYPE_FAIRY;
-        // In Emerald's type-based damage system, Pixilate changes effectiveness
-        // and STAB type without changing the original Normal move's physical class.
-        isPhysical = IS_TYPE_PHYSICAL(gBattleMoves[move].type);
-    }
 
     attack = attacker->attack;
     defense = defender->defense;
@@ -3199,6 +3203,18 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
                 spAttack = (spAttack * (attackerHoldEffectParam + 100)) / 100;
             break;
         }
+    }
+
+    // The Metronome held item raises a repeated move by 20% per consecutive repeat,
+    // up to +100%. The first use establishes the chain and is not boosted.
+    if (attackerHoldEffect == HOLD_EFFECT_METRONOME
+        && gDisableStructs[battlerIdAtk].metronomeMove == move
+        && gDisableStructs[battlerIdAtk].metronomeCount != 0)
+    {
+        u8 repeats = gDisableStructs[battlerIdAtk].metronomeCount;
+        if (repeats > 5)
+            repeats = 5;
+        gBattleMovePower = (gBattleMovePower * (100 + 20 * repeats)) / 100;
     }
 
     // Apply boosts from hold items
@@ -5614,6 +5630,18 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 mode, u16 evolutionItem)
             case EVO_LEVEL:
                 if (evolutions[i].param <= level)
                     targetSpecies = evolutions[i].targetSpecies;
+                break;
+            case EVO_LEVEL_HOLD_ITEM_DAY:
+                if (evolutions[i].param <= level && heldItem == ITEM_OVAL_STONE)
+                {
+                    RtcCalcLocalTime();
+                    if (gLocalTime.hours >= DAY_EVO_HOUR_BEGIN && gLocalTime.hours < DAY_EVO_HOUR_END)
+                    {
+                        targetSpecies = evolutions[i].targetSpecies;
+                        heldItem = ITEM_NONE; // The Oval Stone is consumed by the evolution.
+                        SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
+                    }
+                }
                 break;
             case EVO_LEVEL_ATK_GT_DEF:
                 if (evolutions[i].param <= level)

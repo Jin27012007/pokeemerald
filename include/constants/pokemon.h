@@ -238,6 +238,12 @@
 
 #define F_SUMMARY_SCREEN_FLIP_SPRITE 0x80
 
+// Move damage categories. AUTO preserves Emerald's original type-based rules.
+#define DAMAGE_CATEGORY_AUTO     0
+#define DAMAGE_CATEGORY_PHYSICAL 1
+#define DAMAGE_CATEGORY_SPECIAL  2
+#define DAMAGE_CATEGORY_STATUS   3
+
 // Evolution types
 #define EVO_FRIENDSHIP       1  // Pokémon levels up with friendship ≥ 220
 #define EVO_FRIENDSHIP_DAY   2  // Pokémon levels up during the day with friendship ≥ 220
@@ -254,6 +260,7 @@
 #define EVO_LEVEL_NINJASK    13 // Pokémon reaches the specified level (special value for Ninjask)
 #define EVO_LEVEL_SHEDINJA   14 // Pokémon reaches the specified level (special value for Shedinja)
 #define EVO_BEAUTY           15 // Pokémon levels up with beauty ≥ specified value
+#define EVO_LEVEL_HOLD_ITEM_DAY 16 // Pokémon levels up during the day while holding the required item
 
 #define EVOS_PER_MON 5
 

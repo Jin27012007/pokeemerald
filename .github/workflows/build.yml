@@ -209,6 +209,8 @@ jobs:
         run: |
           python3 tools/audit_gen4_species_readiness.py
           python3 tools/test_gen4_species_readiness.py
+          python3 tools/test_gen4_combat_mechanics.py
+          python3 tools/test_gen4_moves_stage1.py
           test -s reports/gen8-conversion/gen4_runtime_readiness.json
 
       - name: Verify generated staging sources are tracked and complete

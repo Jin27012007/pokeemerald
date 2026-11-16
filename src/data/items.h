@@ -4545,6 +4545,7 @@ const struct Item gItems[] =
         .name = _("BLACK SLUDGE"),
         .itemId = ITEM_BLACK_SLUDGE,
         .price = 2000,
+        .holdEffect = HOLD_EFFECT_BLACK_SLUDGE,
         .description = sBlackSludgeDesc,
         .pocket = POCKET_ITEMS,
         .type = ITEM_USE_BAG_MENU,
@@ -4568,7 +4569,7 @@ const struct Item gItems[] =
         .description = sHoneyDesc,
         .pocket = POCKET_ITEMS,
         .type = ITEM_USE_BAG_MENU,
-        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+        .fieldUseFunc = ItemUseOutOfBattle_BlackWhiteFlute,
     },
     [ITEM_LAGGING_TAIL] =
     {
@@ -4596,6 +4597,7 @@ const struct Item gItems[] =
         .name = _("METRONOME"),
         .itemId = ITEM_METRONOME,
         .price = 2000,
+        .holdEffect = HOLD_EFFECT_METRONOME,
         .description = sMetronomeItemDesc,
         .pocket = POCKET_ITEMS,
         .type = ITEM_USE_BAG_MENU,

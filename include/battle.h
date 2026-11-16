@@ -100,6 +100,9 @@ struct DisableStruct
     u8 filler_18_2:2; // Unused field.
     u8 mimickedMoves:4;
     u8 rechargeTimer;
+    // Consecutive move tracking for the Generation 4 Metronome held item.
+    u16 metronomeMove;
+    u8 metronomeCount;
 };
 
 struct ProtectStruct
