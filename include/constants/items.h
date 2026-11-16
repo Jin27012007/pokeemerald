@@ -409,6 +409,16 @@ enum {
     ITEM_MAGMA_EMBLEM,
     ITEM_OLD_SEA_MAP,
 
+    // Generation 4 held and evolution items
+    ITEM_BLACK_SLUDGE,
+    ITEM_ELECTIRIZER,
+    ITEM_HONEY,
+    ITEM_LAGGING_TAIL,
+    ITEM_MAGMARIZER,
+    ITEM_METRONOME,
+    ITEM_OVAL_STONE,
+    ITEM_WIDE_LENS,
+
     ITEMS_COUNT
 };
 

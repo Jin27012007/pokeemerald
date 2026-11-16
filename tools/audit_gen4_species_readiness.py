@@ -188,6 +188,12 @@ def audit(
         for pending_item in row.get("runtime_semantics_pending", [])
         if pending_item.startswith("ability_behavior_not_audited:")
     )
+    item_semantics_pending = Counter(
+        pending_item
+        for row in mapping_by_dex.values()
+        for pending_item in row.get("runtime_semantics_pending", [])
+        if pending_item.startswith("held_item_behavior_not_audited:")
+    )
     missing_runtime_blockers = Counter(
         blocker
         for row in mapping_by_dex.values()
@@ -212,6 +218,7 @@ def audit(
         "species_missing_target_graphics": len(missing_graphics),
         "species_missing_target_cry_entries": len(missing_cries),
         "distinct_ability_behaviors_pending_audit": len(ability_semantics_pending),
+        "distinct_held_item_behaviors_pending_audit": len(item_semantics_pending),
         "runtime_blocker_entries": sum(missing_runtime_blockers.values()),
     }
 
@@ -226,6 +233,7 @@ def audit(
         "production_species_ids_allocated": len(unallocated) == 0,
         "all_level_up_moves_have_battle_records": not missing_battle_used,
         "all_held_items_have_target_data": not missing_item_species,
+        "all_held_item_behaviors_audited": not item_semantics_pending,
         "all_evolution_conditions_runtime_implemented": False,
         "all_target_graphics_assets_present": not missing_graphics,
         "all_target_cry_entries_present": not missing_cries,
@@ -250,6 +258,12 @@ def audit(
             "detail": "Held-item constants and target item-data records are missing for these items.",
             "symbols": sorted(missing_item_species),
             "affected_species": dict(sorted(missing_item_species.items())),
+        },
+        {
+            "area": "Held-item runtime behavior",
+            "count": len(item_semantics_pending),
+            "detail": "Item constants and records exist, but effects without a verified Emerald runtime handler remain blocked.",
+            "symbols": sorted(item_semantics_pending),
         },
         {
             "area": "Evolution conditions",
@@ -305,6 +319,7 @@ def audit(
         "species_missing_target_graphics": missing_graphics,
         "species_missing_target_cries": missing_cries,
         "ability_behaviors_pending_audit": dict(sorted(ability_semantics_pending.items())),
+        "held_item_behaviors_pending_audit": dict(sorted(item_semantics_pending.items())),
         "invariants": [
             "No production species ID is allocated by this audit.",
             "National Dex numbers are never used as Emerald runtime array indices.",

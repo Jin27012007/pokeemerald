@@ -4538,4 +4538,89 @@ const struct Item gItems[] =
         .type = ITEM_USE_BAG_MENU,
         .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
     },
+
+    // Generation 4 items; incomplete battle/field behaviors remain staged.
+    [ITEM_BLACK_SLUDGE] =
+    {
+        .name = _("BLACK SLUDGE"),
+        .itemId = ITEM_BLACK_SLUDGE,
+        .price = 2000,
+        .description = sBlackSludgeDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_ELECTIRIZER] =
+    {
+        .name = _("ELECTIRIZER"),
+        .itemId = ITEM_ELECTIRIZER,
+        .price = 2000,
+        .description = sElectirizerDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_HONEY] =
+    {
+        .name = _("HONEY"),
+        .itemId = ITEM_HONEY,
+        .price = 300,
+        .description = sHoneyDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_LAGGING_TAIL] =
+    {
+        .name = _("LAGGING TAIL"),
+        .itemId = ITEM_LAGGING_TAIL,
+        .price = 2000,
+        .holdEffect = HOLD_EFFECT_LAGGING_TAIL,
+        .description = sLaggingTailDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_MAGMARIZER] =
+    {
+        .name = _("MAGMARIZER"),
+        .itemId = ITEM_MAGMARIZER,
+        .price = 2000,
+        .description = sMagmarizerDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_METRONOME] =
+    {
+        .name = _("METRONOME"),
+        .itemId = ITEM_METRONOME,
+        .price = 2000,
+        .description = sMetronomeItemDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_OVAL_STONE] =
+    {
+        .name = _("OVAL STONE"),
+        .itemId = ITEM_OVAL_STONE,
+        .price = 2000,
+        .description = sOvalStoneDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+    [ITEM_WIDE_LENS] =
+    {
+        .name = _("WIDE LENS"),
+        .itemId = ITEM_WIDE_LENS,
+        .price = 2000,
+        .holdEffect = HOLD_EFFECT_WIDE_LENS,
+        .description = sWideLensDesc,
+        .pocket = POCKET_ITEMS,
+        .type = ITEM_USE_BAG_MENU,
+        .fieldUseFunc = ItemUseOutOfBattle_CannotUse,
+    },
+
 };

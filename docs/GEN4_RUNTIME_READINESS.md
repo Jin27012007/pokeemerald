@@ -15,7 +15,8 @@ Baseline aferido pelo CI:
 - 107/107 registros SpeciesInfo presentes, com os campos-base exigidos preenchidos.
 - 107/107 learnsets presentes; 1.675 entradas de movimentos e 380 movimentos distintos.
 - 137 movimentos distintos usados nesses learnsets ainda não possuem registros de batalha no Emerald.
-- Oito itens segurados ainda não têm constante/dados de item no alvo: Black Sludge, Electirizer, Honey, Lagging Tail, Magmarizer, Metronome, Oval Stone e Wide Lens.
+- Os oito itens pendentes agora têm constantes, registros, descrições e entradas de ícone temporárias. Lagging Tail e Wide Lens receberam efeitos de batalha; Black Sludge, Electirizer, Honey, Magmarizer, Metronome e Oval Stone continuam sem comportamento completo.
+- Os seis Evolution Stones e os oito itens Gen 4 foram adicionados ao balcão esquerdo do 2F da loja de Lilycove. Os ícones dos oito itens ainda usam a interrogação genérica até a importação de arte própria.
 - As 107 espécies ainda não têm ID interno de produção.
 - As 107 espécies ainda não têm assets gráficos completos no formato do Emerald nem entrada de cry integrada.
 - As evoluções envolvendo a Geração 4 precisam de revisão de condições como gênero, amizade, horário, movimento conhecido, item segurado, região e espécie presente na equipe.
@@ -24,8 +25,8 @@ Os números de bloqueios são uma fotografia da branch e devem ser atualizados c
 
 ## Ordem de integração
 
-1. Fechar os movimentos usados pelas 107 espécies, incluindo efeitos de batalha e dados de Contest quando exigidos.
-2. Fechar os oito itens e suas funções (incluindo os itens de evolução).
+1. Fechar os 137 movimentos usados pelas 107 espécies, incluindo efeitos de batalha e dados de Contest quando exigidos.
+2. Finalizar os seis comportamentos de itens ainda pendentes: Black Sludge, Electirizer, Honey, Magmarizer, Metronome e Oval Stone; adicionar testes de regressão.
 3. Implementar e testar as condições evolutivas da Geração 4, incluindo evoluções de espécies antigas para espécies novas.
 4. Importar front/back sprites, animações, ícones, footprints e paletas no formato e limites gráficos da GBA; integrar os cries.
 5. Auditar o comportamento real de todas as habilidades atribuídas às espécies.

@@ -4610,6 +4610,8 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
     u32 speedBattler1 = 0, speedBattler2 = 0;
     u8 holdEffect = 0;
     u8 holdEffectParam = 0;
+    u8 holdEffectBattler1 = HOLD_EFFECT_NONE;
+    u8 holdEffectBattler2 = HOLD_EFFECT_NONE;
     u16 moveBattler1 = 0, moveBattler2 = 0;
 
     if (WEATHER_HAS_EFFECT)
@@ -4646,6 +4648,7 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
         holdEffect = GetItemHoldEffect(gBattleMons[battler1].item);
         holdEffectParam = GetItemHoldEffectParam(gBattleMons[battler1].item);
     }
+    holdEffectBattler1 = holdEffect;
 
     // badge boost
     if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_FRONTIER))
@@ -4680,6 +4683,7 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
         holdEffect = GetItemHoldEffect(gBattleMons[battler2].item);
         holdEffectParam = GetItemHoldEffectParam(gBattleMons[battler2].item);
     }
+    holdEffectBattler2 = holdEffect;
 
     // badge boost
     if (!(gBattleTypeFlags & (BATTLE_TYPE_LINK | BATTLE_TYPE_RECORDED_LINK | BATTLE_TYPE_FRONTIER))
@@ -4736,7 +4740,13 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
         // both priorities are the same
         if (gBattleMoves[moveBattler1].priority == gBattleMoves[moveBattler2].priority)
         {
-            if (speedBattler1 == speedBattler2 && Random() & 1)
+            if (!ignoreChosenMoves && holdEffectBattler1 == HOLD_EFFECT_LAGGING_TAIL
+                && holdEffectBattler2 != HOLD_EFFECT_LAGGING_TAIL)
+                strikesFirst = 1;
+            else if (!ignoreChosenMoves && holdEffectBattler2 == HOLD_EFFECT_LAGGING_TAIL
+                && holdEffectBattler1 != HOLD_EFFECT_LAGGING_TAIL)
+                strikesFirst = 0;
+            else if (speedBattler1 == speedBattler2 && Random() & 1)
                 strikesFirst = 2; // same speeds, same priorities
             else if (speedBattler1 < speedBattler2)
                 strikesFirst = 1; // battler2 has more speed
@@ -4753,7 +4763,13 @@ u8 GetWhoStrikesFirst(u8 battler1, u8 battler2, bool8 ignoreChosenMoves)
     // both priorities are equal to 0
     else
     {
-        if (speedBattler1 == speedBattler2 && Random() & 1)
+        if (!ignoreChosenMoves && holdEffectBattler1 == HOLD_EFFECT_LAGGING_TAIL
+            && holdEffectBattler2 != HOLD_EFFECT_LAGGING_TAIL)
+            strikesFirst = 1;
+        else if (!ignoreChosenMoves && holdEffectBattler2 == HOLD_EFFECT_LAGGING_TAIL
+            && holdEffectBattler1 != HOLD_EFFECT_LAGGING_TAIL)
+            strikesFirst = 0;
+        else if (speedBattler1 == speedBattler2 && Random() & 1)
             strikesFirst = 2; // same speeds, same priorities
         else if (speedBattler1 < speedBattler2)
             strikesFirst = 1; // battler2 has more speed
