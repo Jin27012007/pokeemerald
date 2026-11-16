@@ -359,6 +359,27 @@ EXPECTED = [
     ]
 ]
 
+EXPECTED.extend([
+    ["AIR_SLASH", 394, "EFFECT_FLINCH_HIT", 75, "FLYING", "SPECIAL", 95, 15, 0],
+    ["AQUA_TAIL", 395, "EFFECT_HIT", 90, "WATER", "PHYSICAL", 90, 10, 0],
+    ["ATTACK_ORDER", 396, "EFFECT_HIGH_CRITICAL", 90, "BUG", "PHYSICAL", 100, 15, 0],
+    ["BULLDOZE", 397, "EFFECT_SPEED_DOWN_HIT", 60, "GROUND", "PHYSICAL", 100, 20, 0],
+    ["CHATTER", 398, "EFFECT_CONFUSE_HIT", 65, "FLYING", "SPECIAL", 100, 20, 0],
+    ["DISCHARGE", 399, "EFFECT_PARALYZE_HIT", 80, "ELECTRIC", "SPECIAL", 100, 15, 0],
+    ["DOUBLE_HIT", 400, "EFFECT_DOUBLE_HIT", 35, "NORMAL", "PHYSICAL", 90, 10, 0],
+    ["DRAGON_RUSH", 401, "EFFECT_FLINCH_HIT", 100, "DRAGON", "PHYSICAL", 75, 10, 0],
+    ["DRILL_RUN", 402, "EFFECT_HIGH_CRITICAL", 80, "GROUND", "PHYSICAL", 95, 10, 0],
+    ["FORCE_PALM", 403, "EFFECT_PARALYZE_HIT", 60, "FIGHTING", "PHYSICAL", 100, 10, 0],
+    ["LAVA_PLUME", 404, "EFFECT_BURN_HIT", 80, "FIRE", "SPECIAL", 100, 15, 0],
+    ["LEAFAGE", 405, "EFFECT_HIT", 40, "GRASS", "PHYSICAL", 100, 40, 0],
+    ["LEAF_TORNADO", 406, "EFFECT_ACCURACY_DOWN_HIT", 65, "GRASS", "SPECIAL", 90, 10, 0],
+    ["MYSTICAL_FIRE", 407, "EFFECT_SPECIAL_ATTACK_DOWN_HIT", 75, "FIRE", "SPECIAL", 100, 10, 0],
+    ["NUZZLE", 408, "EFFECT_PARALYZE_HIT", 20, "ELECTRIC", "PHYSICAL", 100, 20, 0],
+    ["PETAL_BLIZZARD", 409, "EFFECT_HIT", 90, "GRASS", "PHYSICAL", 100, 15, 0],
+    ["POWER_UP_PUNCH", 410, "EFFECT_ATTACK_UP_HIT", 40, "FIGHTING", "PHYSICAL", 100, 20, 0],
+    ["STRUGGLE_BUG", 411, "EFFECT_SPECIAL_ATTACK_DOWN_HIT", 50, "BUG", "SPECIAL", 100, 20, 0],
+])
+
 
 def test_gen4_move_ids_and_runtime_records():
     constants = (ROOT / "include/constants/moves.h").read_text(encoding="utf-8")
@@ -366,8 +387,8 @@ def test_gen4_move_ids_and_runtime_records():
     names = (ROOT / "src/data/text/move_names.h").read_text(encoding="utf-8")
     descriptions = (ROOT / "src/data/text/move_descriptions.h").read_text(encoding="utf-8")
     animations = (ROOT / "data/battle_anim_scripts.s").read_text(encoding="utf-8")
-    assert "#define MOVES_COUNT 394" in constants
-    assert len(EXPECTED) == 32
+    assert "#define MOVES_COUNT 412" in constants
+    assert len(EXPECTED) == 50
     for symbol, move_id, effect, power, move_type, category, accuracy, pp, priority in EXPECTED:
         assert f"#define MOVE_{symbol} {move_id}" in constants
         start = records.index(f"[MOVE_{symbol}] =")
@@ -399,7 +420,33 @@ def test_new_moves_use_existing_effect_handlers():
         assert ".effect = EFFECT_RECHARGE" in entry
 
 
+
+def test_second_batch_uses_specific_secondary_effects():
+    records = (ROOT / "src/data/battle_moves.h").read_text(encoding="utf-8")
+    expected = {
+        "AIR_SLASH": ("EFFECT_FLINCH_HIT", 30),
+        "BULLDOZE": ("EFFECT_SPEED_DOWN_HIT", 100),
+        "CHATTER": ("EFFECT_CONFUSE_HIT", 100),
+        "DISCHARGE": ("EFFECT_PARALYZE_HIT", 30),
+        "DRAGON_RUSH": ("EFFECT_FLINCH_HIT", 20),
+        "FORCE_PALM": ("EFFECT_PARALYZE_HIT", 30),
+        "LAVA_PLUME": ("EFFECT_BURN_HIT", 30),
+        "LEAF_TORNADO": ("EFFECT_ACCURACY_DOWN_HIT", 50),
+        "MYSTICAL_FIRE": ("EFFECT_SPECIAL_ATTACK_DOWN_HIT", 100),
+        "NUZZLE": ("EFFECT_PARALYZE_HIT", 100),
+        "POWER_UP_PUNCH": ("EFFECT_ATTACK_UP_HIT", 100),
+        "STRUGGLE_BUG": ("EFFECT_SPECIAL_ATTACK_DOWN_HIT", 100),
+    }
+    for symbol, (effect, chance) in expected.items():
+        entry = records.split(f"[MOVE_{symbol}] =", 1)[1].split("\\n    },", 1)[0]
+        assert f".effect = {effect}" in entry, symbol
+        assert f".secondaryEffectChance = {chance}" in entry, symbol
+    double_hit = records.split("[MOVE_DOUBLE_HIT] =", 1)[1].split("\\n    },", 1)[0]
+    assert ".effect = EFFECT_DOUBLE_HIT" in double_hit
+
+
 if __name__ == "__main__":
     test_gen4_move_ids_and_runtime_records()
     test_new_moves_use_existing_effect_handlers()
-    print("PASS: 32 Gen 4 moves with IDs, damage categories, data, names, descriptions and animation pointers.")
+    test_second_batch_uses_specific_secondary_effects()
+    print("PASS: 50 Gen 4 moves with IDs, damage categories, data, names, descriptions and animation pointers.")
