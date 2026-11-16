@@ -438,10 +438,10 @@ def test_second_batch_uses_specific_secondary_effects():
         "STRUGGLE_BUG": ("EFFECT_SPECIAL_ATTACK_DOWN_HIT", 100),
     }
     for symbol, (effect, chance) in expected.items():
-        entry = records.split(f"[MOVE_{symbol}] =", 1)[1].split("\\n    },", 1)[0]
+        entry = records.split(f"[MOVE_{symbol}] =", 1)[1].split("\n    },", 1)[0]
         assert f".effect = {effect}" in entry, symbol
         assert f".secondaryEffectChance = {chance}" in entry, symbol
-    double_hit = records.split("[MOVE_DOUBLE_HIT] =", 1)[1].split("\\n    },", 1)[0]
+    double_hit = records.split("[MOVE_DOUBLE_HIT] =", 1)[1].split("\n    },", 1)[0]
     assert ".effect = EFFECT_DOUBLE_HIT" in double_hit
 
 
