@@ -3119,6 +3119,7 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     s32 damage = 0;
     s32 damageHelper;
     u8 type;
+    bool8 isPhysical;
     u16 attack, defense;
     u16 spAttack, spDefense;
     u8 defenderHoldEffect;
@@ -3136,8 +3137,14 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     else
         type = typeOverride & DYNAMIC_TYPE_MASK;
 
-    if (type == TYPE_NORMAL && attacker->ability == ABILITY_PIXILATE && move != MOVE_STRUGGLE)
+    isPhysical = isPhysical;
+    if (!typeOverride && type == TYPE_NORMAL && attacker->ability == ABILITY_PIXILATE && move != MOVE_STRUGGLE)
+    {
         type = TYPE_FAIRY;
+        // In Emerald's type-based damage system, Pixilate changes effectiveness
+        // and STAB type without changing the original Normal move's physical class.
+        isPhysical = IS_TYPE_PHYSICAL(gBattleMoves[move].type);
+    }
 
     attack = attacker->attack;
     defense = defender->defense;
@@ -3186,7 +3193,7 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
         if (attackerHoldEffect == sHoldEffectToType[i][0]
             && type == sHoldEffectToType[i][1])
         {
-            if (IS_TYPE_PHYSICAL(type))
+            if (isPhysical)
                 attack = (attack * (attackerHoldEffectParam + 100)) / 100;
             else
                 spAttack = (spAttack * (attackerHoldEffectParam + 100)) / 100;
@@ -3264,7 +3271,7 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     if (gBattleMoves[gCurrentMove].effect == EFFECT_EXPLOSION)
         defense /= 2;
 
-    if (IS_TYPE_PHYSICAL(type))
+    if (isPhysical)
     {
         if (gCritMultiplier == 2)
         {
@@ -3319,7 +3326,7 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     if (type == TYPE_MYSTERY)
         damage = 0; // is ??? type. does 0 damage.
 
-    if (IS_TYPE_SPECIAL(type))
+    if ((!isPhysical && type != TYPE_MYSTERY))
     {
         if (gCritMultiplier == 2)
         {
