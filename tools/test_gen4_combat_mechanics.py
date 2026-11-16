@@ -84,9 +84,46 @@ def test_oval_stone_and_trade_evolution_paths_are_implemented():
     assert "DAY_EVO_HOUR_BEGIN" in pokemon and "DAY_EVO_HOUR_END" in pokemon
     oval = pokemon.split("case EVO_LEVEL_HOLD_ITEM_DAY:", 1)[1].split("break;", 1)[0]
     assert "heldItem = ITEM_NONE" in oval
+    assert "SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem)" in oval
     assert "case EVO_TRADE_ITEM:" in pokemon
     assert "heldItem = ITEM_NONE;" in pokemon
 
+
+
+
+def test_lagging_tail_and_wide_lens_runtime_modifiers():
+    hold = read("include/constants/hold_effects.h")
+    items = read("src/data/items.h")
+    battle_main = read("src/battle_main.c")
+    commands = read("src/battle_script_commands.c")
+    lagging = items.split("[ITEM_LAGGING_TAIL] =", 1)[1].split("\n    },", 1)[0]
+    wide = items.split("[ITEM_WIDE_LENS] =", 1)[1].split("\n    },", 1)[0]
+    assert "#define HOLD_EFFECT_LAGGING_TAIL   67" in hold
+    assert "#define HOLD_EFFECT_WIDE_LENS      68" in hold
+    assert ".holdEffect = HOLD_EFFECT_LAGGING_TAIL" in lagging
+    assert ".holdEffect = HOLD_EFFECT_WIDE_LENS" in wide
+    # Lagging Tail overrides Speed only within an equal-priority bracket.
+    assert "holdEffectBattler1 == HOLD_EFFECT_LAGGING_TAIL" in battle_main
+    assert "holdEffectBattler2 == HOLD_EFFECT_LAGGING_TAIL" in battle_main
+    # Wide Lens multiplies the user's final accuracy calculation by 1.1.
+    assert "GetItemHoldEffect(gBattleMons[gBattlerAttacker].item) == HOLD_EFFECT_WIDE_LENS" in commands
+    assert "calc = (calc * 110) / 100" in commands
+
+
+def test_electirizer_and_magmarizer_trade_evolution_items():
+    constants = read("include/constants/items.h")
+    items = read("src/data/items.h")
+    pokemon = read("src/pokemon.c")
+    for name in ["ELECTIRIZER", "MAGMARIZER"]:
+        assert f"ITEM_{name}" in constants
+        entry = items.split(f"[ITEM_{name}] =", 1)[1].split("\n    },", 1)[0]
+        assert f".itemId = ITEM_{name}" in entry
+        # These are trade-evolution catalysts, not passive battle hold effects.
+        assert ".holdEffect =" not in entry
+    trade = pokemon.split("case EVO_TRADE_ITEM:", 1)[1].split("break;", 1)[0]
+    assert "evolutions[i].param == heldItem" in trade
+    assert "heldItem = ITEM_NONE;" in trade
+    assert "SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);" in trade
 
 def test_items_marked_as_audited_only_after_runtime_support():
     pipeline = read("tools/gen8_build_pending_tables.py")
@@ -101,5 +138,7 @@ if __name__ == "__main__":
     test_metronome_item_accumulates_repeated_move_power()
     test_honey_is_consumable_and_uses_encounter_lure()
     test_oval_stone_and_trade_evolution_paths_are_implemented()
+    test_lagging_tail_and_wide_lens_runtime_modifiers()
+    test_electirizer_and_magmarizer_trade_evolution_items()
     test_items_marked_as_audited_only_after_runtime_support()
     print("PASS: Gen 4 damage categories, Black Sludge, Metronome item, Honey, Oval Stone and trade-item evolution.")
