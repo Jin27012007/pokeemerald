@@ -1495,6 +1495,42 @@ static const u8 sXScissorDescription[] = _("Slashes the target with crossed scyt
 
 static const u8 sZenHeadbuttDescription[] = _("Strikes with a focused headbutt. May make the target flinch.");
 
+static const u8 sAirSlashDescription[] = _("Cuts the target with a blade of air. May cause flinching.");
+
+static const u8 sAquaTailDescription[] = _("Attacks by swinging its tail like a powerful wave.");
+
+static const u8 sAttackOrderDescription[] = _("Commands underlings to attack. This move has a high critical-hit rate.");
+
+static const u8 sBulldozeDescription[] = _("Stomps the ground, damaging nearby Pokémon and lowering their Speed.");
+
+static const u8 sChatterDescription[] = _("Attacks with a sound wave that confuses the target.");
+
+static const u8 sDischargeDescription[] = _("Shocks nearby Pokémon with electricity. May cause paralysis.");
+
+static const u8 sDoubleHitDescription[] = _("Strikes the target twice in quick succession.");
+
+static const u8 sDragonRushDescription[] = _("Charges at the target with overwhelming force. May cause flinching.");
+
+static const u8 sDrillRunDescription[] = _("Spins like a drill to attack. This move has a high critical-hit rate.");
+
+static const u8 sForcePalmDescription[] = _("Strikes with a shockwave from the palm. May cause paralysis.");
+
+static const u8 sLavaPlumeDescription[] = _("Scorches nearby Pokémon with molten rock. May cause a burn.");
+
+static const u8 sLeafageDescription[] = _("Pelts the target with leaves.");
+
+static const u8 sLeafTornadoDescription[] = _("Circles the target with leaves. May lower its accuracy.");
+
+static const u8 sMysticalFireDescription[] = _("Attacks with a special flame that always lowers the target's Sp. Atk.");
+
+static const u8 sNuzzleDescription[] = _("Rubs electrified cheeks against the target, paralyzing it.");
+
+static const u8 sPetalBlizzardDescription[] = _("Attacks with a storm of petals that strikes nearby Pokémon.");
+
+static const u8 sPowerUpPunchDescription[] = _("A punch that boosts the user's Attack when it hits.");
+
+static const u8 sStruggleBugDescription[] = _("Attacks opposing Pokémon while resisting, lowering their Sp. Atk.");
+
 // MOVE_NONE is ignored in this table. Make sure to always subtract 1 before getting the right pointer.
 const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
 {
@@ -1891,4 +1927,22 @@ const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
     [MOVE_WOOD_HAMMER - 1] = sWoodHammerDescription,
     [MOVE_X_SCISSOR - 1] = sXScissorDescription,
     [MOVE_ZEN_HEADBUTT - 1] = sZenHeadbuttDescription,
+    [MOVE_AIR_SLASH - 1] = sAirSlashDescription,
+    [MOVE_AQUA_TAIL - 1] = sAquaTailDescription,
+    [MOVE_ATTACK_ORDER - 1] = sAttackOrderDescription,
+    [MOVE_BULLDOZE - 1] = sBulldozeDescription,
+    [MOVE_CHATTER - 1] = sChatterDescription,
+    [MOVE_DISCHARGE - 1] = sDischargeDescription,
+    [MOVE_DOUBLE_HIT - 1] = sDoubleHitDescription,
+    [MOVE_DRAGON_RUSH - 1] = sDragonRushDescription,
+    [MOVE_DRILL_RUN - 1] = sDrillRunDescription,
+    [MOVE_FORCE_PALM - 1] = sForcePalmDescription,
+    [MOVE_LAVA_PLUME - 1] = sLavaPlumeDescription,
+    [MOVE_LEAFAGE - 1] = sLeafageDescription,
+    [MOVE_LEAF_TORNADO - 1] = sLeafTornadoDescription,
+    [MOVE_MYSTICAL_FIRE - 1] = sMysticalFireDescription,
+    [MOVE_NUZZLE - 1] = sNuzzleDescription,
+    [MOVE_PETAL_BLIZZARD - 1] = sPetalBlizzardDescription,
+    [MOVE_POWER_UP_PUNCH - 1] = sPowerUpPunchDescription,
+    [MOVE_STRUGGLE_BUG - 1] = sStruggleBugDescription,
 };
