@@ -4445,7 +4445,7 @@ static void Cmd_moveend(void)
                 {
                     if (gDisableStructs[gBattlerAttacker].metronomeMove == gCurrentMove)
                     {
-                        if (gDisableStructs[gBattlerAttacker].metronomeCount < 5)
+                        if (gDisableStructs[gBattlerAttacker].metronomeCount < 10)
                             gDisableStructs[gBattlerAttacker].metronomeCount++;
                     }
                     else
