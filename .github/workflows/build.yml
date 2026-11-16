@@ -101,7 +101,7 @@ jobs:
       - name: Test expanded Gen 8 species fields and hidden ability selection
         run: python3 tools/test_gen8_runtime_species_fields.py
 
-      - name: Test Gen 8 Fairy type chart, icon and battle access
+      - name: Test Fairy type, moves, learnsets, abilities and battle access
         run: python3 tools/test_gen8_fairy_type.py
 
       - name: Audit all Expansion SpeciesInfo candidates by National Dex
