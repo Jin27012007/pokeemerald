@@ -45,7 +45,10 @@ SOURCE_ORDERS = VENDOR / "src/data/pokemon/pokedex_orders.h"
 SOURCE_CRY = VENDOR / "sound/cry_tables.inc"
 
 # Item effects verified in the target battle runtime.
-AUDITED_TARGET_ITEM_BEHAVIORS = {"LAGGING_TAIL", "WIDE_LENS"}
+AUDITED_TARGET_ITEM_BEHAVIORS = {
+    "BLACK_SLUDGE", "ELECTIRIZER", "HONEY", "LAGGING_TAIL",
+    "MAGMARIZER", "METRONOME", "OVAL_STONE", "WIDE_LENS",
+}
 
 TEXT_FIELDS = ("speciesName", "categoryName", "description")
 REQUIRED_GRAPHIC_ASSETS = (
