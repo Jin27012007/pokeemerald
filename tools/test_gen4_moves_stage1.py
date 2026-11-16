@@ -381,14 +381,16 @@ EXPECTED.extend([
 ])
 
 
+EXPECTED.append(["FLASH_CANNON", 412, "EFFECT_SPECIAL_DEFENSE_DOWN_HIT", 80, "STEEL", "SPECIAL", 100, 10, 0])
+
 def test_gen4_move_ids_and_runtime_records():
     constants = (ROOT / "include/constants/moves.h").read_text(encoding="utf-8")
     records = (ROOT / "src/data/battle_moves.h").read_text(encoding="utf-8")
     names = (ROOT / "src/data/text/move_names.h").read_text(encoding="utf-8")
     descriptions = (ROOT / "src/data/text/move_descriptions.h").read_text(encoding="utf-8")
     animations = (ROOT / "data/battle_anim_scripts.s").read_text(encoding="utf-8")
-    assert "#define MOVES_COUNT 412" in constants
-    assert len(EXPECTED) == 50
+    assert "#define MOVES_COUNT 413" in constants
+    assert len(EXPECTED) == 51
     for symbol, move_id, effect, power, move_type, category, accuracy, pp, priority in EXPECTED:
         assert f"#define MOVE_{symbol} {move_id}" in constants
         start = records.index(f"[MOVE_{symbol}] =")
@@ -436,6 +438,7 @@ def test_second_batch_uses_specific_secondary_effects():
         "NUZZLE": ("EFFECT_PARALYZE_HIT", 100),
         "POWER_UP_PUNCH": ("EFFECT_ATTACK_UP_HIT", 100),
         "STRUGGLE_BUG": ("EFFECT_SPECIAL_ATTACK_DOWN_HIT", 100),
+        "FLASH_CANNON": ("EFFECT_SPECIAL_DEFENSE_DOWN_HIT", 10),
     }
     for symbol, (effect, chance) in expected.items():
         entry = records.split(f"[MOVE_{symbol}] =", 1)[1].split("\n    },", 1)[0]
@@ -449,4 +452,4 @@ if __name__ == "__main__":
     test_gen4_move_ids_and_runtime_records()
     test_new_moves_use_existing_effect_handlers()
     test_second_batch_uses_specific_secondary_effects()
-    print("PASS: 50 Gen 4 moves with IDs, damage categories, data, names, descriptions and animation pointers.")
+    print("PASS: 51 Gen 4 moves with IDs, damage categories, data, names, descriptions and animation pointers.")
