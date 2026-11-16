@@ -460,11 +460,21 @@ STATIC_ASSERT(sizeof(((struct BattleStruct *)0)->palaceFlags) * 8 >= MAX_BATTLER
     if (gBattleStruct->dynamicMoveType)                               \
         typeArg = gBattleStruct->dynamicMoveType & DYNAMIC_TYPE_MASK; \
     else                                                              \
+    {                                                                 \
         typeArg = gBattleMoves[move].type;                            \
+        if (typeArg == TYPE_NORMAL                                    \
+         && gBattleMoves[move].power != 0                             \
+         && gBattleMons[gBattlerAttacker].ability == ABILITY_PIXILATE)\
+            typeArg = TYPE_FAIRY;                                     \
+    }                                                                 \
 }
 
 #define IS_TYPE_PHYSICAL(moveType) (moveType < TYPE_MYSTERY)
 #define IS_TYPE_SPECIAL(moveType) (moveType > TYPE_MYSTERY)
+// Gen III derives physical/special from type. These later Fairy moves keep
+// their modern physical category despite Fairy being a special type here.
+#define IS_MOVE_PHYSICAL(move, moveType) ((move) == MOVE_PLAY_ROUGH || (move) == MOVE_SPIRIT_BREAK || IS_TYPE_PHYSICAL(moveType))
+#define IS_MOVE_SPECIAL(move, moveType) (!IS_MOVE_PHYSICAL((move), (moveType)))
 
 #define TARGET_TURN_DAMAGED ((gSpecialStatuses[gBattlerTarget].physicalDmg != 0 || gSpecialStatuses[gBattlerTarget].specialDmg != 0))
 
