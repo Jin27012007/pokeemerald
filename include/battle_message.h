@@ -167,8 +167,8 @@
 {                                                               \
     textVar[0] = B_BUFF_PLACEHOLDER_BEGIN;                      \
     textVar[1] = B_BUFF_ITEM;                                   \
-    textVar[2] = item;                                          \
-    textVar[3] = (item & 0xFF00) >> 8;                          \
+    textVar[2] = (u8)((item) & 0xFF);                           \
+    textVar[3] = (u8)(((item) >> 8) & 0xFF);                     \
     textVar[4] = B_BUFF_EOS;                                    \
 }
 
