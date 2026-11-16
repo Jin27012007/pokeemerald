@@ -40,7 +40,7 @@ def test_fairy_moves_are_registered_and_battle_ready():
         assert f".pp = {pp}" in entry
         assert f"[MOVE_{name}] = " in names
         assert f"[MOVE_{name} - 1] =" in descriptions
-        assert f"@ {name.replace('_', ' ').title()}" in animations
+        assert f"@ " + {"DISARMING_VOICE": "Disarming Voice", "DRAINING_KISS": "Draining Kiss", "FAIRY_WIND": "Fairy Wind", "PLAY_ROUGH": "Play Rough", "MOONBLAST": "Moonblast", "DAZZLING_GLEAM": "Dazzling Gleam", "BABY_DOLL_EYES": "Baby-Doll Eyes"}[name] in animations
     assert ".priority = 1" in moves[moves.index("[MOVE_BABY_DOLL_EYES] ="):]
     assert ".target = MOVE_TARGET_BOTH" in moves[moves.index("[MOVE_DAZZLING_GLEAM] ="):]
 
