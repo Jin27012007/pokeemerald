@@ -3400,7 +3400,7 @@ u8 ItemBattleEffects(u8 caseID, u8 battler, bool8 moveTurn)
             case HOLD_EFFECT_BLACK_SLUDGE:
                 if (!moveTurn && gBattleMons[battler].hp != 0)
                 {
-                    if (gBattleMons[battler].type1 == TYPE_POISON || gBattleMons[battler].type2 == TYPE_POISON)
+                    if (IS_BATTLER_OF_TYPE(battler, TYPE_POISON))
                     {
                         if (gBattleMons[battler].hp < gBattleMons[battler].maxHP)
                         {
