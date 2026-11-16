@@ -41,7 +41,10 @@ def test_black_sludge_heals_poison_and_hurts_other_types():
     assert "#define HOLD_EFFECT_BLACK_SLUDGE   69" in hold
     black = items.split("[ITEM_BLACK_SLUDGE] =", 1)[1].split("\n    },", 1)[0]
     assert ".holdEffect = HOLD_EFFECT_BLACK_SLUDGE" in black
-    assert "gBattleMons[battler].type1 == TYPE_POISON || gBattleMons[battler].type2 == TYPE_POISON" in battle
+    assert "IS_BATTLER_OF_TYPE(battler, TYPE_POISON)" in battle
+    item_message = read("include/battle_message.h")
+    assert "textVar[2] = (u8)((item) & 0xFF);" in item_message
+    assert "textVar[3] = (u8)(((item) >> 8) & 0xFF);" in item_message
     assert "gBattleMons[battler].maxHP / 16" in battle
     assert "gBattleMons[battler].maxHP / 8" in battle
     assert "PREPARE_ITEM_BUFFER(gBattleTextBuff1, ITEM_BLACK_SLUDGE)" in battle
