@@ -410,7 +410,25 @@ gBattleAnims_Moves::
 	.4byte Move_TACKLE @ Wood Hammer
 	.4byte Move_TACKLE @ X Scissor
 	.4byte Move_TACKLE @ Zen Headbutt
-	.4byte Move_COUNT @ cannot be reached, because last move is Zen Headbutt
+	.4byte Move_GUST @ Air Slash
+	.4byte Move_GUST @ Aqua Tail
+	.4byte Move_TACKLE @ Attack Order
+	.4byte Move_TACKLE @ Bulldoze
+	.4byte Move_SING @ Chatter
+	.4byte Move_PSYBEAM @ Discharge
+	.4byte Move_TACKLE @ Double Hit
+	.4byte Move_GUST @ Dragon Rush
+	.4byte Move_TACKLE @ Drill Run
+	.4byte Move_TACKLE @ Force Palm
+	.4byte Move_FLASH @ Lava Plume
+	.4byte Move_ABSORB @ Leafage
+	.4byte Move_GUST @ Leaf Tornado
+	.4byte Move_FLASH @ Mystical Fire
+	.4byte Move_FLASH @ Nuzzle
+	.4byte Move_GUST @ Petal Blizzard
+	.4byte Move_TACKLE @ Power Up Punch
+	.4byte Move_SING @ Struggle Bug
+	.4byte Move_COUNT @ cannot be reached, because last move is Struggle Bug
 
 	.align 2
 gBattleAnims_StatusConditions::
