@@ -1554,3 +1554,43 @@ static const u8 sOldSeaMapDesc[] = _(
     "A faded sea chart\n"
     "that shows the way\n"
     "to a certain island.");
+
+static const u8 sBlackSludgeDesc[] = _(
+    "A held item that\n"
+    "restores HP to POISON-\n"
+    "type Pokemon.");
+
+static const u8 sElectirizerDesc[] = _(
+    "A box packed with\n"
+    "electricity. It may\n"
+    "cause evolution.");
+
+static const u8 sHoneyDesc[] = _(
+    "A sweet honey with\n"
+    "a soothing aroma.\n"
+    "Field use is pending.");
+
+static const u8 sLaggingTailDesc[] = _(
+    "A held item that\n"
+    "makes its holder act\n"
+    "last at its priority.");
+
+static const u8 sMagmarizerDesc[] = _(
+    "A box packed with\n"
+    "magma-like energy.\n"
+    "It may cause evolution.");
+
+static const u8 sMetronomeItemDesc[] = _(
+    "A held item that\n"
+    "boosts a move used\n"
+    "repeatedly.");
+
+static const u8 sOvalStoneDesc[] = _(
+    "A peculiar stone\n"
+    "that may cause a\n"
+    "certain evolution.");
+
+static const u8 sWideLensDesc[] = _(
+    "A held item that\n"
+    "slightly boosts the\n"
+    "accuracy of moves.");

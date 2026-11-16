@@ -44,6 +44,9 @@ SOURCE_FORM_CHANGE = VENDOR / "src/data/pokemon/form_change_tables.h"
 SOURCE_ORDERS = VENDOR / "src/data/pokemon/pokedex_orders.h"
 SOURCE_CRY = VENDOR / "sound/cry_tables.inc"
 
+# Item effects verified in the target battle runtime.
+AUDITED_TARGET_ITEM_BEHAVIORS = {"LAGGING_TAIL", "WIDE_LENS"}
+
 TEXT_FIELDS = ("speciesName", "categoryName", "description")
 REQUIRED_GRAPHIC_ASSETS = (
     "front.png", "anim_front.png", "back.png", "icon.png",
@@ -1010,7 +1013,7 @@ def source_table_inventory() -> dict:
             "target_item_data_fields": sorted(target_fields),
             "target_hold_effect_expression": target_fields.get("holdEffect"),
             "target_hold_effect_param_expression": target_fields.get("holdEffectParam"),
-            "target_item_behavior_audited": False,
+            "target_item_behavior_audited": name in AUDITED_TARGET_ITEM_BEHAVIORS,
         })
 
     used_types = sorted(type_use)

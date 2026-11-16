@@ -401,6 +401,15 @@ const u32 *const gItemIconTable[ITEMS_COUNT + 1][2] =
     // Emerald-only key items
     [ITEM_MAGMA_EMBLEM] = {gItemIcon_MagmaEmblem, gItemIconPalette_MagmaEmblem},
     [ITEM_OLD_SEA_MAP] = {gItemIcon_OldSeaMap, gItemIconPalette_OldSeaMap},
+    // Generation 4 items. Placeholder icons until dedicated GBA item art is imported.
+    [ITEM_BLACK_SLUDGE] = {gItemIcon_QuestionMark, gItemIconPalette_QuestionMark},
+    [ITEM_ELECTIRIZER] = {gItemIcon_QuestionMark, gItemIconPalette_QuestionMark},
+    [ITEM_HONEY] = {gItemIcon_QuestionMark, gItemIconPalette_QuestionMark},
+    [ITEM_LAGGING_TAIL] = {gItemIcon_QuestionMark, gItemIconPalette_QuestionMark},
+    [ITEM_MAGMARIZER] = {gItemIcon_QuestionMark, gItemIconPalette_QuestionMark},
+    [ITEM_METRONOME] = {gItemIcon_QuestionMark, gItemIconPalette_QuestionMark},
+    [ITEM_OVAL_STONE] = {gItemIcon_QuestionMark, gItemIconPalette_QuestionMark},
+    [ITEM_WIDE_LENS] = {gItemIcon_QuestionMark, gItemIconPalette_QuestionMark},
     // Return to field arrow
     [ITEMS_COUNT] = {gItemIcon_ReturnToFieldArrow, gItemIconPalette_ReturnToFieldArrow},
 };

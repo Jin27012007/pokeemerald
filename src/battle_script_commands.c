@@ -1154,7 +1154,9 @@ static void Cmd_accuracycheck(void)
         if (WEATHER_HAS_EFFECT && gBattleMons[gBattlerTarget].ability == ABILITY_SAND_VEIL && gBattleWeather & B_WEATHER_SANDSTORM)
             calc = (calc * 80) / 100; // 1.2 sand veil loss
         if (gBattleMons[gBattlerAttacker].ability == ABILITY_HUSTLE && IS_TYPE_PHYSICAL(type))
-            calc = (calc * 80) / 100; // 1.2 hustle loss
+            calc = (calc * 80) / 100; // Hustle accuracy penalty
+        if (GetItemHoldEffect(gBattleMons[gBattlerAttacker].item) == HOLD_EFFECT_WIDE_LENS)
+            calc = (calc * 110) / 100; // Wide Lens: 10% accuracy boost
 
         if (gBattleMons[gBattlerTarget].item == ITEM_ENIGMA_BERRY)
         {

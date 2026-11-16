@@ -205,6 +205,12 @@ jobs:
           test -s reports/gen8-conversion/species_info_runtime_mapping_audit.json
 
 
+      - name: Audit Generation 4 runtime readiness (pre-activation)
+        run: |
+          python3 tools/audit_gen4_species_readiness.py
+          python3 tools/test_gen4_species_readiness.py
+          test -s reports/gen8-conversion/gen4_runtime_readiness.json
+
       - name: Verify generated staging sources are tracked and complete
         run: |
           test -s include/gen8_species_map.h

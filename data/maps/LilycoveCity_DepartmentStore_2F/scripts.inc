@@ -36,6 +36,20 @@ LilycoveCity_DepartmentStore_2F_Pokemart1:
 	.2byte ITEM_ICE_HEAL
 	.2byte ITEM_AWAKENING
 	.2byte ITEM_FLUFFY_TAIL
+	.2byte ITEM_SUN_STONE
+	.2byte ITEM_MOON_STONE
+	.2byte ITEM_FIRE_STONE
+	.2byte ITEM_THUNDER_STONE
+	.2byte ITEM_WATER_STONE
+	.2byte ITEM_LEAF_STONE
+	.2byte ITEM_BLACK_SLUDGE
+	.2byte ITEM_ELECTIRIZER
+	.2byte ITEM_HONEY
+	.2byte ITEM_LAGGING_TAIL
+	.2byte ITEM_MAGMARIZER
+	.2byte ITEM_METRONOME
+	.2byte ITEM_OVAL_STONE
+	.2byte ITEM_WIDE_LENS
 	pokemartlistend
 
 LilycoveCity_DepartmentStore_2F_EventScript_ClerkRight::
