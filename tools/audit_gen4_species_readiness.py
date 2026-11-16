@@ -20,6 +20,10 @@ OUTPUT = REPORTS / "gen4_runtime_readiness.json"
 DEX_FIRST = 387
 DEX_LAST = 493
 EXPECTED_COUNT = 107
+GENERATION_4_NEW_HELD_ITEMS = {
+    "BLACK_SLUDGE", "ELECTIRIZER", "HONEY", "LAGGING_TAIL",
+    "MAGMARIZER", "METRONOME", "OVAL_STONE", "WIDE_LENS",
+}
 REQUIRED_SOURCE_FIELDS = {
     "baseHP", "baseAttack", "baseDefense", "baseSpeed", "baseSpAttack",
     "baseSpDefense", "catchRate", "expYield", "genderRatio", "eggCycles",
@@ -193,6 +197,7 @@ def audit(
         for row in mapping_by_dex.values()
         for pending_item in row.get("runtime_semantics_pending", [])
         if pending_item.startswith("held_item_behavior_not_audited:")
+        and pending_item.split(":", 1)[1] in GENERATION_4_NEW_HELD_ITEMS
     )
     missing_runtime_blockers = Counter(
         blocker
