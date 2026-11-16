@@ -382,6 +382,7 @@ EXPECTED.extend([
 
 
 EXPECTED.append(["FLASH_CANNON", 412, "EFFECT_SPECIAL_DEFENSE_DOWN_HIT", 80, "STEEL", "SPECIAL", 100, 10, 0])
+EXPECTED.append(["ACID_SPRAY", 413, "EFFECT_SPECIAL_DEFENSE_DOWN_2_HIT", 40, "POISON", "SPECIAL", 100, 20, 0])
 
 def test_gen4_move_ids_and_runtime_records():
     constants = (ROOT / "include/constants/moves.h").read_text(encoding="utf-8")
@@ -389,8 +390,8 @@ def test_gen4_move_ids_and_runtime_records():
     names = (ROOT / "src/data/text/move_names.h").read_text(encoding="utf-8")
     descriptions = (ROOT / "src/data/text/move_descriptions.h").read_text(encoding="utf-8")
     animations = (ROOT / "data/battle_anim_scripts.s").read_text(encoding="utf-8")
-    assert "#define MOVES_COUNT 413" in constants
-    assert len(EXPECTED) == 51
+    assert "#define MOVES_COUNT 414" in constants
+    assert len(EXPECTED) == 52
     for symbol, move_id, effect, power, move_type, category, accuracy, pp, priority in EXPECTED:
         assert f"#define MOVE_{symbol} {move_id}" in constants
         start = records.index(f"[MOVE_{symbol}] =")
@@ -439,6 +440,7 @@ def test_second_batch_uses_specific_secondary_effects():
         "POWER_UP_PUNCH": ("EFFECT_ATTACK_UP_HIT", 100),
         "STRUGGLE_BUG": ("EFFECT_SPECIAL_ATTACK_DOWN_HIT", 100),
         "FLASH_CANNON": ("EFFECT_SPECIAL_DEFENSE_DOWN_HIT", 10),
+        "ACID_SPRAY": ("EFFECT_SPECIAL_DEFENSE_DOWN_2_HIT", 100),
     }
     for symbol, (effect, chance) in expected.items():
         entry = records.split(f"[MOVE_{symbol}] =", 1)[1].split("\n    },", 1)[0]
@@ -446,10 +448,15 @@ def test_second_batch_uses_specific_secondary_effects():
         assert f".secondaryEffectChance = {chance}" in entry, symbol
     double_hit = records.split("[MOVE_DOUBLE_HIT] =", 1)[1].split("\n    },", 1)[0]
     assert ".effect = EFFECT_DOUBLE_HIT" in double_hit
+    effects = (ROOT / "include/constants/battle_move_effects.h").read_text(encoding="utf-8")
+    scripts = (ROOT / "data/battle_scripts_1.s").read_text(encoding="utf-8")
+    assert "#define EFFECT_SPECIAL_DEFENSE_DOWN_2_HIT 214" in effects
+    assert "BattleScript_EffectSpecialDefenseDown2Hit::" in scripts
+    assert "setmoveeffect MOVE_EFFECT_SP_DEF_MINUS_2" in scripts
 
 
 if __name__ == "__main__":
     test_gen4_move_ids_and_runtime_records()
     test_new_moves_use_existing_effect_handlers()
     test_second_batch_uses_specific_secondary_effects()
-    print("PASS: 51 Gen 4 moves with IDs, damage categories, data, names, descriptions and animation pointers.")
+    print("PASS: 52 Gen 4 moves with IDs, damage categories, data, names, descriptions and animation pointers.")
