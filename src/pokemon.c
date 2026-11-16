@@ -5639,6 +5639,7 @@ u16 GetEvolutionTargetSpecies(struct Pokemon *mon, u8 mode, u16 evolutionItem)
                     {
                         targetSpecies = evolutions[i].targetSpecies;
                         heldItem = ITEM_NONE; // The Oval Stone is consumed by the evolution.
+                        SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem);
                     }
                 }
                 break;
