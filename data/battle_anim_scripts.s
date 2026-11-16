@@ -371,7 +371,14 @@ gBattleAnims_Moves::
 	.4byte Move_WATER_PULSE
 	.4byte Move_DOOM_DESIRE
 	.4byte Move_PSYCHO_BOOST
-	.4byte Move_COUNT @ cannot be reached, because last move is Psycho Boost
+	.4byte Move_SING @ Disarming Voice
+	.4byte Move_ABSORB @ Draining Kiss
+	.4byte Move_GUST @ Fairy Wind
+	.4byte Move_TACKLE @ Play Rough
+	.4byte Move_PSYBEAM @ Moonblast
+	.4byte Move_FLASH @ Dazzling Gleam
+	.4byte Move_CHARM @ Baby-Doll Eyes
+	.4byte Move_COUNT @ cannot be reached, because last move is Baby-Doll Eyes
 
 	.align 2
 gBattleAnims_StatusConditions::

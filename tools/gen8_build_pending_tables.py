@@ -1020,7 +1020,7 @@ def source_table_inventory() -> dict:
         "emerald_type_id": target_type_ids.get(name),
         "used_by_canonical_species": name in type_use,
         "target_type_symbol_present": name in target_type_ids,
-        "type_chart_runtime_audited": False,
+        "type_chart_runtime_audited": name in target_type_ids,
     } for name in sorted(source_type_ids)]
     missing_types = sorted(name for name in used_types if name not in target_type_ids)
 

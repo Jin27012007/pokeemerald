@@ -5,6 +5,12 @@ UNUSEDGFXDIR := graphics/unused
 BATINTGFXDIR := graphics/battle_interface
 BATTRANSGFXDIR := graphics/battle_transitions
 TYPESGFXDIR := graphics/types
+
+# Explicit ordering for the summary-screen type sprite sheet. Fairy is appended
+# after Dark so its animation index matches TYPE_FAIRY == 18.
+types ?= normal fight flying poison ground rock bug ghost steel mystery fire water grass electric psychic ice dragon dark fairy
+types := $(filter-out fairy,$(types)) fairy
+contest_types ?= cool beauty cute smart tough
 RAYQUAZAGFXDIR := graphics/rayquaza_scene
 ROULETTEGFXDIR := graphics/roulette
 SLOTMACHINEGFXDIR := graphics/slot_machine
@@ -13,8 +19,6 @@ WALLPAPERGFXDIR := graphics/pokemon_storage/wallpapers
 JPCONTESTGFXDIR := graphics/contest/japanese
 TITLESCREENGFXDIR := graphics/title_screen
 
-types := normal fight flying poison ground rock bug ghost steel mystery fire water grass electric psychic ice dragon dark
-contest_types := cool beauty cute smart tough
 
 
 
