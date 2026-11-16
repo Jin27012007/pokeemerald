@@ -1153,7 +1153,7 @@ static void Cmd_accuracycheck(void)
             calc = (calc * 130) / 100; // 1.3 compound eyes boost
         if (WEATHER_HAS_EFFECT && gBattleMons[gBattlerTarget].ability == ABILITY_SAND_VEIL && gBattleWeather & B_WEATHER_SANDSTORM)
             calc = (calc * 80) / 100; // 1.2 sand veil loss
-        if (gBattleMons[gBattlerAttacker].ability == ABILITY_HUSTLE && IS_TYPE_PHYSICAL(type))
+        if (gBattleMons[gBattlerAttacker].ability == ABILITY_HUSTLE && GetMoveCategory(gCurrentMove) == DAMAGE_CATEGORY_PHYSICAL)
             calc = (calc * 80) / 100; // Hustle accuracy penalty
         if (GetItemHoldEffect(gBattleMons[gBattlerAttacker].item) == HOLD_EFFECT_WIDE_LENS)
             calc = (calc * 110) / 100; // Wide Lens: 10% accuracy boost
@@ -1937,7 +1937,7 @@ static void Cmd_datahpupdate(void)
                 // Note: While physicalDmg/specialDmg below are only distinguished between for Counter/Mirror Coat, they are
                 //       used in combination as general damage trackers for other purposes. specialDmg is additionally used
                 //       to help determine if a fire move should defrost the target.
-                if (IS_TYPE_PHYSICAL(moveType) && !(gHitMarker & HITMARKER_PASSIVE_HP_UPDATE) && gCurrentMove != MOVE_PAIN_SPLIT)
+                if (GetMoveCategory(gCurrentMove) == DAMAGE_CATEGORY_PHYSICAL && !(gHitMarker & HITMARKER_PASSIVE_HP_UPDATE) && gCurrentMove != MOVE_PAIN_SPLIT)
                 {
                     // Record physical damage/attacker for Counter
                     gProtectStructs[gActiveBattler].physicalDmg = gHpDealt;
@@ -1953,7 +1953,7 @@ static void Cmd_datahpupdate(void)
                         gSpecialStatuses[gActiveBattler].physicalBattlerId = gBattlerTarget;
                     }
                 }
-                else if (!IS_TYPE_PHYSICAL(moveType) && !(gHitMarker & HITMARKER_PASSIVE_HP_UPDATE))
+                else if (GetMoveCategory(gCurrentMove) == DAMAGE_CATEGORY_SPECIAL && !(gHitMarker & HITMARKER_PASSIVE_HP_UPDATE))
                 {
                     // Record special damage/attacker for Mirror Coat
                     gProtectStructs[gActiveBattler].specialDmg = gHpDealt;
@@ -4433,6 +4433,31 @@ static void Cmd_moveend(void)
                 else
                 {
                     gLastLandedMoves[gBattlerTarget] = MOVE_UNAVAILABLE;
+                }
+            }
+            // Track consecutive move use for the Metronome held item. The first
+            // use sets the chain; each repeat adds 20% power on the following use.
+            if (gBattlerAttacker < gBattlersCount)
+            {
+                if (gBattleMons[gBattlerAttacker].item == ITEM_METRONOME
+                    && (gHitMarker & HITMARKER_OBEYS)
+                    && gCurrentMove != MOVE_STRUGGLE)
+                {
+                    if (gDisableStructs[gBattlerAttacker].metronomeMove == gCurrentMove)
+                    {
+                        if (gDisableStructs[gBattlerAttacker].metronomeCount < 5)
+                            gDisableStructs[gBattlerAttacker].metronomeCount++;
+                    }
+                    else
+                    {
+                        gDisableStructs[gBattlerAttacker].metronomeMove = gCurrentMove;
+                        gDisableStructs[gBattlerAttacker].metronomeCount = 1;
+                    }
+                }
+                else
+                {
+                    gDisableStructs[gBattlerAttacker].metronomeMove = MOVE_NONE;
+                    gDisableStructs[gBattlerAttacker].metronomeCount = 0;
                 }
             }
             gBattleScripting.moveendState++;
