@@ -3,6 +3,7 @@
 
 // should they be included here or included individually by every file?
 #include "constants/battle.h"
+#include "constants/abilities.h"
 #include "battle_main.h"
 #include "battle_message.h"
 #include "battle_util.h"
@@ -462,7 +463,7 @@ STATIC_ASSERT(sizeof(((struct BattleStruct *)0)->palaceFlags) * 8 >= MAX_BATTLER
     else                                                              \
     {                                                                 \
         typeArg = gBattleMoves[move].type;                            \
-        if (typeArg == TYPE_NORMAL && gBattleMons[gBattlerAttacker].ability == ABILITY_PIXILATE) \
+        if (typeArg == TYPE_NORMAL && gBattlerAttacker < gBattlersCount && gBattleMons[gBattlerAttacker].ability == ABILITY_PIXILATE) \
             typeArg = TYPE_FAIRY;                                     \
     }                                                                 \
 }
