@@ -82,6 +82,8 @@ def test_oval_stone_and_trade_evolution_paths_are_implemented():
     assert "case EVO_LEVEL_HOLD_ITEM_DAY:" in pokemon
     assert "heldItem == ITEM_OVAL_STONE" in pokemon
     assert "DAY_EVO_HOUR_BEGIN" in pokemon and "DAY_EVO_HOUR_END" in pokemon
+    oval = pokemon.split("case EVO_LEVEL_HOLD_ITEM_DAY:", 1)[1].split("break;", 1)[0]
+    assert "heldItem = ITEM_NONE" in oval
     assert "case EVO_TRADE_ITEM:" in pokemon
     assert "heldItem = ITEM_NONE;" in pokemon
 
