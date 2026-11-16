@@ -330,6 +330,7 @@ struct BattleMove
     u8 effect;
     u8 power;
     u8 type;
+    u8 category; // DAMAGE_CATEGORY_AUTO keeps original Emerald type-based damage.
     u8 accuracy;
     u8 pp;
     u8 secondaryEffectChance;
@@ -378,6 +379,7 @@ extern struct Pokemon gEnemyParty[PARTY_SIZE];
 extern struct SpriteTemplate gMultiuseSpriteTemplate;
 
 extern const struct BattleMove gBattleMoves[];
+u8 GetMoveCategory(u16 move);
 extern const u8 gFacilityClassToPicIndex[];
 extern const u8 gFacilityClassToTrainerClass[];
 extern const struct SpeciesInfo gSpeciesInfo[];
