@@ -3136,6 +3136,9 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     else
         type = typeOverride & DYNAMIC_TYPE_MASK;
 
+    if (type == TYPE_NORMAL && attacker->ability == ABILITY_PIXILATE && move != MOVE_STRUGGLE)
+        type = TYPE_FAIRY;
+
     attack = attacker->attack;
     defense = defender->defense;
     spAttack = attacker->spAttack;
@@ -3234,6 +3237,28 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
         gBattleMovePower = (150 * gBattleMovePower) / 100;
     if (type == TYPE_BUG && attacker->ability == ABILITY_SWARM && attacker->hp <= (attacker->maxHP / 3))
         gBattleMovePower = (150 * gBattleMovePower) / 100;
+
+    // Fairy Aura boosts Fairy moves; Aura Break reverses the aura's effect.
+    if (type == TYPE_FAIRY)
+    {
+        bool8 fairyAura = FALSE;
+        bool8 auraBreak = FALSE;
+        for (i = 0; i < gBattlersCount; i++)
+        {
+            if (gBattleMons[i].hp == 0)
+                continue;
+            if (gBattleMons[i].ability == ABILITY_FAIRY_AURA)
+                fairyAura = TRUE;
+            else if (gBattleMons[i].ability == ABILITY_AURA_BREAK)
+                auraBreak = TRUE;
+        }
+        if (fairyAura)
+            gBattleMovePower = (gBattleMovePower * 4) / 3;
+        if (auraBreak)
+            gBattleMovePower = (gBattleMovePower * 3) / 4;
+    }
+    if (type == TYPE_FAIRY && attacker->ability == ABILITY_PIXILATE && gBattleMoves[move].type == TYPE_NORMAL)
+        gBattleMovePower = (gBattleMovePower * 6) / 5;
 
     // Self-destruct / Explosion cut defense in half
     if (gBattleMoves[gCurrentMove].effect == EFFECT_EXPLOSION)
