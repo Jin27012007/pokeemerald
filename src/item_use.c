@@ -17,6 +17,7 @@
 #include "field_player_avatar.h"
 #include "field_screen_effect.h"
 #include "field_weather.h"
+#include "fldeff.h"
 #include "item.h"
 #include "item_menu.h"
 #include "item_use.h"
@@ -67,6 +68,8 @@ static void UseTMHMYesNo(u8);
 static void UseTMHM(u8);
 static void Task_StartUseRepel(u8);
 static void Task_UseRepel(u8);
+static void Task_UseHoneyOnField(u8 taskId);
+static void ItemUseOnFieldCB_Honey(u8 taskId);
 static void Task_CloseCantUseKeyItemMessage(u8);
 static void SetDistanceOfClosestHiddenItem(u8, s16, s16);
 static void CB2_OpenPokeblockFromBag(void);
@@ -867,8 +870,6 @@ static void Task_UsedBlackWhiteFlute(u8 taskId)
     if(++gTasks[taskId].data[8] > 7)
     {
         PlaySE(SE_GLASS_FLUTE);
-        if (gSpecialVar_ItemId == ITEM_HONEY)
-            RemoveUsedItem();
         if (CurrentBattlePyramidLocation() == PYRAMID_LOCATION_NONE)
             DisplayItemMessage(taskId, FONT_NORMAL, gStringVar4, CloseItemMessage);
         else
@@ -879,7 +880,7 @@ static void Task_UsedBlackWhiteFlute(u8 taskId)
 void ItemUseOutOfBattle_BlackWhiteFlute(u8 taskId)
 {
     CopyItemName(gSpecialVar_ItemId, gStringVar2);
-    if (gSpecialVar_ItemId == ITEM_WHITE_FLUTE || gSpecialVar_ItemId == ITEM_HONEY)
+    if (gSpecialVar_ItemId == ITEM_WHITE_FLUTE)
     {
         FlagSet(FLAG_SYS_ENC_UP_ITEM);
         FlagClear(FLAG_SYS_ENC_DOWN_ITEM);
@@ -893,6 +894,27 @@ void ItemUseOutOfBattle_BlackWhiteFlute(u8 taskId)
     }
     gTasks[taskId].data[8] = 0;
     gTasks[taskId].func = Task_UsedBlackWhiteFlute;
+}
+
+static void Task_UseHoneyOnField(u8 taskId)
+{
+    StartSweetScentFieldEffect();
+    DestroyTask(taskId);
+}
+
+static void ItemUseOnFieldCB_Honey(u8 taskId)
+{
+    Overworld_ResetStateAfterDigEscRope();
+    RemoveUsedItem();
+    DisplayItemMessageOnField(taskId, gStringVar4, Task_UseHoneyOnField);
+}
+
+void ItemUseOutOfBattle_Honey(u8 taskId)
+{
+    sItemUseOnFieldCB = ItemUseOnFieldCB_Honey;
+    gFieldCallback = FieldCB_UseItemOnField;
+    gBagMenu->newScreenCallback = CB2_ReturnToField;
+    Task_FadeAndCloseBagMenu(taskId);
 }
 
 void Task_UseDigEscapeRopeOnField(u8 taskId)

@@ -41,7 +41,10 @@ def test_black_sludge_heals_poison_and_hurts_other_types():
     assert "#define HOLD_EFFECT_BLACK_SLUDGE   69" in hold
     black = items.split("[ITEM_BLACK_SLUDGE] =", 1)[1].split("\n    },", 1)[0]
     assert ".holdEffect = HOLD_EFFECT_BLACK_SLUDGE" in black
-    assert "gBattleMons[battler].type1 == TYPE_POISON || gBattleMons[battler].type2 == TYPE_POISON" in battle
+    assert "IS_BATTLER_OF_TYPE(battler, TYPE_POISON)" in battle
+    item_message = read("include/battle_message.h")
+    assert "textVar[2] = (u8)((item) & 0xFF);" in item_message
+    assert "textVar[3] = (u8)(((item) >> 8) & 0xFF);" in item_message
     assert "gBattleMons[battler].maxHP / 16" in battle
     assert "gBattleMons[battler].maxHP / 8" in battle
     assert "PREPARE_ITEM_BUFFER(gBattleTextBuff1, ITEM_BLACK_SLUDGE)" in battle
@@ -60,19 +63,62 @@ def test_metronome_item_accumulates_repeated_move_power():
     assert "#define HOLD_EFFECT_METRONOME      70" in hold
     assert ".holdEffect = HOLD_EFFECT_METRONOME" in item
     assert "u16 metronomeMove;" in battle_h and "u8 metronomeCount;" in battle_h
-    assert "100 + 20 * repeats" in pokemon
+    assert "100 + 10 * repeats" in pokemon
     assert "gBattleMons[gBattlerAttacker].item == ITEM_METRONOME" in commands
-    assert "gDisableStructs[gBattlerAttacker].metronomeCount < 5" in commands
+    assert "gDisableStructs[gBattlerAttacker].metronomeCount < 10" in commands
 
 
-def test_honey_is_consumable_and_uses_encounter_lure():
+def test_honey_uses_its_own_sweet_scent_field_behavior():
     item = read("src/data/items.h").split("[ITEM_HONEY] =", 1)[1].split("\n    },", 1)[0]
     use = read("src/item_use.c")
+    item_header = read("include/item_use.h")
+    field_header = read("include/fldeff.h")
+    sweet_scent = read("src/fldeff_sweetscent.c")
     desc = read("src/data/text/item_descriptions.h")
-    assert ".fieldUseFunc = ItemUseOutOfBattle_BlackWhiteFlute" in item
-    assert "gSpecialVar_ItemId == ITEM_WHITE_FLUTE || gSpecialVar_ItemId == ITEM_HONEY" in use
-    assert "if (gSpecialVar_ItemId == ITEM_HONEY)\n            RemoveUsedItem();" in use
+    assert ".type = ITEM_USE_FIELD" in item
+    assert ".fieldUseFunc = ItemUseOutOfBattle_Honey" in item
+    assert "void ItemUseOutOfBattle_Honey(u8 taskId);" in item_header
+    assert "sItemUseOnFieldCB = ItemUseOnFieldCB_Honey" in use
+    assert "RemoveUsedItem();" in use[use.index("static void ItemUseOnFieldCB_Honey"):use.index("void ItemUseOutOfBattle_Honey")]
+    assert "StartSweetScentFieldEffect();" in use
+    assert "void StartSweetScentFieldEffect(void);" in field_header
+    assert "void StartSweetScentFieldEffect(void)" in sweet_scent
+    flute = use.split("void ItemUseOutOfBattle_BlackWhiteFlute", 1)[1].split("void Task_UseDigEscapeRopeOnField", 1)[0]
+    assert "ITEM_HONEY" not in flute
     assert "attracts wild" in desc[desc.index("sHoneyDesc"):desc.index("sLaggingTailDesc")]
+
+
+def test_lagging_tail_and_wide_lens_battle_paths_are_wired():
+    battle_main = read("src/battle_main.c")
+    who_strikes_first = battle_main.split("u8 GetWhoStrikesFirst", 1)[1].split("static void SetActionsAndBattlersTurnOrder", 1)[0]
+    assert "holdEffectBattler1 == HOLD_EFFECT_LAGGING_TAIL" in who_strikes_first
+    assert "holdEffectBattler2 == HOLD_EFFECT_LAGGING_TAIL" in who_strikes_first
+    assert "!ignoreChosenMoves" in who_strikes_first
+    assert "gBattleMoves[moveBattler1].priority == gBattleMoves[moveBattler2].priority" in who_strikes_first
+    assert "GetWhoStrikesFirst(battler1, battler2, FALSE)" in battle_main
+    commands = read("src/battle_script_commands.c")
+    accuracy = commands.split("if (GetItemHoldEffect(gBattleMons[gBattlerAttacker].item) == HOLD_EFFECT_WIDE_LENS)", 1)[1][:180]
+    assert "calc = (calc * 110) / 100" in accuracy
+    hold = read("include/constants/hold_effects.h")
+    items = read("src/data/items.h")
+    lagging = next(line for line in hold.splitlines() if line.startswith("#define HOLD_EFFECT_LAGGING_TAIL"))
+    wide = next(line for line in hold.splitlines() if line.startswith("#define HOLD_EFFECT_WIDE_LENS"))
+    assert lagging.split()[-1] == "67"
+    assert wide.split()[-1] == "68"
+    assert ".holdEffect = HOLD_EFFECT_LAGGING_TAIL" in items
+    assert ".holdEffect = HOLD_EFFECT_WIDE_LENS" in items
+
+
+def test_electirizer_and_magmarizer_are_bound_to_their_evolutions():
+    species = read("tools/vendor/pokeemerald-expansion/src/data/pokemon/species_info/gen_1_families.h")
+    electabuzz = species.split("[SPECIES_ELECTABUZZ] =", 1)[1].split("\n    },", 1)[0]
+    magmar = species.split("[SPECIES_MAGMAR] =", 1)[1].split("\n    },", 1)[0]
+    assert "SPECIES_ELECTIVIRE" in electabuzz and "ITEM_ELECTIRIZER" in electabuzz
+    assert "IF_HOLD_ITEM, ITEM_ELECTIRIZER" in electabuzz
+    assert "EVO_ITEM, ITEM_ELECTIRIZER, SPECIES_ELECTIVIRE" in electabuzz
+    assert "SPECIES_MAGMORTAR" in magmar and "ITEM_MAGMARIZER" in magmar
+    assert "IF_HOLD_ITEM, ITEM_MAGMARIZER" in magmar
+    assert "EVO_ITEM, ITEM_MAGMARIZER, SPECIES_MAGMORTAR" in magmar
 
 
 def test_oval_stone_and_trade_evolution_paths_are_implemented():
@@ -84,6 +130,7 @@ def test_oval_stone_and_trade_evolution_paths_are_implemented():
     assert "DAY_EVO_HOUR_BEGIN" in pokemon and "DAY_EVO_HOUR_END" in pokemon
     oval = pokemon.split("case EVO_LEVEL_HOLD_ITEM_DAY:", 1)[1].split("break;", 1)[0]
     assert "heldItem = ITEM_NONE" in oval
+    assert "SetMonData(mon, MON_DATA_HELD_ITEM, &heldItem)" in oval
     assert "case EVO_TRADE_ITEM:" in pokemon
     assert "heldItem = ITEM_NONE;" in pokemon
 
@@ -99,7 +146,9 @@ if __name__ == "__main__":
     test_physical_special_split_keeps_emerald_legacy_default()
     test_black_sludge_heals_poison_and_hurts_other_types()
     test_metronome_item_accumulates_repeated_move_power()
-    test_honey_is_consumable_and_uses_encounter_lure()
+    test_honey_uses_its_own_sweet_scent_field_behavior()
+    test_lagging_tail_and_wide_lens_battle_paths_are_wired()
+    test_electirizer_and_magmarizer_are_bound_to_their_evolutions()
     test_oval_stone_and_trade_evolution_paths_are_implemented()
     test_items_marked_as_audited_only_after_runtime_support()
-    print("PASS: Gen 4 damage categories, Black Sludge, Metronome item, Honey, Oval Stone and trade-item evolution.")
+    print("PASS: Gen 4 damage categories, item behavior wiring, Lagging Tail, Wide Lens and evolution paths.")

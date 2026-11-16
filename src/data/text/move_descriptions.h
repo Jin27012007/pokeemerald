@@ -1496,6 +1496,78 @@ static const u8 sXScissorDescription[] = _("Slashes the target with crossed scyt
 static const u8 sZenHeadbuttDescription[] = _("Strikes with a focused headbutt. May make the target flinch.");
 
 // MOVE_NONE is ignored in this table. Make sure to always subtract 1 before getting the right pointer.
+static const u8 sAquaTailDescription[] = _(
+    "The user swings its tail like a\n"
+    "wave to attack.");
+
+static const u8 sForcePalmDescription[] = _(
+    "A shock wave attack that may\n"
+    "paralyze the foe.");
+
+static const u8 sAirSlashDescription[] = _(
+    "Attacks with a blade of air.\n"
+    "May cause flinching.");
+
+static const u8 sDragonRushDescription[] = _(
+    "Tackles the foe with menace.\n"
+    "May cause flinching.");
+
+static const u8 sFlashCannonDescription[] = _(
+    "Releases a blast of light that\n"
+    "may lower Sp. Def.");
+
+static const u8 sDischargeDescription[] = _(
+    "Zaps all others with\n"
+    "electricity. May paralyze.");
+
+static const u8 sLavaPlumeDescription[] = _(
+    "Torches all others with scarlet\n"
+    "flames. May burn.");
+
+static const u8 sAttackOrderDescription[] = _(
+    "Underlings pummel the foe. High\n"
+    "critical-hit ratio.");
+
+static const u8 sDoubleHitDescription[] = _(
+    "Slams the foe with a tail etc.\n"
+    "Strikes twice.");
+
+static const u8 sInfernoDescription[] = _(
+    "Powerful and sure to inflict a\n"
+    "burn, but inaccurate.");
+
+static const u8 sStruggleBugDescription[] = _(
+    "Resisting, the user attacks the\n"
+    "foes. Lowers Sp. Atk.");
+
+static const u8 sLeafTornadoDescription[] = _(
+    "Circles the foe with leaves to\n"
+    "damage and cut accuracy.");
+
+static const u8 sSearingShotDescription[] = _(
+    "Torches all others with scarlet\n"
+    "flames. May burn.");
+
+static const u8 sPetalBlizzardDescription[] = _(
+    "Stirs up a violent storm of\n"
+    "petals to attack all.");
+
+static const u8 sNuzzleDescription[] = _(
+    "Rubs its cheeks against the\n"
+    "foe, paralyzing it.");
+
+static const u8 sPowerUpPunchDescription[] = _(
+    "A hard punch that raises the\n"
+    "user's Attack.");
+
+static const u8 sLeafageDescription[] = _(
+    "Attacks with a flurry of small\n"
+    "leaves.");
+
+static const u8 sLungeDescription[] = _(
+    "Lunges at the foe to lower its\n"
+    "Attack stat.");
+
 const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
 {
     [MOVE_POUND - 1] = sPoundDescription,
@@ -1891,4 +1963,22 @@ const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
     [MOVE_WOOD_HAMMER - 1] = sWoodHammerDescription,
     [MOVE_X_SCISSOR - 1] = sXScissorDescription,
     [MOVE_ZEN_HEADBUTT - 1] = sZenHeadbuttDescription,
+    [MOVE_AQUA_TAIL - 1] = sAquaTailDescription,
+    [MOVE_FORCE_PALM - 1] = sForcePalmDescription,
+    [MOVE_AIR_SLASH - 1] = sAirSlashDescription,
+    [MOVE_DRAGON_RUSH - 1] = sDragonRushDescription,
+    [MOVE_FLASH_CANNON - 1] = sFlashCannonDescription,
+    [MOVE_DISCHARGE - 1] = sDischargeDescription,
+    [MOVE_LAVA_PLUME - 1] = sLavaPlumeDescription,
+    [MOVE_ATTACK_ORDER - 1] = sAttackOrderDescription,
+    [MOVE_DOUBLE_HIT - 1] = sDoubleHitDescription,
+    [MOVE_INFERNO - 1] = sInfernoDescription,
+    [MOVE_STRUGGLE_BUG - 1] = sStruggleBugDescription,
+    [MOVE_LEAF_TORNADO - 1] = sLeafTornadoDescription,
+    [MOVE_SEARING_SHOT - 1] = sSearingShotDescription,
+    [MOVE_PETAL_BLIZZARD - 1] = sPetalBlizzardDescription,
+    [MOVE_NUZZLE - 1] = sNuzzleDescription,
+    [MOVE_POWER_UP_PUNCH - 1] = sPowerUpPunchDescription,
+    [MOVE_LEAFAGE - 1] = sLeafageDescription,
+    [MOVE_LUNGE - 1] = sLungeDescription,
 };
