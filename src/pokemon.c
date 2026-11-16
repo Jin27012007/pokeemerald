@@ -3137,7 +3137,7 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
     else
         type = typeOverride & DYNAMIC_TYPE_MASK;
 
-    isPhysical = isPhysical;
+    isPhysical = IS_TYPE_PHYSICAL(type);
     if (!typeOverride && type == TYPE_NORMAL && attacker->ability == ABILITY_PIXILATE && move != MOVE_STRUGGLE)
     {
         type = TYPE_FAIRY;
