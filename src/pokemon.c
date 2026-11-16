@@ -3252,10 +3252,10 @@ s32 CalculateBaseDamage(struct BattlePokemon *attacker, struct BattlePokemon *de
             else if (gBattleMons[i].ability == ABILITY_AURA_BREAK)
                 auraBreak = TRUE;
         }
-        if (fairyAura)
-            gBattleMovePower = (gBattleMovePower * 4) / 3;
-        if (auraBreak)
+        if (fairyAura && auraBreak)
             gBattleMovePower = (gBattleMovePower * 3) / 4;
+        else if (fairyAura)
+            gBattleMovePower = (gBattleMovePower * 4) / 3;
     }
     if (type == TYPE_FAIRY && attacker->ability == ABILITY_PIXILATE && gBattleMoves[move].type == TYPE_NORMAL)
         gBattleMovePower = (gBattleMovePower * 6) / 5;
