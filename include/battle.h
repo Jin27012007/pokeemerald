@@ -460,7 +460,11 @@ STATIC_ASSERT(sizeof(((struct BattleStruct *)0)->palaceFlags) * 8 >= MAX_BATTLER
     if (gBattleStruct->dynamicMoveType)                               \
         typeArg = gBattleStruct->dynamicMoveType & DYNAMIC_TYPE_MASK; \
     else                                                              \
+    {                                                                 \
         typeArg = gBattleMoves[move].type;                            \
+        if (typeArg == TYPE_NORMAL && gBattleMons[gBattlerAttacker].ability == ABILITY_PIXILATE) \
+            typeArg = TYPE_FAIRY;                                     \
+    }                                                                 \
 }
 
 #define IS_TYPE_PHYSICAL(moveType) (moveType < TYPE_MYSTERY)
