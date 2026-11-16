@@ -1533,6 +1533,8 @@ static const u8 sStruggleBugDescription[] = _("Attacks opposing Pokémon while r
 
 static const u8 sFlashCannonDescription[] = _("Fires a blast of light that may lower the target's Sp. Def.");
 
+static const u8 sAcidSprayDescription[] = _("Sprays a corrosive acid that harshly lowers the target's Sp. Def.");
+
 // MOVE_NONE is ignored in this table. Make sure to always subtract 1 before getting the right pointer.
 const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
 {
@@ -1948,4 +1950,5 @@ const u8 *const gMoveDescriptionPointers[MOVES_COUNT - 1] =
     [MOVE_POWER_UP_PUNCH - 1] = sPowerUpPunchDescription,
     [MOVE_STRUGGLE_BUG - 1] = sStruggleBugDescription,
     [MOVE_FLASH_CANNON - 1] = sFlashCannonDescription,
+    [MOVE_ACID_SPRAY - 1] = sAcidSprayDescription,
 };
